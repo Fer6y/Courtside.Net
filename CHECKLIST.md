@@ -7,9 +7,9 @@
 - [x] Sign up for Supabase — create project (save project URL + anon key)
 - [x] Sign up for Clerk — create application (enable Google + email providers)
 - [x] Sign up for Vercel — connect GitHub repo
-- [ ] Run: `npx create-next-app@latest . --typescript --tailwind --app`
-- [ ] Install deps: shadcn/ui, @supabase/supabase-js, @clerk/nextjs, d3
-- [ ] Initialize shadcn/ui: `npx shadcn@latest init`
+- [x] Run: `npx create-next-app@latest . --typescript --tailwind --app`
+- [x] Install deps: shadcn/ui, @supabase/supabase-js, @clerk/nextjs, d3
+- [x] Initialize shadcn/ui: `npx shadcn@latest init`
 - [x] Set up .env.local with Supabase + Clerk keys (see .env.local.example)
 - [x] Create CLAUDE.md and CHECKLIST.md in project root
 - [ ] Deploy to Vercel — confirm pipeline works

@@ -1,154 +1,85 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
+/* ─── Courtside Design Tokens ─────────────────────────────────────────────── */
+@theme inline {
+  /* Fonts */
+  --font-mono: var(--font-mono);   /* IBM Plex Mono — numbers, scores, brand */
+  --font-sans: var(--font-sans);   /* DM Sans — body, reviews, UI labels */
+
+  /* Backgrounds & surfaces */
+  --color-background: #0e1116;
+  --color-surface:    #1a1e26;
+  --color-surface-2:  #22272f;
+  --color-surface-3:  #2a303a;
+
+  /* Brand & semantic */
+  --color-primary: #22d68a;   /* Green — actions, wins, CTA */
+  --color-accent:  #4a9eff;   /* Blue — comparisons, Movement category */
+  --color-amber:   #f5c518;   /* Highlights, Skill category */
+  --color-coral:   #d4734e;   /* Mental category */
+  --color-loss:    #e74c3c;   /* Red — losses, errors, destructive */
+
+  /* Text */
+  --color-text-primary: #e8eaed;
+  --color-text-mid:     #9ca3af;
+  --color-text-dim:     #6b7280;
+
+  /* Surface / court badges */
+  --color-court-hard:  #4a90d9;
+  --color-court-clay:  #d4734e;
+  --color-court-grass: #5cb85c;
+
+  /* Radar category colors */
+  --color-cat-movement:  #4a9eff;
+  --color-cat-technique: #22d68a;
+  --color-cat-skill:     #f5c518;
+  --color-cat-mental:    #d4734e;
+
+  /* Animations */
+  --animate-spring-in: springIn 0.18s ease-out;
+  --animate-fade-in:   fadeIn 0.3s ease-out;
+
+  @keyframes springIn {
+    0%   { transform: scale(0.92); opacity: 0; }
+    100% { transform: scale(1);    opacity: 1; }
+  }
+  @keyframes fadeIn {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+  }
+}
+
+/* ─── shadcn CSS variable overrides (dark-only app) ──────────────────────── */
+:root,
+.dark {
+  --background: #0e1116;
+  --foreground: #e8eaed;
+  --card:                #1a1e26;
+  --card-foreground:     #e8eaed;
+  --popover:             #1a1e26;
+  --popover-foreground:  #e8eaed;
+  --primary:             #22d68a;
+  --primary-foreground:  #0e1116;
+  --secondary:           #22272f;
+  --secondary-foreground:#e8eaed;
+  --muted:               #22272f;
+  --muted-foreground:    #9ca3af;
+  --accent:              #4a9eff;
+  --accent-foreground:   #0e1116;
+  --destructive:         #e74c3c;
+  --border:              rgba(255,255,255,0.05);
+  --input:               rgba(255,255,255,0.08);
+  --ring:                #22d68a;
+  --radius:              0.5rem;
+}
+
+/* ─── Base styles ─────────────────────────────────────────────────────────── */
 @layer base {
-  html {
-    @apply dark font-sans;
-  }
-
   body {
-    @apply font-sans bg-background text-foreground;
-  }
-  .theme {
-
-    --font-heading: var(--font-sans);
-
-    --font-sans: var(--font-sans)
-  }
-  :root {
-
-    --background: oklch(1 0 0);
-
-    --foreground: oklch(0.145 0 0);
-
-    --card: oklch(1 0 0);
-
-    --card-foreground: oklch(0.145 0 0);
-
-    --popover: oklch(1 0 0);
-
-    --popover-foreground: oklch(0.145 0 0);
-
-    --primary: oklch(0.205 0 0);
-
-    --primary-foreground: oklch(0.985 0 0);
-
-    --secondary: oklch(0.97 0 0);
-
-    --secondary-foreground: oklch(0.205 0 0);
-
-    --muted: oklch(0.97 0 0);
-
-    --muted-foreground: oklch(0.556 0 0);
-
-    --accent: oklch(0.97 0 0);
-
-    --accent-foreground: oklch(0.205 0 0);
-
-    --destructive: oklch(0.577 0.245 27.325);
-
-    --border: oklch(0.922 0 0);
-
-    --input: oklch(0.922 0 0);
-
-    --ring: oklch(0.708 0 0);
-
-    --chart-1: oklch(0.87 0 0);
-
-    --chart-2: oklch(0.556 0 0);
-
-    --chart-3: oklch(0.439 0 0);
-
-    --chart-4: oklch(0.371 0 0);
-
-    --chart-5: oklch(0.269 0 0);
-
-    --radius: 0.625rem;
-
-    --sidebar: oklch(0.985 0 0);
-
-    --sidebar-foreground: oklch(0.145 0 0);
-
-    --sidebar-primary: oklch(0.205 0 0);
-
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-
-    --sidebar-accent: oklch(0.97 0 0);
-
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-
-    --sidebar-border: oklch(0.922 0 0);
-
-    --sidebar-ring: oklch(0.708 0 0)
-  }
-  .dark {
-
-    --background: oklch(0.145 0 0);
-
-    --foreground: oklch(0.985 0 0);
-
-    --card: oklch(0.205 0 0);
-
-    --card-foreground: oklch(0.985 0 0);
-
-    --popover: oklch(0.205 0 0);
-
-    --popover-foreground: oklch(0.985 0 0);
-
-    --primary: oklch(0.922 0 0);
-
-    --primary-foreground: oklch(0.205 0 0);
-
-    --secondary: oklch(0.269 0 0);
-
-    --secondary-foreground: oklch(0.985 0 0);
-
-    --muted: oklch(0.269 0 0);
-
-    --muted-foreground: oklch(0.708 0 0);
-
-    --accent: oklch(0.269 0 0);
-
-    --accent-foreground: oklch(0.985 0 0);
-
-    --destructive: oklch(0.704 0.191 22.216);
-
-    --border: oklch(1 0 0 / 10%);
-
-    --input: oklch(1 0 0 / 15%);
-
-    --ring: oklch(0.556 0 0);
-
-    --chart-1: oklch(0.87 0 0);
-
-    --chart-2: oklch(0.556 0 0);
-
-    --chart-3: oklch(0.439 0 0);
-
-    --chart-4: oklch(0.371 0 0);
-
-    --chart-5: oklch(0.269 0 0);
-
-    --sidebar: oklch(0.205 0 0);
-
-    --sidebar-foreground: oklch(0.985 0 0);
-
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-
-    --sidebar-accent: oklch(0.269 0 0);
-
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-
-    --sidebar-border: oklch(1 0 0 / 10%);
-
-    --sidebar-ring: oklch(0.556 0 0)
-  }
-  * {
-    @apply border-border outline-ring/50;
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans), sans-serif;
   }
 }

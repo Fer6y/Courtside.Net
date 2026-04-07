@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, DM_Sans, Geist } from "next/font/google";
+import { IBM_Plex_Mono, DM_Sans } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/utils";
 
 const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-mono",
@@ -9,7 +8,10 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["400", "500", "600", "700"],
 });
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const dmSans = DM_Sans({
+  variable: "--font-sans",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "Courtside — Catalogue your tennis fandom",
@@ -24,7 +26,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("dark", "h-full", "antialiased", ibmPlexMono.variable, "font-sans", geist.variable)}
+      className={`${ibmPlexMono.variable} ${dmSans.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-text-primary">
         {children}
