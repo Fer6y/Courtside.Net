@@ -12,16 +12,16 @@
 - [x] Initialize shadcn/ui: `npx shadcn@latest init`
 - [x] Set up .env.local with Supabase + Clerk keys (see .env.local.example)
 - [x] Create CLAUDE.md and CHECKLIST.md in project root
-- [ ] Deploy to Vercel — confirm pipeline works
+- [x] Deploy to Vercel — confirm pipeline works
 - [ ] Register courtside.net domain (check availability)
 
 ## Phase 1: Database, Auth & Data Import (Week 1–2)
 
-- [ ] Create all Supabase tables (see COURTSIDE-DESIGN-DOC.md Section 7)
-- [ ] Set up foreign key relationships between tables
-- [ ] Add indexes on user_id, player_id, match_id columns
-- [ ] Enable RLS on all tables
-- [ ] Write RLS policies: public READ, authenticated INSERT, own-data UPDATE/DELETE
+- [x] Create all Supabase tables (see COURTSIDE-DESIGN-DOC.md Section 7)
+- [x] Set up foreign key relationships between tables
+- [x] Add indexes on user_id, player_id, match_id columns
+- [x] Enable RLS on all tables
+- [x] Write RLS policies: public READ, authenticated INSERT, own-data UPDATE/DELETE
 - [ ] Test RLS policies in Supabase SQL editor
 - [ ] Install and configure @clerk/nextjs
 - [ ] Set up middleware.ts for route protection
