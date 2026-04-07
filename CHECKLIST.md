@@ -23,10 +23,10 @@
 - [x] Enable RLS on all tables
 - [x] Write RLS policies: public READ, authenticated INSERT, own-data UPDATE/DELETE
 - [ ] Test RLS policies in Supabase SQL editor
-- [ ] Install and configure @clerk/nextjs
-- [ ] Set up middleware.ts for route protection
-- [ ] Create sign-in/sign-up pages with Clerk components
-- [ ] Set up Clerk webhook → Supabase profiles sync
+- [x] Install and configure @clerk/nextjs
+- [x] Set up middleware.ts for route protection
+- [x] Create sign-in/sign-up pages with Clerk components
+- [x] Set up Clerk webhook → Supabase profiles sync
 - [ ] Test full auth flow: sign up, sign in, verify user appears in Supabase
 - [ ] Evaluate tennis data APIs (api-tennis.com, RapidAPI options) — test free trials
 - [ ] Download Sackmann ATP + WTA datasets from GitHub

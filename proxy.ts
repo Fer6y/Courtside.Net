@@ -1,0 +1,29 @@
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+
+// These routes are accessible without being signed in.
+// Everything not listed here will require authentication.
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/players(.*)",
+  "/matches(.*)",
+  "/h2h(.*)",
+  "/compare(.*)",
+  "/profile(.*)",         // public profiles are readable by anyone
+  "/api/webhooks(.*)",    // Clerk webhook must be public — no auth header
+]);
+
+export default clerkMiddleware(async (auth, request) => {
+  if (!isPublicRoute(request)) {
+    await auth.protect();
+  }
+});
+
+export const config = {
+  matcher: [
+    // Run middleware on all routes except static files and Next.js internals
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
+  ],
+};

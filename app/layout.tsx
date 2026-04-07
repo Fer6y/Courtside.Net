@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, DM_Sans } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 const ibmPlexMono = IBM_Plex_Mono({
@@ -24,13 +25,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${ibmPlexMono.variable} ${dmSans.variable} dark h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-background text-text-primary">
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html
+        lang="en"
+        className={`${ibmPlexMono.variable} ${dmSans.variable} dark h-full antialiased`}
+      >
+        <body className="min-h-full flex flex-col bg-background text-text-primary">
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
