@@ -29,9 +29,9 @@
 - [x] Set up Clerk webhook → Supabase profiles sync
 - [x] Test full auth flow: sign up, sign in, verify user appears in Supabase
 - [ ] Evaluate tennis data APIs (api-tennis.com, RapidAPI options) — test free trials
-- [ ] Download Sackmann ATP + WTA datasets from GitHub
-- [ ] Write import script: seed players table from Sackmann data
-- [ ] Write import script: seed matches table (majors only) from Sackmann data
+- [x] Download Sackmann ATP + WTA datasets from GitHub
+- [x] Write import script: seed players table from Sackmann data
+- [x] Write import script: seed matches table (majors only) from Sackmann data
 - [ ] Set up paid API connection for ongoing match imports
 
 ## Phase 2: Core Pages & Radar Charts (Week 3–4)
