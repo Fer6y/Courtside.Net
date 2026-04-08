@@ -27,7 +27,7 @@
 - [x] Set up middleware.ts for route protection
 - [x] Create sign-in/sign-up pages with Clerk components
 - [x] Set up Clerk webhook → Supabase profiles sync
-- [ ] Test full auth flow: sign up, sign in, verify user appears in Supabase
+- [x] Test full auth flow: sign up, sign in, verify user appears in Supabase
 - [ ] Evaluate tennis data APIs (api-tennis.com, RapidAPI options) — test free trials
 - [ ] Download Sackmann ATP + WTA datasets from GitHub
 - [ ] Write import script: seed players table from Sackmann data
