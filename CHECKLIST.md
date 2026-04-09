@@ -36,13 +36,13 @@
 
 ## Phase 2: Core Pages & Radar Charts (Week 3–4)
 
-- [ ] Build /players page — list all players with search/filter
-- [ ] Build /players/[id] — player profile with API stats + community rating
+- [x] Build /players page — list all players with search/filter
+- [x] Build /players/[id] — player profile with API stats + community rating
 - [ ] Build rotating highly-rated comments display on player profiles
 - [ ] Build category-weighted radar chart component (4 colored quadrants, 11 axes, curved bezier lines, animated on load)
 - [ ] Build skill breakdown bars component (detail view beneath radar)
-- [ ] Build /matches page — browse with filters
-- [ ] Build /matches/[id] — match page with player comparison
+- [x] Build /matches page — browse with filters
+- [x] Build /matches/[id] — match page with player comparison
 - [ ] Build player quick bubble component (rank, recent form, link to profile)
 - [ ] Build /compare — dual radar overlay comparison
 - [ ] Build /h2h/[player1]-vs-[player2] — rivalry pages (split screen)
