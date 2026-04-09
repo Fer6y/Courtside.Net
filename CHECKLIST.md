@@ -13,7 +13,7 @@
 - [x] Set up .env.local with Supabase + Clerk keys (see .env.local.example)
 - [x] Create CLAUDE.md and CHECKLIST.md in project root
 - [x] Deploy to Vercel — confirm pipeline works
-- [ ] Register courtside.net domain (check availability)
+- [ ] Register courtside.net domain — deferred to later
 
 ## Phase 1: Database, Auth & Data Import (Week 1–2)
 
@@ -22,17 +22,17 @@
 - [x] Add indexes on user_id, player_id, match_id columns
 - [x] Enable RLS on all tables
 - [x] Write RLS policies: public READ, authenticated INSERT, own-data UPDATE/DELETE
-- [ ] Test RLS policies in Supabase SQL editor
+- [ ] Test RLS policies in Supabase SQL editor — deferred to Phase 3
 - [x] Install and configure @clerk/nextjs
 - [x] Set up middleware.ts for route protection
 - [x] Create sign-in/sign-up pages with Clerk components
 - [x] Set up Clerk webhook → Supabase profiles sync
 - [x] Test full auth flow: sign up, sign in, verify user appears in Supabase
-- [ ] Evaluate tennis data APIs (api-tennis.com, RapidAPI options) — test free trials
+- [ ] Evaluate tennis data APIs (api-tennis.com, RapidAPI options) — deferred to later
 - [x] Download Sackmann ATP + WTA datasets from GitHub
 - [x] Write import script: seed players table from Sackmann data
 - [x] Write import script: seed matches table (majors only) from Sackmann data
-- [ ] Set up paid API connection for ongoing match imports
+- [ ] Set up paid API connection for ongoing match imports — deferred to later
 
 ## Phase 2: Core Pages & Radar Charts (Week 3–4)
 
