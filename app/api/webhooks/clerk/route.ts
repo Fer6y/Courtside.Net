@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { Webhook } from "svix";
-import { supabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 // Clerk sends a signed POST request to this endpoint whenever a user
 // is created, updated, or deleted. We use the signing secret to verify
@@ -20,6 +20,7 @@ type ClerkUserEvent = {
 };
 
 export async function POST(req: Request) {
+  const supabaseAdmin = getSupabaseAdmin();
   const secret = process.env.CLERK_WEBHOOK_SECRET;
   if (!secret) {
     return new Response("Webhook secret not configured", { status: 500 });
