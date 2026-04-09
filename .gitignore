@@ -41,6 +41,7 @@ yarn-error.log*
 
 # sackmann seed data — large CSVs, no need in git
 /data/
+sackmann-data.zip
 
 # typescript
 *.tsbuildinfo
