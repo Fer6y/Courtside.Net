@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "import:players": "tsx scripts/import-players.ts",
-    "import:matches": "tsx scripts/import-matches.ts"
+    "import:matches": "tsx scripts/import-matches.ts",
+    "merge:players": "tsx scripts/merge-duplicate-players.ts",
+    "fix:links": "tsx scripts/fix-player-match-links.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
