@@ -57,9 +57,10 @@ async function main() {
       if (!fs.existsSync(filePath)) continue;
 
       const rows = parseCSV(filePath);
-      const grandSlams = rows.filter((r) => r.tourney_level === "G");
+      // G = Grand Slam, M = ATP Masters 1000, PM = WTA Premier Mandatory (= WTA 1000)
+      const majors = rows.filter((r) => r.tourney_level === "G" || r.tourney_level === "M" || r.tourney_level === "PM");
 
-      for (const row of grandSlams) {
+      for (const row of majors) {
         const date = row.tourney_date;
 
         for (const [idCol, rankCol] of [

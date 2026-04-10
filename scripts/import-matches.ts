@@ -92,7 +92,8 @@ async function main() {
       if (!fs.existsSync(filePath)) continue;
 
       const rows = parseCSV(filePath);
-      const grandSlams = rows.filter((r) => r.tourney_level === "G");
+      // G = Grand Slam, M = ATP Masters 1000, PM = WTA Premier Mandatory (= WTA 1000)
+      const grandSlams = rows.filter((r) => r.tourney_level === "G" || r.tourney_level === "M" || r.tourney_level === "PM");
 
       for (const row of grandSlams) {
         const player1Uuid = idMap.get(row.winner_id);
@@ -112,7 +113,7 @@ async function main() {
           score:        row.score || null,
           surface:      normaliseSurface(row.surface),
           match_date:   formatDate(row.tourney_date),
-          api_match_id: `${row.tourney_id}_${row.match_num}`,
+          api_match_id: `${tour}_${row.tourney_id}_${row.match_num}`,
         });
       }
     }

@@ -13,11 +13,29 @@ const SURFACE_COLORS: Record<Surface, string> = {
   Carpet: "text-text-dim",
 };
 
-const TOURNAMENTS = [
+const GRAND_SLAMS = [
   "Australian Open",
   "Roland Garros",
   "Wimbledon",
   "Us Open",
+];
+
+const MASTERS = [
+  "Indian Wells Masters",
+  "Miami Masters",
+  "Monte Carlo Masters",
+  "Madrid Masters",
+  "Rome Masters",
+  "Canada Masters",
+  "Cincinnati Masters",
+  "Shanghai Masters",
+  "Paris Masters",
+  // WTA equivalents (different names in data)
+  "Indian Wells",
+  "Miami",
+  "Madrid",
+  "Rome",
+  "Beijing",
 ];
 
 type SearchParams = Promise<{
@@ -64,29 +82,48 @@ export default async function MatchesPage({
         Matches
       </h1>
       <p className="font-sans text-text-mid mb-8">
-        Grand Slam matches 2020–2024 · ATP & WTA
+        Grand Slams &amp; Masters 1000 · 2020–2024 · ATP &amp; WTA
       </p>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        <FilterGroup
-          label="Surface"
-          param="surface"
-          current={surface}
-          options={["Hard", "Clay", "Grass"]}
-        />
-        <FilterGroup
-          label="Tournament"
-          param="tournament"
-          current={tournament}
-          options={TOURNAMENTS}
-        />
-        <FilterGroup
-          label="Year"
-          param="year"
-          current={year}
-          options={["2020", "2021", "2022", "2023", "2024"]}
-        />
+      <div className="flex flex-col gap-3 mb-8">
+        {/* Surface + Year */}
+        <div className="flex flex-wrap gap-2">
+          <FilterGroup
+            label="Surface"
+            param="surface"
+            current={surface}
+            options={["Hard", "Clay", "Grass"]}
+          />
+          <FilterGroup
+            label="Year"
+            param="year"
+            current={year}
+            options={["2020", "2021", "2022", "2023", "2024"]}
+          />
+        </div>
+
+        {/* Grand Slams */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="font-mono text-xs text-text-dim w-20 shrink-0">Grand Slams</span>
+          <FilterGroup
+            label="Grand Slams"
+            param="tournament"
+            current={tournament}
+            options={GRAND_SLAMS}
+          />
+        </div>
+
+        {/* Masters */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="font-mono text-xs text-text-dim w-20 shrink-0">Masters</span>
+          <FilterGroup
+            label="Masters"
+            param="tournament"
+            current={tournament}
+            options={MASTERS}
+          />
+        </div>
       </div>
 
       {/* Results count */}

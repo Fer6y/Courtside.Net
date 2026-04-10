@@ -74,12 +74,12 @@ async function main() {
       if (!fs.existsSync(filePath)) continue;
 
       const rows = parseCSV(filePath);
-      const grandSlams = rows.filter((r) => r.tourney_level === "G");
+      const grandSlams = rows.filter((r) => r.tourney_level === "G" || r.tourney_level === "M" || r.tourney_level === "PM");
 
       for (const row of grandSlams) {
         const winnerSackId = row.winner_id;
         const loserSackId  = row.loser_id;
-        const apiMatchId   = `${row.tourney_id}_${row.match_num}`;
+        const apiMatchId   = `${tour}_${row.tourney_id}_${row.match_num}`;
 
         const winnerUuid = idMap.get(winnerSackId);
         const loserUuid  = idMap.get(loserSackId);
