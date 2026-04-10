@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, DM_Sans } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import Navbar from "@/components/nav/Navbar";
 import "./globals.css";
 
 const ibmPlexMono = IBM_Plex_Mono({
@@ -31,7 +32,16 @@ export default function RootLayout({
         className={`${ibmPlexMono.variable} ${dmSans.variable} dark h-full antialiased`}
       >
         <body className="min-h-full flex flex-col bg-background text-text-primary">
-          {children}
+          <Navbar />
+          {/*
+            pt-[44px] = mobile top header height
+            md:pt-[60px] = desktop top nav height
+            pb-[56px] = mobile bottom tab bar height
+            md:pb-0 = no bottom padding on desktop
+          */}
+          <div className="flex flex-col flex-1 pt-[44px] md:pt-[60px] pb-[56px] md:pb-0">
+            {children}
+          </div>
         </body>
       </html>
     </ClerkProvider>
