@@ -1,92 +1,79 @@
 # Courtside Build Checklist
 
-## Phase 0: Environment & Foundations (Day 1–2)
-
-- [x] Create GitHub repo (courtside-app) with README
+## Phase 0: Environment & Foundations ✅
+- [x] Create GitHub repo with README
 - [x] Install Node.js (v20+) and VS Code
-- [x] Sign up for Supabase — create project (save project URL + anon key)
-- [x] Sign up for Clerk — create application (enable Google + email providers)
+- [x] Sign up for Supabase — create project
+- [x] Sign up for Clerk — create application (Google + email)
 - [x] Sign up for Vercel — connect GitHub repo
-- [x] Run: `npx create-next-app@latest . --typescript --tailwind --app`
-- [x] Install deps: shadcn/ui, @supabase/supabase-js, @clerk/nextjs, d3
-- [x] Initialize shadcn/ui: `npx shadcn@latest init`
-- [x] Set up .env.local with Supabase + Clerk keys (see .env.local.example)
-- [x] Create CLAUDE.md and CHECKLIST.md in project root
-- [x] Deploy to Vercel — confirm pipeline works
-- [ ] Register courtside.net domain — deferred to later
+- [x] Bootstrap Next.js 16 app (TypeScript, Tailwind v4, App Router)
+- [x] Install deps: shadcn/ui, @supabase/supabase-js, @clerk/nextjs
+- [x] Set up .env.local with all keys
+- [x] Deploy to Vercel — pipeline confirmed working
+- [ ] Register courtside.net domain — deferred to Phase 5
 
-## Phase 1: Database, Auth & Data Import (Week 1–2)
-
-- [x] Create all Supabase tables (see COURTSIDE-DESIGN-DOC.md Section 7)
-- [x] Set up foreign key relationships between tables
-- [x] Add indexes on user_id, player_id, match_id columns
-- [x] Enable RLS on all tables
-- [x] Write RLS policies: public READ, authenticated INSERT, own-data UPDATE/DELETE
-- [ ] Test RLS policies in Supabase SQL editor — deferred to Phase 3
+## Phase 1: Database, Auth & Data Import ✅
+- [x] Create all 10 Supabase tables with foreign keys + indexes
+- [x] Enable RLS on all tables + write all policies
+- [ ] Test RLS policies — deferred to Phase 3
 - [x] Install and configure @clerk/nextjs
-- [x] Set up middleware.ts for route protection
-- [x] Create sign-in/sign-up pages with Clerk components
-- [x] Set up Clerk webhook → Supabase profiles sync
-- [x] Test full auth flow: sign up, sign in, verify user appears in Supabase
-- [ ] Evaluate tennis data APIs (api-tennis.com, RapidAPI options) — deferred to later
-- [x] Download Sackmann ATP + WTA datasets from GitHub
-- [x] Write import script: seed players table from Sackmann data
-- [x] Write import script: seed matches table (majors only) from Sackmann data
-- [ ] Set up paid API connection for ongoing match imports — deferred to later
+- [x] Set up proxy.ts route protection (Next.js 16 middleware)
+- [x] Create sign-in / sign-up pages with Clerk components
+- [x] Set up Clerk webhook → Supabase profiles sync (verified working)
+- [x] Download Sackmann ATP + WTA datasets
+- [x] Write + run player import script (690 players, ATP + WTA, fixed tour-specific master lookup bug)
+- [x] Write + run match import script (8,546 matches, Grand Slams + Masters 1000, tour-prefixed api_match_id)
+- [x] Write + run data integrity scripts (diagnose, fix-links, merge-duplicates)
+- [x] Schema migration: skill_ratings expanded from 11 → 13 axes (focus, clutch, resilience replace mental_strength)
+- [x] Schema migration: reviews.is_favorited + watched_matches.collection_name columns added
+- [ ] Connect paid tennis API for live imports — deferred to pre-launch
 
-## Phase 2: Core Pages & Radar Charts (Week 3–4)
+## Phase 2: Core Pages & Radar Charts 🔄
+- [x] Homepage — ball hero image + tagline
+- [x] /players — list with ATP/WTA tabs, sort by Rank/Name/Age/Country/Matches/Surface Win%/Streak
+- [x] /players/[id] — player profile with match history, radar chart, Rate Player button
+- [x] /players/[id]/rate — 13-axis skill rating form (4 categories, 1–5 sliders, pre-fills on edit)
+- [x] /matches — browse with multi-select filters (surface, tournament, year all stackable)
+- [x] /matches/[id] — match detail with player cards, score, Review Match button
+- [x] /matches/[id]/review — full review form (3 sliders 1–10, comment, favorite toggle, collection folder)
+- [x] Radar chart component — 13 axes, 4 quadrants, bezier curves, glow, staggered animation, legend, breakdown bars
+- [x] LoadingAnimation component — bouncing tennis ball with squash/stretch physics
+- [x] Loading states — loading.tsx on players, matches, player profile, match detail pages
+- [ ] Player quick bubble popup (tap name → mini card with rank, form, link)
+- [ ] /compare — dual radar overlay for two players
+- [ ] /h2h/[slug] — head-to-head rivalry pages
+- [ ] Community reviews display on match pages (currently shows placeholder)
+- [ ] Community ratings display on player profiles (aggregated from reviews)
+- [ ] Responsive audit — all pages tested on mobile
 
-- [x] Build /players page — list all players with search/filter
-- [x] Build /players/[id] — player profile with API stats + community rating
-- [ ] Build rotating highly-rated comments display on player profiles
-- [ ] Build category-weighted radar chart component (4 colored quadrants, 11 axes, curved bezier lines, animated on load)
-- [ ] Build skill breakdown bars component (detail view beneath radar)
-- [x] Build /matches page — browse with filters
-- [x] Build /matches/[id] — match page with player comparison
-- [ ] Build player quick bubble component (rank, recent form, link to profile)
-- [ ] Build /compare — dual radar overlay comparison
-- [ ] Build /h2h/[player1]-vs-[player2] — rivalry pages (split screen)
-- [ ] Implement dark theme with CSS variables
-- [ ] Surface badges, Avatar component, loading skeletons
-- [ ] Responsive audit — all pages work on mobile
+## Phase 3: Rating System & User Features 🔜
+- [x] Match review form — 3 sliders (match + P1 + P2, 1–10), comment, favorite, collection
+- [x] Skill rating form — 13 sliders grouped by 4 categories (1–5), edit support
+- [x] Review/rating data saved to Supabase (reviews + skill_ratings + watched_matches)
+- [ ] Display community reviews on match pages (list with usernames, ratings, comments)
+- [ ] Display community rating averages on match pages (avg match/P1/P2 scores)
+- [ ] Edit / delete own reviews
+- [ ] Comment threads on reviews
+- [ ] User profile page (/profile/[username]) — review history, watch log, collections, favorites
+- [ ] Watch log — full catalogue of matches watched, filterable by collection/favorite
+- [ ] Achievement decal system (tiers, triggers, display)
+- [ ] Follow system (follow users, personalised feed)
 
-## Phase 3: Rating System & User Features (Week 5–7)
-
-- [ ] Build 1.0–10.0 slider rating component (0.1 increments, 10.0 as perfect)
-- [ ] Build sets watched quick-select buttons
-- [ ] Build match review form: 3 sliders (match + Player 1 + Player 2) + comment
-- [ ] Connect review form to Supabase
-- [ ] Build aggregation: average player ratings across matches → consensus rating on profile
-- [ ] Build skill rating form on player profiles (11 sliders grouped by 4 categories)
-- [ ] Build aggregation: community skill ratings → radar chart on profile
-- [ ] Add edit/delete for own reviews
-- [ ] Build comment threads on reviews
-- [ ] Build user profile page with review history + watch log
-- [ ] Build watch log — full catalogue of matches watched with ratings and comments
-- [ ] Implement achievement decal system (define tiers, trigger conditions, display component)
-
-## Phase 4: Polish & Performance (Week 8–9)
-
-- [ ] Server components for data-heavy pages
-- [ ] Database indexes for slow queries
-- [ ] Image optimization (player photos, avatars)
-- [ ] Dynamic OG images for player/match/H2H pages
+## Phase 4: Polish & Performance
+- [ ] Dynamic OG images for player/match pages
 - [ ] sitemap.xml and robots.txt
-- [ ] Slider and rating component animation polish
-- [ ] Toast notifications for user actions
-- [ ] Empty states for all pages
+- [ ] Toast notifications for user actions (save, delete, error)
+- [ ] Empty states for all list pages
 - [ ] Accessibility audit
+- [ ] Image optimization (player photos when API connected)
 - [ ] Cross-browser testing
 
-## Phase 5: Testing & Launch (Week 10–12)
-
+## Phase 5: Testing & Launch
 - [ ] Manual test all user flows: sign up → browse → rate → review
 - [ ] Test RLS: verify users can't access/modify others' data
-- [ ] Test edge cases: empty reviews, max-length comments, rapid submissions
-- [ ] Set up error tracking (Sentry or Vercel built-in)
-- [ ] Seed 10–20 quality reviews yourself
-- [ ] Invite 15–30 tennis friends for inner circle testing
-- [ ] Connect courtside.net domain to Vercel
-- [ ] Upgrade Supabase to Pro ($25/month)
-- [ ] Soft launch: share with local tennis networks
-- [ ] Begin organic seeding in r/tennis, Tennis Twitter, Discord
+- [ ] Seed 10–20 quality reviews
+- [ ] Invite inner circle (15–30 tennis friends) for testing
+- [ ] Connect courtside.net domain
+- [ ] Upgrade Supabase to Pro
+- [ ] Switch Sackmann data → live tennis API
+- [ ] Soft launch: r/tennis, Tennis Twitter, Discord
