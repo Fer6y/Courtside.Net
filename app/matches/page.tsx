@@ -300,6 +300,8 @@ export default async function MatchesPage({
 
 function MatchRow({ match }: { match: MatchWithPlayers }) {
   const surface = match.surface as Surface | null;
+  const p1Won = match.winner_id && match.player1 && match.winner_id === match.player1.id;
+  const p2Won = match.winner_id && match.player2 && match.winner_id === match.player2.id;
 
   return (
     <Link
@@ -307,11 +309,11 @@ function MatchRow({ match }: { match: MatchWithPlayers }) {
       className="flex items-center justify-between py-3 px-2 hover:bg-white/[0.03] rounded transition-colors duration-150 group"
     >
       <div className="flex items-center gap-2 min-w-0">
-        <span className="font-sans text-text-primary group-hover:text-primary transition-colors duration-150 truncate">
+        <span className={`font-sans truncate transition-colors duration-150 ${p1Won ? "text-primary font-semibold" : "text-text-primary"}`}>
           {match.player1?.name ?? "Unknown"}
         </span>
         <span className="font-mono text-text-dim text-xs shrink-0">vs</span>
-        <span className="font-sans text-text-primary truncate">
+        <span className={`font-sans truncate ${p2Won ? "text-primary font-semibold" : "text-text-primary"}`}>
           {match.player2?.name ?? "Unknown"}
         </span>
       </div>
