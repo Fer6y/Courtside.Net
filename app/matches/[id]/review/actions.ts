@@ -67,6 +67,31 @@ export async function submitMatchReview(matchId: string, formData: FormData) {
   return { success: true };
 }
 
+export async function deleteReview(reviewId: string) {
+  const { userId: clerkId } = await auth();
+  if (!clerkId) throw new Error("Not authenticated");
+
+  const supabase = adminClient();
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("clerk_user_id", clerkId)
+    .single();
+
+  if (!profile) throw new Error("Profile not found");
+
+  // Delete only if this user owns the review
+  const { error } = await supabase
+    .from("reviews")
+    .delete()
+    .eq("id", reviewId)
+    .eq("user_id", profile.id);
+
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
 export async function getExistingReview(matchId: string, clerkId: string) {
   const supabase = adminClient();
 

@@ -5,6 +5,7 @@ import type { Surface } from "@/types";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PlayerNameWithBubble from "@/components/PlayerNameWithBubble";
+import DeleteReviewButton from "@/components/DeleteReviewButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -342,12 +343,15 @@ function ReviewCard({
         </div>
         <div className="flex items-center gap-3">
           {isOwn && (
-            <Link
-              href={`/matches/${matchId}/review`}
-              className="font-mono text-xs text-text-dim hover:text-primary transition-colors duration-150"
-            >
-              Edit
-            </Link>
+            <>
+              <Link
+                href={`/matches/${matchId}/review`}
+                className="font-mono text-xs text-text-dim hover:text-primary transition-colors duration-150"
+              >
+                Edit
+              </Link>
+              <DeleteReviewButton reviewId={review.id} />
+            </>
           )}
           <span className="font-mono text-xs text-text-dim">
             {timeAgo(review.created_at)}

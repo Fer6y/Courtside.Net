@@ -41,7 +41,7 @@
 - [x] Loading states — loading.tsx on players, matches, player profile, match detail pages
 - [x] Player quick bubble popup (hover/long-press → pill with rank, W/L record, top skill badge)
 - [x] /compare — dual radar overlay, color picker per player, top skills, biggest edge, H2H record
-- [ ] /h2h/[slug] — head-to-head rivalry pages
+- [x] /h2h — covered by /compare (dual radar + H2H record + skill differential)
 - [x] Community reviews display on match pages (reviewer name, ratings, comment, time ago, edit own)
 - [x] Community ratings display on player profiles (avg performance + match quality from reviews)
 - [ ] Responsive audit — all pages tested on mobile
@@ -52,10 +52,10 @@
 - [x] Review/rating data saved to Supabase (reviews + skill_ratings + watched_matches)
 - [x] Display community reviews on match pages (list with usernames, ratings, comments)
 - [x] Display community rating averages on match pages (avg match/P1/P2 scores)
-- [ ] Edit / delete own reviews
+- [x] Edit / delete own reviews (edit links to form, delete with inline confirm)
 - [ ] Comment threads on reviews
-- [ ] User profile page (/profile/[username]) — review history, watch log, collections, favorites
-- [ ] Watch log — full catalogue of matches watched, filterable by collection/favorite
+- [x] User profile page (/profile/[username]) — review history, ratings given, watch log, collections
+- [x] Watch log — grouped by collection on profile page
 - [ ] Achievement decal system (tiers, triggers, display)
 - [ ] Follow system (follow users, personalised feed)
 

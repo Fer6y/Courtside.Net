@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-// IOC 3-letter → ISO 3166-1 alpha-2 for flag emojis
 const IOC_TO_ISO2: Record<string, string> = {
   ESP: "ES", ITA: "IT", GBR: "GB", FRA: "FR", USA: "US",
   GER: "DE", AUS: "AU", SRB: "RS", RUS: "RU", NOR: "NO",
@@ -24,7 +21,7 @@ function countryToFlag(ioc: string): string {
     .join("");
 }
 
-interface BubbleData {
+export interface BubbleData {
   name: string;
   country: string | null;
   current_rank: number | null;
@@ -35,22 +32,12 @@ interface BubbleData {
 }
 
 interface Props {
-  playerId: string;
   playerName: string;
+  data: BubbleData;
   position: { top: number; left: number };
 }
 
-export default function PlayerBubble({ playerId, playerName, position }: Props) {
-  const [data, setData] = useState<BubbleData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch(`/api/players/${playerId}/bubble`)
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [playerId]);
-
+export default function PlayerBubble({ playerName, data, position }: Props) {
   const initials = playerName
     .split(" ")
     .map((w) => w[0])
@@ -58,7 +45,7 @@ export default function PlayerBubble({ playerId, playerName, position }: Props) 
     .join("")
     .toUpperCase();
 
-  const flag = data?.country ? countryToFlag(data.country) : "";
+  const flag = data.country ? countryToFlag(data.country) : "";
 
   return (
     <div
@@ -86,56 +73,43 @@ export default function PlayerBubble({ playerId, playerName, position }: Props) 
           )}
         </div>
 
-        {loading ? (
-          <div className="flex items-center px-4 py-2.5">
-            <span className="font-mono text-xs" style={{ color: "#6b7280" }}>
-              ···
-            </span>
+        <Divider />
+
+        {/* Rank */}
+        <Slot
+          value={data.current_rank ? String(data.current_rank) : "—"}
+          label="rank"
+        />
+
+        <Divider />
+
+        {/* W/L */}
+        <div className="px-4 py-2.5 text-center shrink-0">
+          <div className="font-mono text-sm font-bold leading-none whitespace-nowrap">
+            <span style={{ color: "#22d68a" }}>{data.wins}W</span>
+            {" "}
+            <span style={{ color: "#9ca3af" }}>{data.losses}L</span>
           </div>
-        ) : (
+          <div
+            className="font-mono mt-0.5 whitespace-nowrap"
+            style={{ fontSize: 10, color: "#6b7280" }}
+          >
+            last {data.match_count} matches
+          </div>
+        </div>
+
+        {/* Top skill */}
+        {data.topSkill && (
           <>
             <Divider />
-
-            {/* Rank */}
-            <Slot
-              value={data?.current_rank ? String(data.current_rank) : "—"}
-              label="rank"
-            />
-
-            <Divider />
-
-            {/* W/L */}
-            <div className="px-4 py-2.5 text-center shrink-0">
-              <div className="font-mono text-sm font-bold leading-none whitespace-nowrap">
-                <span style={{ color: "#22d68a" }}>{data?.wins ?? 0}W</span>
-                {" "}
-                <span style={{ color: "#9ca3af" }}>{data?.losses ?? 0}L</span>
-              </div>
-              <div
-                className="font-mono mt-0.5 whitespace-nowrap"
-                style={{ fontSize: 10, color: "#6b7280" }}
+            <div className="px-3 py-2.5 shrink-0">
+              <span
+                className="font-mono text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap"
+                style={{ background: "rgba(34,214,138,0.15)", color: "#22d68a" }}
               >
-                last {data?.match_count ?? 20} matches
-              </div>
+                {data.topSkill.label} {data.topSkill.value.toFixed(1)}
+              </span>
             </div>
-
-            {/* Top skill — only if available */}
-            {data?.topSkill && (
-              <>
-                <Divider />
-                <div className="px-3 py-2.5 shrink-0">
-                  <span
-                    className="font-mono text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap"
-                    style={{
-                      background: "rgba(34,214,138,0.15)",
-                      color: "#22d68a",
-                    }}
-                  >
-                    {data.topSkill.label} {data.topSkill.value.toFixed(1)}
-                  </span>
-                </div>
-              </>
-            )}
           </>
         )}
       </div>

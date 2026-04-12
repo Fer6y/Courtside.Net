@@ -16,7 +16,6 @@ const DESKTOP_LINKS = [
   { label: "Players", href: "/players" },
   { label: "Matches", href: "/matches" },
   { label: "Compare", href: "/compare" },
-  { label: "H2H",     href: "/h2h" },
 ];
 
 const MOBILE_TABS = [
@@ -101,8 +100,16 @@ export default function Navbar() {
             />
 
             {isSignedIn ? (
-              /* Clerk's built-in avatar + dropdown when signed in */
-              <UserButton afterSignOutUrl="/" />
+              <>
+                <Link
+                  href="/profile"
+                  className="font-sans font-medium text-[15px] transition-colors duration-150 pb-[6px]"
+                  style={{ color: isActive(pathname, "/profile") ? "#e8eaed" : "#6b7280" }}
+                >
+                  Profile
+                </Link>
+                <UserButton afterSignOutUrl="/" />
+              </>
             ) : (
               <>
                 {/* Guest avatar circle */}
