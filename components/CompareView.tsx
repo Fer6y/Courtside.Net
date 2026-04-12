@@ -361,15 +361,19 @@ function ColorPicker({
         <button
           key={c}
           onClick={() => onChange(c)}
-          className="w-5 h-5 rounded-full shrink-0 transition-all duration-150"
-          style={{
-            background: c,
-            outline: value === c ? `2px solid ${c}` : "2px solid transparent",
-            outlineOffset: 2,
-            opacity: value === c ? 1 : 0.4,
-          }}
+          className="w-[44px] h-[44px] sm:w-7 sm:h-7 flex items-center justify-center shrink-0"
           title={c}
-        />
+        >
+          <div
+            className="w-5 h-5 rounded-full transition-all duration-150"
+            style={{
+              background: c,
+              outline: value === c ? `2px solid ${c}` : "2px solid transparent",
+              outlineOffset: 2,
+              opacity: value === c ? 1 : 0.4,
+            }}
+          />
+        </button>
       ))}
     </div>
   );

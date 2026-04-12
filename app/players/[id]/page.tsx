@@ -133,7 +133,7 @@ export default async function PlayerPage({ params }: Props) {
 
       {/* Header */}
       <div className="mb-10">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
             <h1 className="font-mono text-4xl font-bold text-text-primary">
               {p.name}
@@ -156,7 +156,7 @@ export default async function PlayerPage({ params }: Props) {
           </div>
 
           {/* Rank + Rate button */}
-          <div className="flex flex-col items-end gap-3">
+          <div className="flex flex-col items-start sm:items-end gap-3">
             {p.current_rank && (
               <div className="text-right">
                 <div className="font-mono text-4xl font-bold text-primary">
@@ -208,7 +208,7 @@ export default async function PlayerPage({ params }: Props) {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Performance */}
             <div className="text-center">
               <div

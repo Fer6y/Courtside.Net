@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { submitMatchReview } from "./actions";
+import { useToast } from "@/components/toast/ToastContext";
 
 interface Player {
   id: string;
@@ -83,19 +84,25 @@ export default function ReviewMatchForm({ matchId, player1, player2, existing }:
 
   const formRef = useRef<HTMLFormElement>(null);
   const router  = useRouter();
+  const toast   = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPending(true);
     setError(null);
+    const toastId = toast.loading("Saving review…");
     try {
       const fd = new FormData(formRef.current!);
       fd.set("is_favorited", String(favorited));
       await submitMatchReview(matchId, fd);
+      toast.success(toastId, "Review saved!");
+      setPending(false);
       router.push(`/matches/${matchId}`);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      const msg = err instanceof Error ? err.message : "Something went wrong.";
+      toast.error(toastId, msg);
+      setError(msg);
       setPending(false);
     }
   }

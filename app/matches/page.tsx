@@ -176,7 +176,7 @@ export default async function MatchesPage({
 
         {/* Surface — single-select */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-xs text-text-dim w-20 shrink-0">Surface</span>
+          <span className="font-mono text-xs text-text-dim w-16 sm:w-20 shrink-0">Surface</span>
           <div className="flex gap-1.5 flex-wrap">
             {SURFACES.map((s) => {
               const active = activeSurfaces.has(s);
@@ -200,7 +200,7 @@ export default async function MatchesPage({
 
         {/* Year — multi-select */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-xs text-text-dim w-20 shrink-0">Year</span>
+          <span className="font-mono text-xs text-text-dim w-16 sm:w-20 shrink-0">Year</span>
           <div className="flex gap-1.5 flex-wrap">
             {activeTournaments.size > 0 && (
               <Link
@@ -232,7 +232,7 @@ export default async function MatchesPage({
 
         {/* Grand Slams — multi-select */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-xs text-text-dim w-20 shrink-0">Slams</span>
+          <span className="font-mono text-xs text-text-dim w-16 sm:w-20 shrink-0">Slams</span>
           <div className="flex gap-1.5 flex-wrap">
             {GRAND_SLAMS.map((t) => {
               const active = activeTournaments.has(t);
@@ -256,7 +256,7 @@ export default async function MatchesPage({
 
         {/* Masters — multi-select */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-xs text-text-dim w-20 shrink-0">Masters</span>
+          <span className="font-mono text-xs text-text-dim w-16 sm:w-20 shrink-0">Masters</span>
           <div className="flex gap-1.5 flex-wrap">
             {MASTERS.map((t) => {
               const active = activeTournaments.has(t);

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { submitSkillRating } from "./actions";
+import { useToast } from "@/components/toast/ToastContext";
 
 const CATEGORIES = [
   {
@@ -74,6 +75,7 @@ export default function RatePlayerForm({
   const [pending, setPending] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
+  const toast = useToast();
 
   const set = (key: SkillKey, val: number) =>
     setValues((prev) => ({ ...prev, [key]: val }));
@@ -81,12 +83,16 @@ export default function RatePlayerForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPending(true);
+    const toastId = toast.loading("Saving rating…");
     try {
       const fd = new FormData(formRef.current!);
       await submitSkillRating(playerId, fd);
+      toast.success(toastId, "Rating saved!");
+      setPending(false);
       router.push(`/players/${playerId}`);
       router.refresh();
     } catch {
+      toast.error(toastId, "Something went wrong");
       setPending(false);
     }
   }

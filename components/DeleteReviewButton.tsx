@@ -3,18 +3,23 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteReview } from "@/app/matches/[id]/review/actions";
+import { useToast } from "@/components/toast/ToastContext";
 
 export default function DeleteReviewButton({ reviewId }: { reviewId: string }) {
   const router = useRouter();
+  const toast = useToast();
   const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
 
   const handleDelete = async () => {
     setPending(true);
+    const toastId = toast.loading("Deleting review…");
     try {
       await deleteReview(reviewId);
+      toast.success(toastId, "Review deleted");
       router.refresh();
     } catch {
+      toast.error(toastId, "Couldn't delete review");
       setPending(false);
       setConfirming(false);
     }

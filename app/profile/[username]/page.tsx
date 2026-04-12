@@ -146,7 +146,7 @@ export default async function ProfilePage({ params }: Props) {
     <main className="max-w-4xl mx-auto px-4 py-12">
 
       {/* ── Header ───────────────────────────────────────────────── */}
-      <div className="flex items-start gap-6 mb-8">
+      <div className="flex flex-col sm:flex-row items-start gap-6 mb-8">
         <div
           className="w-20 h-20 rounded-full flex items-center justify-center font-mono text-2xl font-bold shrink-0"
           style={{ background: "rgba(34,214,138,0.15)", color: "#22d68a" }}
@@ -169,7 +169,7 @@ export default async function ProfilePage({ params }: Props) {
 
       {/* ── Stats ────────────────────────────────────────────────── */}
       <div
-        className="flex items-center gap-0 mb-10 pb-8 border-b border-white/5"
+        className="flex items-center flex-wrap gap-y-4 mb-10 pb-8 border-b border-white/5"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
       >
         {[

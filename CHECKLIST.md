@@ -44,7 +44,7 @@
 - [x] /h2h — covered by /compare (dual radar + H2H record + skill differential)
 - [x] Community reviews display on match pages (reviewer name, ratings, comment, time ago, edit own)
 - [x] Community ratings display on player profiles (avg performance + match quality from reviews)
-- [ ] Responsive audit — all pages tested on mobile
+- [x] Responsive audit — all pages tested on mobile
 
 ## Phase 3: Rating System & User Features 🔜
 - [x] Match review form — 3 sliders (match + P1 + P2, 1–10), comment, favorite, collection
@@ -62,7 +62,7 @@
 ## Phase 4: Polish & Performance
 - [ ] Dynamic OG images for player/match pages
 - [ ] sitemap.xml and robots.txt
-- [ ] Toast notifications for user actions (save, delete, error)
+- [x] Toast notifications for user actions (save, delete, error)
 - [ ] Empty states for all list pages
 - [ ] Accessibility audit
 - [ ] Image optimization (player photos when API connected)

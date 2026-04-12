@@ -71,41 +71,16 @@ export default function LoadingAnimation() {
             }}
           />
 
-          {/* Ball — animated on a single element */}
+          {/* Ball */}
           <div
             style={{
               width: 40,
               height: 40,
               borderRadius: "50%",
               background: "#22d68a",
-              position: "relative",
               animation: "cs-bounce 800ms infinite",
             }}
-          >
-            {/* Seam lines — two S-curve arcs in darker green */}
-            <svg
-              viewBox="0 0 40 40"
-              width="40"
-              height="40"
-              style={{ position: "absolute", inset: 0 }}
-              aria-hidden="true"
-            >
-              <path
-                d="M 7,20 Q 14,8 20,20 Q 26,32 33,20"
-                fill="none"
-                stroke="#1ab876"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-              <path
-                d="M 7,20 Q 14,32 20,20 Q 26,8 33,20"
-                fill="none"
-                stroke="#1ab876"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
+          />
 
         </div>
 
