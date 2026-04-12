@@ -30,7 +30,6 @@ const MASTERS = [
   "Cincinnati Masters",
   "Shanghai Masters",
   "Paris Masters",
-  // WTA equivalents (different names in data)
   "Indian Wells",
   "Miami",
   "Madrid",
@@ -38,11 +37,64 @@ const MASTERS = [
   "Beijing",
 ];
 
+const YEARS = ["2020", "2021", "2022", "2023", "2024"];
+const SURFACES = ["Hard", "Clay", "Grass"];
+
 type SearchParams = Promise<{
   surface?: string;
-  tournament?: string;
-  year?: string;
+  tournament?: string; // comma-separated
+  year?: string;       // comma-separated
 }>;
+
+/** Parse a comma-separated param into a Set of active values */
+function parseMulti(val: string | undefined): Set<string> {
+  if (!val) return new Set();
+  return new Set(val.split(",").map((s) => s.trim()).filter(Boolean));
+}
+
+/** Build URL toggling a value in/out of a multi-select param */
+function buildUrl(
+  param: string,
+  value: string,
+  current: { surface?: string; tournament?: string; year?: string },
+  multi = true
+) {
+  const url = new URL("http://x/matches");
+
+  if (multi) {
+    // Preserve all current params, toggle the clicked value
+    const existing = parseMulti(current[param as keyof typeof current]);
+    if (existing.has(value)) existing.delete(value);
+    else existing.add(value);
+    if (existing.size) url.searchParams.set(param, [...existing].join(","));
+    // Preserve other params unchanged
+    for (const [k, v] of Object.entries(current)) {
+      if (k !== param && v) url.searchParams.set(k, v);
+    }
+  } else {
+    // Single-select (surface): toggle off if already active
+    for (const [k, v] of Object.entries(current)) {
+      if (v) url.searchParams.set(k, v);
+    }
+    const currentVal = current[param as keyof typeof current];
+    if (currentVal === value) url.searchParams.delete(param);
+    else url.searchParams.set(param, value);
+  }
+
+  return `/matches?${url.searchParams.toString()}`;
+}
+
+function clearUrl(
+  param: string,
+  current: { surface?: string; tournament?: string; year?: string }
+) {
+  const url = new URL("http://x/matches");
+  for (const [k, v] of Object.entries(current)) {
+    if (k !== param && v) url.searchParams.set(k, v);
+  }
+  const qs = url.searchParams.toString();
+  return `/matches${qs ? `?${qs}` : ""}`;
+}
 
 export default async function MatchesPage({
   searchParams,
@@ -51,6 +103,12 @@ export default async function MatchesPage({
 }) {
   const { surface, tournament, year } = await searchParams;
   const supabase = getSupabase();
+
+  const activeSurfaces    = parseMulti(surface);
+  const activeTournaments = parseMulti(tournament);
+  const activeYears       = parseMulti(year);
+
+  const current = { surface, tournament, year };
 
   let query = supabase
     .from("matches")
@@ -62,19 +120,31 @@ export default async function MatchesPage({
     .order("match_date", { ascending: false })
     .limit(100);
 
-  if (surface)    query = query.eq("surface", surface);
-  if (tournament) query = query.eq("tournament", tournament);
-  if (year)       query = query.gte("match_date", `${year}-01-01`).lte("match_date", `${year}-12-31`);
+  // Surface — single value
+  if (surface) query = query.eq("surface", surface);
+
+  // Tournament — multi-select using .in()
+  if (activeTournaments.size) {
+    query = query.in("tournament", [...activeTournaments]);
+  }
+
+  // Year — multi-select: build OR of date ranges
+  if (activeYears.size) {
+    const yearList = [...activeYears];
+    if (yearList.length === 1) {
+      const y = yearList[0];
+      query = query.gte("match_date", `${y}-01-01`).lte("match_date", `${y}-12-31`);
+    } else {
+      const orClauses = yearList
+        .map((y) => `and(match_date.gte.${y}-01-01,match_date.lte.${y}-12-31)`)
+        .join(",");
+      query = query.or(orClauses);
+    }
+  }
 
   const { data: matches, error } = await query;
 
-  if (error) {
-    return (
-      <main className="max-w-5xl mx-auto px-4 py-12">
-        <p className="text-loss">Failed to load matches.</p>
-      </main>
-    );
-  }
+  const totalActive = activeSurfaces.size + activeTournaments.size + activeYears.size;
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-12">
@@ -85,106 +155,147 @@ export default async function MatchesPage({
         Grand Slams &amp; Masters 1000 · 2020–2024 · ATP &amp; WTA
       </p>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-3 mb-8">
-        {/* Surface + Year */}
-        <div className="flex flex-wrap gap-2">
-          <FilterGroup
-            label="Surface"
-            param="surface"
-            current={surface}
-            options={["Hard", "Clay", "Grass"]}
-          />
-          <FilterGroup
-            label="Year"
-            param="year"
-            current={year}
-            options={["2020", "2021", "2022", "2023", "2024"]}
-          />
+      {/* ── Filters ─────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-4 mb-8">
+
+        {/* Active filter summary + clear all */}
+        {totalActive > 0 && (
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="font-mono text-xs text-primary">
+              {totalActive} filter{totalActive > 1 ? "s" : ""} active
+            </span>
+            <Link
+              href="/matches"
+              className="font-mono text-xs px-3 py-1 rounded-full border border-white/10 text-text-dim hover:text-text-primary transition-colors duration-150"
+            >
+              Clear all
+            </Link>
+          </div>
+        )}
+
+        {/* Surface — single-select */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-mono text-xs text-text-dim w-20 shrink-0">Surface</span>
+          <div className="flex gap-1.5 flex-wrap">
+            {SURFACES.map((s) => {
+              const active = activeSurfaces.has(s);
+              return (
+                <Link
+                  key={s}
+                  href={buildUrl("surface", s, current, false)}
+                  className={`font-mono text-xs px-3 py-1.5 rounded-full border transition-colors duration-150 ${
+                    active
+                      ? "border-primary text-primary bg-primary/10"
+                      : "border-white/10 text-text-dim hover:text-text-primary"
+                  }`}
+                >
+                  {s}
+                  {active && <span className="ml-1 opacity-60">×</span>}
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Grand Slams */}
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="font-mono text-xs text-text-dim w-20 shrink-0">Grand Slams</span>
-          <FilterGroup
-            label="Grand Slams"
-            param="tournament"
-            current={tournament}
-            options={GRAND_SLAMS}
-          />
+        {/* Year — multi-select */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-mono text-xs text-text-dim w-20 shrink-0">Year</span>
+          <div className="flex gap-1.5 flex-wrap">
+            {activeTournaments.size > 0 && (
+              <Link
+                href={clearUrl("year", current)}
+                className="font-mono text-xs px-3 py-1.5 rounded-full border border-white/10 text-text-dim hover:text-text-primary transition-colors duration-150"
+              >
+                Clear
+              </Link>
+            )}
+            {YEARS.map((y) => {
+              const active = activeYears.has(y);
+              return (
+                <Link
+                  key={y}
+                  href={buildUrl("year", y, current)}
+                  className={`font-mono text-xs px-3 py-1.5 rounded-full border transition-colors duration-150 ${
+                    active
+                      ? "border-primary text-primary bg-primary/10"
+                      : "border-white/10 text-text-dim hover:text-text-primary"
+                  }`}
+                >
+                  {y}
+                  {active && <span className="ml-1 opacity-60">×</span>}
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Masters */}
-        <div className="flex flex-wrap gap-2 items-center">
+        {/* Grand Slams — multi-select */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-mono text-xs text-text-dim w-20 shrink-0">Slams</span>
+          <div className="flex gap-1.5 flex-wrap">
+            {GRAND_SLAMS.map((t) => {
+              const active = activeTournaments.has(t);
+              return (
+                <Link
+                  key={t}
+                  href={buildUrl("tournament", t, current)}
+                  className={`font-mono text-xs px-3 py-1.5 rounded-full border transition-colors duration-150 ${
+                    active
+                      ? "border-primary text-primary bg-primary/10"
+                      : "border-white/10 text-text-dim hover:text-text-primary"
+                  }`}
+                >
+                  {t}
+                  {active && <span className="ml-1 opacity-60">×</span>}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Masters — multi-select */}
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="font-mono text-xs text-text-dim w-20 shrink-0">Masters</span>
-          <FilterGroup
-            label="Masters"
-            param="tournament"
-            current={tournament}
-            options={MASTERS}
-          />
+          <div className="flex gap-1.5 flex-wrap">
+            {MASTERS.map((t) => {
+              const active = activeTournaments.has(t);
+              return (
+                <Link
+                  key={t}
+                  href={buildUrl("tournament", t, current)}
+                  className={`font-mono text-xs px-3 py-1.5 rounded-full border transition-colors duration-150 ${
+                    active
+                      ? "border-primary text-primary bg-primary/10"
+                      : "border-white/10 text-text-dim hover:text-text-primary"
+                  }`}
+                >
+                  {t}
+                  {active && <span className="ml-1 opacity-60">×</span>}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* Results count */}
-      <p className="font-mono text-sm text-text-dim mb-4">
-        {matches.length} matches{matches.length === 100 ? "+" : ""}
-      </p>
+      {error ? (
+        <p className="text-loss font-sans text-sm">Failed to load matches.</p>
+      ) : (
+        <>
+          <p className="font-mono text-sm text-text-dim mb-4">
+            {matches?.length ?? 0} matches{(matches?.length ?? 0) >= 100 ? "+" : ""}
+          </p>
 
-      {/* Match list */}
-      <div className="divide-y divide-white/5">
-        {(matches as MatchWithPlayers[]).map((match) => (
-          <MatchRow key={match.id} match={match} />
-        ))}
-      </div>
+          <div className="divide-y divide-white/5">
+            {(matches as MatchWithPlayers[]).map((match) => (
+              <MatchRow key={match.id} match={match} />
+            ))}
+          </div>
+        </>
+      )}
     </main>
   );
-}
-
-function FilterGroup({
-  param,
-  current,
-  options,
-}: {
-  label: string;
-  param: string;
-  current?: string;
-  options: string[];
-}) {
-  return (
-    <div className="flex gap-1 flex-wrap">
-      {current && (
-        <Link
-          href={buildFilterUrl(param, undefined, {})}
-          className="font-mono text-xs px-3 py-1.5 rounded-full border border-white/10 text-text-dim hover:text-text-primary transition-colors duration-150"
-        >
-          Clear
-        </Link>
-      )}
-      {options.map((opt) => (
-        <Link
-          key={opt}
-          href={buildFilterUrl(param, opt, {})}
-          className={`font-mono text-xs px-3 py-1.5 rounded-full border transition-colors duration-150 ${
-            current === opt
-              ? "border-primary text-primary"
-              : "border-white/10 text-text-dim hover:text-text-primary"
-          }`}
-        >
-          {opt}
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-function buildFilterUrl(param: string, value: string | undefined, _current: Record<string, string>) {
-  const url = new URL("http://x/matches");
-  if (param !== "surface"    && _current.surface)    url.searchParams.set("surface", _current.surface);
-  if (param !== "tournament" && _current.tournament) url.searchParams.set("tournament", _current.tournament);
-  if (param !== "year"       && _current.year)       url.searchParams.set("year", _current.year);
-  if (value) url.searchParams.set(param, value);
-  return `/matches?${url.searchParams.toString()}`;
 }
 
 function MatchRow({ match }: { match: MatchWithPlayers }) {
@@ -195,7 +306,6 @@ function MatchRow({ match }: { match: MatchWithPlayers }) {
       href={`/matches/${match.id}`}
       className="flex items-center justify-between py-3 px-2 hover:bg-white/[0.03] rounded transition-colors duration-150 group"
     >
-      {/* Players */}
       <div className="flex items-center gap-2 min-w-0">
         <span className="font-sans text-text-primary group-hover:text-primary transition-colors duration-150 truncate">
           {match.player1?.name ?? "Unknown"}
@@ -206,7 +316,6 @@ function MatchRow({ match }: { match: MatchWithPlayers }) {
         </span>
       </div>
 
-      {/* Meta */}
       <div className="flex items-center gap-4 shrink-0 ml-4">
         {surface && (
           <span className={`font-mono text-xs ${SURFACE_COLORS[surface]}`}>

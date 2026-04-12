@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import { getSupabase } from "@/lib/supabase";
 import type { Surface } from "@/types";
 import Link from "next/link";
@@ -32,6 +33,7 @@ const SURFACE_COLORS: Record<Surface, string> = {
 };
 
 export default async function MatchPage({ params }: Props) {
+  const { userId } = await auth();
   const { id } = await params;
   const supabase = getSupabase();
 
@@ -142,17 +144,25 @@ export default async function MatchPage({ params }: Props) {
         </p>
       </div>
 
-      {/* Reviews placeholder */}
-      <section>
-        <h2 className="font-mono text-lg font-semibold text-text-mid uppercase tracking-widest mb-4">
+      {/* Review CTA */}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-mono text-lg font-semibold text-text-mid uppercase tracking-widest">
           Community Reviews
         </h2>
-        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-6">
-          <p className="font-sans text-text-dim text-sm">
-            Rating and review system coming in Phase 3.
-          </p>
-        </div>
-      </section>
+        <Link
+          href={userId ? `/matches/${id}/review` : "/sign-in"}
+          className="font-mono text-xs px-4 py-2 rounded-lg font-semibold transition-all duration-150"
+          style={{ background: "#22d68a", color: "#0e1116" }}
+        >
+          Review Match
+        </Link>
+      </div>
+
+      <div className="rounded-lg border border-white/5 bg-white/[0.02] p-6">
+        <p className="font-sans text-text-dim text-sm">
+          No reviews yet. Be the first to review this match.
+        </p>
+      </div>
     </main>
   );
 }

@@ -1,7 +1,9 @@
+import { auth } from "@clerk/nextjs/server";
 import { getSupabase } from "@/lib/supabase";
 import type { Player, MatchWithPlayers } from "@/types";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import RadarChart from "@/components/radar/RadarChart";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -17,6 +19,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function PlayerPage({ params }: Props) {
+  const { userId } = await auth();
   const { id } = await params;
   const supabase = getSupabase();
 
@@ -28,6 +31,32 @@ export default async function PlayerPage({ params }: Props) {
     .single();
 
   if (error || !player) notFound();
+
+  // Fetch all community skill ratings and average them in JS
+  const SKILL_KEYS = [
+    "focus","clutch","resilience","serve","forehand","backhand",
+    "net_play","touch","return_play","reaction_time",
+    "speed","court_coverage","positioning",
+  ] as const;
+
+  const { data: skillRows } = await supabase
+    .from("skill_ratings")
+    .select(SKILL_KEYS.join(","))
+    .eq("player_id", id);
+
+  const ratings: Record<string, number> = {};
+  const ratingCount = skillRows?.length ?? 0;
+
+  if (ratingCount > 0) {
+    for (const key of SKILL_KEYS) {
+      const vals = (skillRows ?? [])
+        .map((r) => Number((r as unknown as Record<string, unknown>)[key]))
+        .filter((v) => !isNaN(v) && v > 0);
+      if (vals.length > 0) {
+        ratings[key] = Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+      }
+    }
+  }
 
   // Fetch their matches with both player names joined
   const { data: matches } = await supabase
@@ -78,25 +107,37 @@ export default async function PlayerPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Rank badge */}
-          {p.current_rank && (
-            <div className="text-right">
-              <div className="font-mono text-4xl font-bold text-primary">
-                #{p.current_rank}
+          {/* Rank + Rate button */}
+          <div className="flex flex-col items-end gap-3">
+            {p.current_rank && (
+              <div className="text-right">
+                <div className="font-mono text-4xl font-bold text-primary">
+                  #{p.current_rank}
+                </div>
+                <div className="font-sans text-xs text-text-dim mt-1">
+                  World Ranking
+                </div>
               </div>
-              <div className="font-sans text-xs text-text-dim mt-1">
-                World Ranking
-              </div>
-            </div>
-          )}
+            )}
+            <Link
+              href={userId ? `/players/${id}/rate` : "/sign-in"}
+              className="font-mono text-xs px-4 py-2 rounded-lg font-semibold transition-all duration-150"
+              style={{ background: "#22d68a", color: "#0e1116" }}
+            >
+              Rate Player
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Radar placeholder — Phase 2 */}
-      <div className="rounded-lg border border-white/5 bg-white/[0.02] p-8 mb-10 flex items-center justify-center min-h-[280px]">
-        <p className="font-sans text-text-dim text-sm">
-          Skill radar chart coming soon
-        </p>
+      {/* Radar chart */}
+      <div className="mb-10 flex justify-center">
+        <RadarChart
+          ratings={ratings}
+          playerColor="#22d68a"
+          playerName={p.name}
+          ratingCount={ratingCount > 0 ? ratingCount : undefined}
+        />
       </div>
 
       {/* Match history */}

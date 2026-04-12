@@ -82,20 +82,24 @@ async function main() {
 
   console.log(`Found ${playerRankMap.size} unique players across Grand Slams 2020–2024.`);
 
-  // ── Step 2: Load player master files ───────────────────────────────────────
+  // ── Step 2: Load player master files (kept separate per tour) ───────────────
   console.log("Loading player master files...");
 
-  const playerMaster = new Map<string, Record<string, string>>();
+  // IMPORTANT: ATP and WTA player master files share overlapping numeric IDs.
+  // Keep them in separate maps and look up using the correct tour.
+  const atpMaster = new Map<string, Record<string, string>>();
+  const wtaMaster = new Map<string, Record<string, string>>();
 
   for (const tour of ["atp", "wta"]) {
+    const map = tour === "atp" ? atpMaster : wtaMaster;
     const filePath = path.join(DATA_ROOT, tour, `${tour}_players.csv`);
     const rows = parseCSV(filePath);
     for (const row of rows) {
-      playerMaster.set(row.player_id, row);
+      map.set(row.player_id, row);
     }
   }
 
-  console.log(`Loaded ${playerMaster.size} players from master files.`);
+  console.log(`Loaded ${atpMaster.size} ATP + ${wtaMaster.size} WTA players from master files.`);
 
   // ── Step 3: Build player records and upsert ─────────────────────────────────
   console.log("Building player records...");
@@ -103,7 +107,8 @@ async function main() {
   const toUpsert: object[] = [];
 
   for (const [sackmannId, { rank, tour }] of playerRankMap.entries()) {
-    const master    = playerMaster.get(sackmannId);
+    const masterMap = tour === "ATP" ? atpMaster : wtaMaster;
+    const master    = masterMap.get(sackmannId);
     const firstName = master?.name_first ?? "";
     const lastName  = master?.name_last  ?? "";
     const name      = [firstName, lastName].filter(Boolean).join(" ").trim();
