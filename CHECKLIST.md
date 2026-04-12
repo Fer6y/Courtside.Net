@@ -42,7 +42,7 @@
 - [ ] Player quick bubble popup (tap name → mini card with rank, form, link)
 - [ ] /compare — dual radar overlay for two players
 - [ ] /h2h/[slug] — head-to-head rivalry pages
-- [ ] Community reviews display on match pages (currently shows placeholder)
+- [x] Community reviews display on match pages (reviewer name, ratings, comment, time ago, edit own)
 - [ ] Community ratings display on player profiles (aggregated from reviews)
 - [ ] Responsive audit — all pages tested on mobile
 
@@ -50,8 +50,8 @@
 - [x] Match review form — 3 sliders (match + P1 + P2, 1–10), comment, favorite, collection
 - [x] Skill rating form — 13 sliders grouped by 4 categories (1–5), edit support
 - [x] Review/rating data saved to Supabase (reviews + skill_ratings + watched_matches)
-- [ ] Display community reviews on match pages (list with usernames, ratings, comments)
-- [ ] Display community rating averages on match pages (avg match/P1/P2 scores)
+- [x] Display community reviews on match pages (list with usernames, ratings, comments)
+- [x] Display community rating averages on match pages (avg match/P1/P2 scores)
 - [ ] Edit / delete own reviews
 - [ ] Comment threads on reviews
 - [ ] User profile page (/profile/[username]) — review history, watch log, collections, favorites
