@@ -39,11 +39,11 @@
 - [x] Radar chart component — 13 axes, 4 quadrants, bezier curves, glow, staggered animation, legend, breakdown bars
 - [x] LoadingAnimation component — bouncing tennis ball with squash/stretch physics
 - [x] Loading states — loading.tsx on players, matches, player profile, match detail pages
-- [ ] Player quick bubble popup (tap name → mini card with rank, form, link)
-- [ ] /compare — dual radar overlay for two players
+- [x] Player quick bubble popup (hover/long-press → pill with rank, W/L record, top skill badge)
+- [x] /compare — dual radar overlay, color picker per player, top skills, biggest edge, H2H record
 - [ ] /h2h/[slug] — head-to-head rivalry pages
 - [x] Community reviews display on match pages (reviewer name, ratings, comment, time ago, edit own)
-- [ ] Community ratings display on player profiles (aggregated from reviews)
+- [x] Community ratings display on player profiles (avg performance + match quality from reviews)
 - [ ] Responsive audit — all pages tested on mobile
 
 ## Phase 3: Rating System & User Features 🔜

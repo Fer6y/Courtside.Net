@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Surface } from "@/types";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import PlayerNameWithBubble from "@/components/PlayerNameWithBubble";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -151,7 +152,7 @@ export default async function MatchPage({ params }: Props) {
         <div className="flex items-center justify-between gap-4">
           <Link href={`/players/${p1.id}`} className="flex-1 group">
             <div className={`font-mono text-2xl font-bold transition-colors duration-150 group-hover:text-primary ${won1 ? "text-primary" : "text-text-primary"}`}>
-              {p1.name}
+              <PlayerNameWithBubble playerId={p1.id} playerName={p1.name} />
             </div>
             <div className="flex items-center gap-2 mt-1">
               {p1.country    && <span className="font-mono text-xs text-text-dim">{p1.country}</span>}
@@ -169,7 +170,7 @@ export default async function MatchPage({ params }: Props) {
 
           <Link href={`/players/${p2.id}`} className="flex-1 text-right group">
             <div className={`font-mono text-2xl font-bold transition-colors duration-150 group-hover:text-primary ${!won1 ? "text-primary" : "text-text-primary"}`}>
-              {p2.name}
+              <PlayerNameWithBubble playerId={p2.id} playerName={p2.name} />
             </div>
             <div className="flex items-center gap-2 mt-1 justify-end">
               {p2.current_rank && <span className="font-mono text-xs text-text-dim">#{p2.current_rank}</span>}

@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { getSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import type { Player, MatchWithPlayers } from "@/types";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -18,10 +19,18 @@ export async function generateMetadata({ params }: Props) {
   return { title: data ? `${data.name} — Courtside` : "Player — Courtside" };
 }
 
+function avg(vals: number[]): number {
+  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+}
+
 export default async function PlayerPage({ params }: Props) {
   const { userId } = await auth();
   const { id } = await params;
   const supabase = getSupabase();
+  const admin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
   // Fetch player
   const { data: player, error } = await supabase
@@ -69,6 +78,45 @@ export default async function PlayerPage({ params }: Props) {
     .or(`player1_id.eq.${id},player2_id.eq.${id}`)
     .order("match_date", { ascending: false })
     .limit(50);
+
+  // Fetch community reviews for this player's matches
+  const matchIds = (matches ?? []).map((m) => m.id);
+  let avgPerformance = 0;
+  let avgMatchQuality = 0;
+  let reviewCount = 0;
+  let reviewedMatchCount = 0;
+
+  if (matchIds.length > 0) {
+    const { data: reviewRows } = await admin
+      .from("reviews")
+      .select("match_id, player1_rating, player2_rating, match_rating")
+      .in("match_id", matchIds);
+
+    if (reviewRows && reviewRows.length > 0) {
+      // Map match_id → which position this player occupies
+      const roleMap = new Map<string, "player1" | "player2">();
+      for (const m of matches as MatchWithPlayers[]) {
+        roleMap.set(m.id, m.player1_id === id ? "player1" : "player2");
+      }
+
+      const perfRatings: number[] = [];
+      const matchQualityRatings: number[] = [];
+      const reviewedMatchIds = new Set<string>();
+
+      for (const r of reviewRows) {
+        const role = roleMap.get(r.match_id);
+        const perf = role === "player1" ? r.player1_rating : r.player2_rating;
+        if (perf != null) perfRatings.push(perf);
+        if (r.match_rating != null) matchQualityRatings.push(r.match_rating);
+        reviewedMatchIds.add(r.match_id);
+      }
+
+      avgPerformance  = avg(perfRatings);
+      avgMatchQuality = avg(matchQualityRatings);
+      reviewCount     = reviewRows.length;
+      reviewedMatchCount = reviewedMatchIds.size;
+    }
+  }
 
   const p = player as Player;
   const tour = p.career_stats?.tour as string | undefined;
@@ -119,13 +167,21 @@ export default async function PlayerPage({ params }: Props) {
                 </div>
               </div>
             )}
-            <Link
-              href={userId ? `/players/${id}/rate` : "/sign-in"}
-              className="font-mono text-xs px-4 py-2 rounded-lg font-semibold transition-all duration-150"
-              style={{ background: "#22d68a", color: "#0e1116" }}
-            >
-              Rate Player
-            </Link>
+            <div className="flex gap-2">
+              <Link
+                href={`/compare?p1=${id}`}
+                className="font-mono text-xs px-4 py-2 rounded-lg font-semibold transition-all duration-150 border border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
+              >
+                Compare
+              </Link>
+              <Link
+                href={userId ? `/players/${id}/rate` : "/sign-in"}
+                className="font-mono text-xs px-4 py-2 rounded-lg font-semibold transition-all duration-150"
+                style={{ background: "#22d68a", color: "#0e1116" }}
+              >
+                Rate Player
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -139,6 +195,46 @@ export default async function PlayerPage({ params }: Props) {
           ratingCount={ratingCount > 0 ? ratingCount : undefined}
         />
       </div>
+
+      {/* Community Rating */}
+      {reviewCount > 0 && (
+        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-6 mb-10">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-widest text-text-dim">
+              Community Rating
+            </h2>
+            <span className="font-mono text-xs text-text-dim">
+              {reviewCount} {reviewCount === 1 ? "review" : "reviews"} · {reviewedMatchCount} {reviewedMatchCount === 1 ? "match" : "matches"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            {/* Performance */}
+            <div className="text-center">
+              <div
+                className="font-mono text-4xl font-bold mb-1"
+                style={{ color: "#22d68a" }}
+              >
+                {avgPerformance.toFixed(1)}
+              </div>
+              <div className="font-mono text-xs text-text-dim mb-3">Performance</div>
+              <RatingBar value={avgPerformance} color="#22d68a" />
+            </div>
+
+            {/* Match Quality */}
+            <div className="text-center">
+              <div
+                className="font-mono text-4xl font-bold mb-1"
+                style={{ color: "#f5c518" }}
+              >
+                {avgMatchQuality.toFixed(1)}
+              </div>
+              <div className="font-mono text-xs text-text-dim mb-3">Match Quality</div>
+              <RatingBar value={avgMatchQuality} color="#f5c518" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Match history */}
       <section>
@@ -157,6 +253,20 @@ export default async function PlayerPage({ params }: Props) {
         )}
       </section>
     </main>
+  );
+}
+
+function RatingBar({ value, color }: { value: number; color: string }) {
+  return (
+    <div
+      className="w-full h-1 rounded-full overflow-hidden mx-auto"
+      style={{ background: "rgba(255,255,255,0.06)", maxWidth: 80 }}
+    >
+      <div
+        className="h-full rounded-full"
+        style={{ width: `${(value / 10) * 100}%`, background: color, opacity: 0.7 }}
+      />
+    </div>
   );
 }
 

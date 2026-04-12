@@ -1,6 +1,7 @@
 import { getSupabase } from "@/lib/supabase";
 import type { MatchWithPlayers, Surface } from "@/types";
 import Link from "next/link";
+import PlayerNameWithBubble from "@/components/PlayerNameWithBubble";
 
 export const metadata = {
   title: "Matches — Courtside",
@@ -309,13 +310,17 @@ function MatchRow({ match }: { match: MatchWithPlayers }) {
       className="flex items-center justify-between py-3 px-2 hover:bg-white/[0.03] rounded transition-colors duration-150 group"
     >
       <div className="flex items-center gap-2 min-w-0">
-        <span className={`font-sans truncate transition-colors duration-150 ${p1Won ? "text-primary font-semibold" : "text-text-primary"}`}>
-          {match.player1?.name ?? "Unknown"}
-        </span>
+        <PlayerNameWithBubble
+          playerId={match.player1.id}
+          playerName={match.player1?.name ?? "Unknown"}
+          className={`font-sans truncate transition-colors duration-150 ${p1Won ? "text-primary font-semibold" : "text-text-primary"}`}
+        />
         <span className="font-mono text-text-dim text-xs shrink-0">vs</span>
-        <span className={`font-sans truncate ${p2Won ? "text-primary font-semibold" : "text-text-primary"}`}>
-          {match.player2?.name ?? "Unknown"}
-        </span>
+        <PlayerNameWithBubble
+          playerId={match.player2.id}
+          playerName={match.player2?.name ?? "Unknown"}
+          className={`font-sans truncate ${p2Won ? "text-primary font-semibold" : "text-text-primary"}`}
+        />
       </div>
 
       <div className="flex items-center gap-4 shrink-0 ml-4">
