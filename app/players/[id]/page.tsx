@@ -5,8 +5,12 @@ import type { Player, MatchWithPlayers } from "@/types";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import RadarChart from "@/components/radar/RadarChart";
+import MatchFilterBar, { type MatchFilters } from "@/components/MatchFilterBar";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ round?: string; surface?: string; year?: string }>;
+};
 
 export async function generateMetadata({ params }: Props) {
   const { id } = await params;
@@ -23,9 +27,10 @@ function avg(vals: number[]): number {
   return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
 }
 
-export default async function PlayerPage({ params }: Props) {
+export default async function PlayerPage({ params, searchParams }: Props) {
   const { userId } = await auth();
   const { id } = await params;
+  const { round, surface, year } = await searchParams;
   const supabase = getSupabase();
   const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -67,8 +72,21 @@ export default async function PlayerPage({ params }: Props) {
     }
   }
 
-  // Fetch their matches with both player names joined
-  const { data: matches } = await supabase
+  // Fetch filter options for this player's matches
+  const { data: playerMatchOptions } = await supabase
+    .from("matches")
+    .select("surface, match_date")
+    .or(`player1_id.eq.${id},player2_id.eq.${id}`)
+    .not("match_date", "is", null)
+    .limit(500);
+
+  const playerSurfaces = [...new Set((playerMatchOptions ?? []).map((r) => r.surface).filter(Boolean))].sort() as string[];
+  const playerYears = [
+    ...new Set((playerMatchOptions ?? []).map((r) => r.match_date?.slice(0, 4)).filter(Boolean)),
+  ].sort((a, b) => Number(b) - Number(a)) as string[];
+
+  // Fetch their matches with filters applied
+  let matchQuery = supabase
     .from("matches")
     .select(`
       *,
@@ -78,6 +96,12 @@ export default async function PlayerPage({ params }: Props) {
     .or(`player1_id.eq.${id},player2_id.eq.${id}`)
     .order("match_date", { ascending: false })
     .limit(50);
+
+  if (round)   matchQuery = matchQuery.eq("round", round);
+  if (surface) matchQuery = matchQuery.eq("surface", surface);
+  if (year)    matchQuery = matchQuery.gte("match_date", `${year}-01-01`).lte("match_date", `${year}-12-31`);
+
+  const { data: matches } = await matchQuery;
 
   // Fetch community reviews for this player's matches
   const matchIds = (matches ?? []).map((m) => m.id);
@@ -242,8 +266,22 @@ export default async function PlayerPage({ params }: Props) {
           Match History
         </h2>
 
+        <div className="mb-4">
+          <MatchFilterBar
+            filters={{ round, surface, year }}
+            options={{ tournaments: [], surfaces: playerSurfaces, years: playerYears }}
+            basePath={`/players/${id}`}
+            hidePlayer
+          />
+        </div>
+
         {!matches || matches.length === 0 ? (
-          <p className="font-sans text-text-dim">No matches found.</p>
+          <div className="rounded-lg border border-white/5 bg-white/[0.02] p-8 text-center">
+            <p className="font-mono text-text-dim text-sm mb-1">No matches found</p>
+            {(round || surface || year) && (
+              <p className="font-sans text-text-dim text-xs">Try adjusting your filters</p>
+            )}
+          </div>
         ) : (
           <div className="divide-y divide-white/5">
             {(matches as MatchWithPlayers[]).map((match) => (

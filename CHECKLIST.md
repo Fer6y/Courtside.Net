@@ -59,6 +59,14 @@
 - [ ] Achievement decal system (tiers, triggers, display)
 - [ ] Follow system (follow users, personalised feed)
 
+## Match Filtering
+- [x] MatchFilterBar — horizontal scrollable chip row with anchored dropdowns
+- [x] Filters: Round (R128→RR ordered), Tournament (searchable), Surface, Year (dynamic), Player (debounced search)
+- [x] Filter state in URL query params — shareable, browser back button works
+- [x] Applied to /matches page (all 5 filters)
+- [x] Applied to /players/[id] match history (Round, Surface, Year — Player hidden)
+- [x] Empty state when filter combo returns zero results
+
 ## Phase 4: Polish & Performance
 - [ ] Dynamic OG images for player/match pages
 - [ ] sitemap.xml and robots.txt
