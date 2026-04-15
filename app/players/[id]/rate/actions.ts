@@ -12,16 +12,25 @@ const AXES = [
 ] as const;
 
 export async function submitSkillRating(playerId: string, formData: FormData) {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  const { userId: clerkId } = await auth();
+  if (!clerkId) redirect("/sign-in");
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  // Resolve clerk_user_id → profiles.id (UUID)
+  const { data: profile, error: profileErr } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("clerk_user_id", clerkId)
+    .single();
+
+  if (profileErr || !profile) throw new Error("Profile not found");
+
   const rating: Record<string, number | string> = {
-    user_id:   userId,
+    user_id:   profile.id,
     player_id: playerId,
   };
 
