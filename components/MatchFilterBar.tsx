@@ -5,13 +5,34 @@ import { useRouter } from "next/navigation";
 
 const ROUND_ORDER = ["R128", "R64", "R32", "R16", "QF", "SF", "F", "RR"];
 
+const SETS_OPTIONS = [
+  { label: "3 Sets",   value: "3" },
+  { label: "4 Sets",   value: "4" },
+  { label: "5 Sets",   value: "5" },
+  { label: "Tiebreak", value: "tb" },
+];
+
+const MIN_RATING_OPTIONS = [
+  { label: "7.0+", value: "7" },
+  { label: "8.0+", value: "8" },
+  { label: "9.0+", value: "9" },
+];
+
+const LEVEL_OPTIONS = [
+  { label: "Grand Slam",   value: "slam" },
+  { label: "Masters 1000", value: "masters" },
+];
+
 export interface MatchFilters {
-  round?: string;
+  round?:      string;
   tournament?: string;
-  surface?: string;
-  year?: string;
-  player?: string;      // UUID
-  playerName?: string;  // display name stored in URL
+  surface?:    string;
+  year?:       string;
+  player?:     string;      // UUID
+  playerName?: string;      // display name stored in URL
+  level?:      string;      // "slam" | "masters"
+  sets?:       string;      // "3" | "4" | "5" | "tb"
+  minRating?:  string;      // "7" | "8" | "9"
 }
 
 interface Props {
@@ -31,6 +52,11 @@ interface PlayerResult {
   country: string | null;
   current_rank: number | null;
 }
+
+const ALL_FILTER_KEYS: (keyof MatchFilters)[] = [
+  "round", "tournament", "surface", "year",
+  "player", "playerName", "level", "sets", "minRating",
+];
 
 export default function MatchFilterBar({ filters, options, basePath, hidePlayer }: Props) {
   const router = useRouter();
@@ -67,15 +93,13 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [playerQuery]);
 
-  function navigate(updates: Partial<MatchFilters & { playerName?: string }>) {
+  function navigate(updates: Partial<MatchFilters>) {
     const next: Record<string, string> = {};
     const merged = { ...filters, ...updates };
-    if (merged.round)      next.round      = merged.round;
-    if (merged.tournament) next.tournament = merged.tournament;
-    if (merged.surface)    next.surface    = merged.surface;
-    if (merged.year)       next.year       = merged.year;
-    if (merged.player)     next.player     = merged.player;
-    if (merged.playerName) next.playerName = merged.playerName;
+    for (const k of ALL_FILTER_KEYS) {
+      const v = merged[k];
+      if (v) next[k] = v;
+    }
     const qs = new URLSearchParams(next).toString();
     router.push(`${basePath}${qs ? `?${qs}` : ""}`);
     setOpenChip(null);
@@ -85,10 +109,10 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
 
   function clearFilter(...keys: string[]) {
     const next: Record<string, string> = {};
-    const all = ["round", "tournament", "surface", "year", "player", "playerName"];
-    for (const k of all) {
-      if (!keys.includes(k) && filters[k as keyof MatchFilters]) {
-        next[k] = filters[k as keyof MatchFilters]!;
+    for (const k of ALL_FILTER_KEYS) {
+      if (!keys.includes(k)) {
+        const v = filters[k];
+        if (v) next[k] = v;
       }
     }
     const qs = new URLSearchParams(next).toString();
@@ -101,11 +125,17 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
     setOpenChip(null);
   }
 
-  const hasAnyFilter = !!(filters.round || filters.tournament || filters.surface || filters.year || filters.player);
+  const hasAnyFilter = ALL_FILTER_KEYS.some(
+    (k) => k !== "playerName" && !!filters[k]
+  );
 
   const filteredTournaments = tournamentSearch.trim()
     ? options.tournaments.filter((t) => t.toLowerCase().includes(tournamentSearch.toLowerCase()))
     : options.tournaments;
+
+  const setsLabel = SETS_OPTIONS.find((o) => o.value === filters.sets)?.label;
+  const levelLabel = LEVEL_OPTIONS.find((o) => o.value === filters.level)?.label;
+  const ratingLabel = MIN_RATING_OPTIONS.find((o) => o.value === filters.minRating)?.label;
 
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
@@ -113,6 +143,28 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
         className="flex gap-2 overflow-x-auto pb-1"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
+
+        {/* Level */}
+        <Chip
+          label="Level"
+          value={levelLabel}
+          isOpen={openChip === "level"}
+          onToggle={() => setOpenChip(openChip === "level" ? null : "level")}
+          onClear={() => clearFilter("level")}
+        >
+          <div className="flex flex-col gap-0.5" style={{ minWidth: 140 }}>
+            {LEVEL_OPTIONS.map((o) => (
+              <OptionButton
+                key={o.value}
+                label={o.label}
+                active={filters.level === o.value}
+                onClick={() =>
+                  filters.level === o.value ? clearFilter("level") : navigate({ level: o.value })
+                }
+              />
+            ))}
+          </div>
+        </Chip>
 
         {/* Round */}
         <Chip
@@ -221,6 +273,52 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
           </div>
         </Chip>
 
+        {/* Sets */}
+        <Chip
+          label="Sets"
+          value={setsLabel}
+          isOpen={openChip === "sets"}
+          onToggle={() => setOpenChip(openChip === "sets" ? null : "sets")}
+          onClear={() => clearFilter("sets")}
+        >
+          <div className="flex flex-col gap-0.5" style={{ minWidth: 120 }}>
+            {SETS_OPTIONS.map((o) => (
+              <OptionButton
+                key={o.value}
+                label={o.label}
+                active={filters.sets === o.value}
+                onClick={() =>
+                  filters.sets === o.value ? clearFilter("sets") : navigate({ sets: o.value })
+                }
+              />
+            ))}
+          </div>
+        </Chip>
+
+        {/* Min Community Rating */}
+        <Chip
+          label="Min Rating"
+          value={ratingLabel}
+          isOpen={openChip === "minRating"}
+          onToggle={() => setOpenChip(openChip === "minRating" ? null : "minRating")}
+          onClear={() => clearFilter("minRating")}
+        >
+          <div className="flex flex-col gap-0.5" style={{ minWidth: 100 }}>
+            {MIN_RATING_OPTIONS.map((o) => (
+              <OptionButton
+                key={o.value}
+                label={o.label}
+                active={filters.minRating === o.value}
+                onClick={() =>
+                  filters.minRating === o.value
+                    ? clearFilter("minRating")
+                    : navigate({ minRating: o.value })
+                }
+              />
+            ))}
+          </div>
+        </Chip>
+
         {/* Player search — hidden on player profile page */}
         {!hidePlayer && (
           <Chip
@@ -256,9 +354,7 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
                       label={p.name}
                       sublabel={p.current_rank ? `#${p.current_rank}` : undefined}
                       active={filters.player === p.id}
-                      onClick={() =>
-                        navigate({ player: p.id, playerName: p.name })
-                      }
+                      onClick={() => navigate({ player: p.id, playerName: p.name })}
                     />
                   ))
                 )}

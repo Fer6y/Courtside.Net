@@ -1,4 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import type { MatchWithPlayers, Surface } from "@/types";
 import Link from "next/link";
 import PlayerNameWithBubble from "@/components/PlayerNameWithBubble";
@@ -15,13 +16,25 @@ const SURFACE_COLORS: Record<Surface, string> = {
   Carpet: "text-text-dim",
 };
 
+// Grand Slam tournament name patterns
+const SLAM_PATTERNS = [
+  "Australian Open",
+  "French Open",
+  "Roland Garros",
+  "Wimbledon",
+  "US Open",
+];
+
 type SearchParams = Promise<{
-  round?:       string;
-  tournament?:  string;
-  surface?:     string;
-  year?:        string;
-  player?:      string;
-  playerName?:  string;
+  round?:      string;
+  tournament?: string;
+  surface?:    string;
+  year?:       string;
+  player?:     string;
+  playerName?: string;
+  level?:      string;
+  sets?:       string;
+  minRating?:  string;
 }>;
 
 export default async function MatchesPage({
@@ -29,38 +42,60 @@ export default async function MatchesPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { round, tournament, surface, year, player, playerName } = await searchParams;
+  const { round, tournament, surface, year, player, playerName, level, sets, minRating } =
+    await searchParams;
+
   const supabase = getSupabase();
+  const admin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
   // ── Fetch filter options dynamically ──────────────────────────────────────
   const [{ data: tournamentRows }, { data: yearRows }, { data: surfaceRows }] =
     await Promise.all([
-      supabase
-        .from("matches")
-        .select("tournament")
-        .order("tournament")
-        .limit(500),
-      supabase
-        .from("matches")
-        .select("match_date")
-        .not("match_date", "is", null)
-        .limit(10000),
-      supabase
-        .from("matches")
-        .select("surface")
-        .not("surface", "is", null)
-        .limit(500),
+      supabase.from("matches").select("tournament").order("tournament").limit(500),
+      supabase.from("matches").select("match_date").not("match_date", "is", null).limit(10000),
+      supabase.from("matches").select("surface").not("surface", "is", null).limit(500),
     ]);
 
-  const tournaments = [...new Set((tournamentRows ?? []).map((r) => r.tournament).filter(Boolean))].sort();
+  const tournaments = [
+    ...new Set((tournamentRows ?? []).map((r) => r.tournament).filter(Boolean)),
+  ].sort();
   const years = [
     ...new Set(
-      (yearRows ?? [])
-        .map((r) => r.match_date?.slice(0, 4))
-        .filter(Boolean)
+      (yearRows ?? []).map((r) => r.match_date?.slice(0, 4)).filter(Boolean)
     ),
   ].sort((a, b) => Number(b) - Number(a)) as string[];
-  const surfaces = [...new Set((surfaceRows ?? []).map((r) => r.surface).filter(Boolean))].sort() as string[];
+  const surfaces = [
+    ...new Set((surfaceRows ?? []).map((r) => r.surface).filter(Boolean)),
+  ].sort() as string[];
+
+  // ── Min rating: pre-fetch qualifying match IDs ────────────────────────────
+  let ratedMatchIds: string[] | null = null;
+  if (minRating) {
+    const threshold = Number(minRating);
+    const { data: ratingRows } = await admin
+      .from("reviews")
+      .select("match_id, match_rating");
+    if (ratingRows && ratingRows.length > 0) {
+      // Group and average by match_id
+      const totals = new Map<string, { sum: number; count: number }>();
+      for (const row of ratingRows) {
+        const mid = row.match_id as string;
+        if (!totals.has(mid)) totals.set(mid, { sum: 0, count: 0 });
+        const t = totals.get(mid)!;
+        t.sum += Number(row.match_rating);
+        t.count++;
+      }
+      ratedMatchIds = [];
+      for (const [mid, { sum, count }] of totals) {
+        if (sum / count >= threshold) ratedMatchIds.push(mid);
+      }
+    } else {
+      ratedMatchIds = []; // no reviews at all → no results
+    }
+  }
 
   // ── Build filtered query ───────────────────────────────────────────────────
   let query = supabase
@@ -79,11 +114,45 @@ export default async function MatchesPage({
   if (year)       query = query.gte("match_date", `${year}-01-01`).lte("match_date", `${year}-12-31`);
   if (player)     query = query.or(`player1_id.eq.${player},player2_id.eq.${player}`);
 
+  // Level filter: Grand Slam vs Masters
+  if (level === "slam") {
+    const pattern = SLAM_PATTERNS.map((p) => `tournament.ilike.%${p}%`).join(",");
+    query = query.or(pattern);
+  } else if (level === "masters") {
+    for (const p of SLAM_PATTERNS) {
+      query = query.not("tournament", "ilike", `%${p}%`);
+    }
+  }
+
+  // Sets filter (based on number of spaces in score string)
+  // 3 sets = 2 spaces, 4 sets = 3 spaces, 5 sets = 4 spaces
+  if (sets === "5") {
+    query = query.filter("score", "like", "% % % % %");
+  } else if (sets === "4") {
+    query = query.filter("score", "like", "% % % %").not("score", "like", "% % % % %");
+  } else if (sets === "3") {
+    query = query.filter("score", "like", "% % %").not("score", "like", "% % % %");
+  } else if (sets === "tb") {
+    query = query.filter("score", "ilike", "%7-6%");
+  }
+
+  // Min community rating filter
+  if (ratedMatchIds !== null) {
+    if (ratedMatchIds.length === 0) {
+      // No matches meet the threshold — force empty result
+      query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+    } else {
+      query = query.in("id", ratedMatchIds);
+    }
+  }
+
   const { data: matches, error } = await query;
 
-  const hasAnyFilter = !!(round || tournament || surface || year || player);
+  const hasAnyFilter = !!(round || tournament || surface || year || player || level || sets || minRating);
 
-  const filters: MatchFilters = { round, tournament, surface, year, player, playerName };
+  const filters: MatchFilters = {
+    round, tournament, surface, year, player, playerName, level, sets, minRating,
+  };
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-12">

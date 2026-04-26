@@ -1,14 +1,17 @@
 import { getSupabase } from "@/lib/supabase";
 import type { Player } from "@/types";
 import Link from "next/link";
+import PlayerFilterBar from "@/components/PlayerFilterBar";
 
 export const metadata = {
   title: "Players — Courtside",
 };
 
 type SearchParams = Promise<{
-  tour?: string;
-  sort?: string;
+  tour?:    string;
+  sort?:    string;
+  country?: string;
+  rankMax?: string;
 }>;
 
 const SORT_OPTIONS = [
@@ -85,18 +88,33 @@ export default async function PlayersPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { tour, sort } = await searchParams;
+  const { tour, sort, country, rankMax } = await searchParams;
 
   const activeTour = tour === "WTA" ? "WTA" : "ATP";
   const activeSort = sort ?? "rank";
 
   const supabase = getSupabase();
 
+  // ── Fetch distinct countries for filter dropdown ───────────────
+  const { data: countryRows } = await supabase
+    .from("players")
+    .select("country")
+    .filter("career_stats->>tour", "eq", activeTour)
+    .not("country", "is", null)
+    .order("country");
+  const countries = [...new Set((countryRows ?? []).map((r) => r.country).filter(Boolean))].sort() as string[];
+
   // ── Fetch players ─────────────────────────────────────────────
   let query = supabase
     .from("players")
     .select("id, name, country, age, current_rank, career_stats")
     .filter("career_stats->>tour", "eq", activeTour);
+
+  // Filter by country
+  if (country) query = query.eq("country", country);
+
+  // Filter by rank range
+  if (rankMax) query = query.lte("current_rank", Number(rankMax)).not("current_rank", "is", null);
 
   // Only DB-sort for non-stat sorts
   if (!STAT_SORTS.has(activeSort)) {
@@ -164,13 +182,22 @@ export default async function PlayersPage({
     );
   }
 
+  // Build URL preserving current filter state
   function buildUrl(params: { tour?: string; sort?: string }) {
     const merged = { tour: activeTour, sort: activeSort, ...params };
     const qs = new URLSearchParams();
     if (merged.tour) qs.set("tour", merged.tour);
     if (merged.sort && merged.sort !== "rank") qs.set("sort", merged.sort);
+    // Preserve active filters when changing tour/sort
+    if (country) qs.set("country", country);
+    if (rankMax) qs.set("rankMax", rankMax);
     return `/players${qs.toString() ? `?${qs}` : ""}`;
   }
+
+  // Extra params passed to PlayerFilterBar so it preserves tour + sort when filtering
+  const extraParams: Record<string, string> = {};
+  if (activeTour !== "ATP") extraParams.tour = activeTour;
+  if (activeSort !== "rank") extraParams.sort = activeSort;
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-12">
@@ -216,6 +243,16 @@ export default async function PlayersPage({
         ))}
       </div>
 
+      {/* Filter chips — country + rank */}
+      <div className="mb-6">
+        <PlayerFilterBar
+          filters={{ country, rankMax }}
+          countries={countries}
+          basePath="/players"
+          extraParams={extraParams}
+        />
+      </div>
+
       {error ? (
         <p className="text-loss font-sans text-sm">Failed to load players.</p>
       ) : (
@@ -224,6 +261,11 @@ export default async function PlayersPage({
             {sorted.length} players
           </p>
 
+          {sorted.length === 0 ? (
+            <div className="rounded-lg border border-white/5 bg-white/[0.02] p-12 text-center">
+              <p className="font-sans text-text-dim text-sm">No players found.</p>
+            </div>
+          ) : (
           <div className="divide-y divide-white/5">
             {sorted.map((player, i) => (
               <PlayerRow
@@ -235,6 +277,7 @@ export default async function PlayersPage({
               />
             ))}
           </div>
+          )}
         </>
       )}
     </main>
