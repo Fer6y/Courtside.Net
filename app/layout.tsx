@@ -31,6 +31,7 @@ export default function RootLayout({
       <html
         lang="en"
         className={`${ibmPlexMono.variable} ${dmSans.variable} dark h-full antialiased`}
+        suppressHydrationWarning
       >
         <body className="min-h-full flex flex-col bg-background text-text-primary">
           <ToastProvider>

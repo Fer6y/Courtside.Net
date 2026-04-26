@@ -121,7 +121,7 @@ export default async function ProfilePage({ params }: Props) {
           speed, court_coverage, positioning,
           player:player_id ( id, name, country, current_rank )
         `)
-        .eq("user_id", profile.clerk_user_id)
+        .eq("user_id", profile.id)
         .order("created_at", { ascending: false }),
 
       admin
@@ -231,23 +231,25 @@ export default async function ProfilePage({ params }: Props) {
         style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
       >
         {[
-          { value: reviews.length,   label: "Reviews" },
-          { value: favorites.length, label: "Favorites" },
-          { value: ratings.length,   label: "Players Rated" },
-          { value: watchLog.length,  label: "Watched" },
-          { value: followers,        label: "Followers" },
-          { value: following,        label: "Following" },
-        ].map(({ value, label }, i) => (
+          { value: reviews.length,   label: "Reviews",        tab: "reviews"   },
+          { value: favorites.length, label: "Favorites",      tab: "favorites" },
+          { value: ratings.length,   label: "Players Rated",  tab: "ratings"   },
+          { value: namedCollections.length, label: "Collections", tab: "collections" },
+          { value: followers,        label: "Followers",      tab: "followers" },
+          { value: following,        label: "Following",      tab: "following" },
+        ].map(({ value, label, tab }, i) => (
           <div key={label} className="flex items-center">
             {i > 0 && (
               <div className="w-px h-8 mx-6" style={{ background: "rgba(255,255,255,0.08)" }} />
             )}
-            <div>
-              <div className="font-mono text-2xl font-bold text-text-primary">{value}</div>
-              <div className="font-mono text-[10px] text-text-dim uppercase tracking-widest mt-0.5">
+            <Link href={`/profile/${profile.username}/${tab}`} className="group">
+              <div className="font-mono text-2xl font-bold text-text-primary group-hover:text-primary transition-colors duration-150">
+                {value}
+              </div>
+              <div className="font-mono text-[10px] text-text-dim uppercase tracking-widest mt-0.5 group-hover:text-text-mid transition-colors duration-150">
                 {label}
               </div>
-            </div>
+            </Link>
           </div>
         ))}
       </div>
