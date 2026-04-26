@@ -1,0 +1,48 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { followUser, unfollowUser } from "@/app/profile/[username]/follow/actions";
+
+interface Props {
+  targetProfileId: string;
+  initialIsFollowing: boolean;
+}
+
+export default function FollowButton({ targetProfileId, initialIsFollowing }: Props) {
+  const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
+  const [isPending, startTransition]  = useTransition();
+  const router = useRouter();
+
+  function toggle() {
+    startTransition(async () => {
+      const prev = isFollowing;
+      setIsFollowing(!prev); // optimistic
+      try {
+        if (prev) await unfollowUser(targetProfileId);
+        else      await followUser(targetProfileId);
+        router.refresh(); // update follower counts
+      } catch {
+        setIsFollowing(prev); // revert on error
+      }
+    });
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      disabled={isPending}
+      className="font-mono text-xs px-4 py-2 rounded-lg font-semibold transition-all duration-150"
+      style={{
+        background:  isFollowing ? "transparent" : "#22d68a",
+        color:       isFollowing ? "#9ca3af"      : "#0e1116",
+        border:      isFollowing ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
+        cursor:      isPending   ? "not-allowed"  : "pointer",
+        opacity:     isPending   ? 0.6            : 1,
+        minHeight:   36,
+      }}
+    >
+      {isFollowing ? "Following" : "Follow"}
+    </button>
+  );
+}

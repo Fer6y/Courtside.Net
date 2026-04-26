@@ -6,6 +6,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import PlayerNameWithBubble from "@/components/PlayerNameWithBubble";
 import DeleteReviewButton from "@/components/DeleteReviewButton";
+import CommentThread, { type Comment } from "@/components/CommentThread";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -99,6 +100,29 @@ export default async function MatchPage({ params }: Props) {
     .order("created_at", { ascending: false });
 
   const reviews = (rawReviews ?? []) as unknown as ReviewRow[];
+
+  // Fetch comments for all reviews
+  const reviewIds = reviews.map((r) => r.id);
+  let commentsByReview: Record<string, Comment[]> = {};
+  if (reviewIds.length > 0) {
+    const { data: rawComments } = await admin
+      .from("comments")
+      .select(`
+        id, user_id, review_id, parent_comment_id, body, created_at,
+        profile:user_id ( username, display_name, clerk_user_id )
+      `)
+      .in("review_id", reviewIds)
+      .order("created_at", { ascending: true });
+
+    commentsByReview = ((rawComments ?? []) as unknown as Comment[]).reduce(
+      (acc, c) => {
+        if (!acc[c.review_id]) acc[c.review_id] = [];
+        acc[c.review_id].push(c);
+        return acc;
+      },
+      {} as Record<string, Comment[]>
+    );
+  }
 
   // Compute averages
   const count = reviews.length;
@@ -274,6 +298,8 @@ export default async function MatchPage({ params }: Props) {
               p2Name={p2.name}
               isOwn={review.profile?.clerk_user_id === userId}
               matchId={id}
+              comments={commentsByReview[review.id] ?? []}
+              currentClerkUserId={userId ?? null}
             />
           ))}
         </div>
@@ -304,12 +330,16 @@ function ReviewCard({
   p2Name,
   isOwn,
   matchId,
+  comments,
+  currentClerkUserId,
 }: {
   review: ReviewRow;
   p1Name: string;
   p2Name: string;
   isOwn: boolean;
   matchId: string;
+  comments: Comment[];
+  currentClerkUserId: string | null;
 }) {
   const name = review.profile?.display_name ?? review.profile?.username ?? "Anonymous";
 
@@ -372,6 +402,13 @@ function ReviewCard({
           {review.comment}
         </p>
       )}
+
+      {/* Comment thread */}
+      <CommentThread
+        reviewId={review.id}
+        initialComments={comments}
+        currentClerkUserId={currentClerkUserId}
+      />
     </div>
   );
 }

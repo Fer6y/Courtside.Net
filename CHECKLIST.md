@@ -53,11 +53,11 @@
 - [x] Display community reviews on match pages (list with usernames, ratings, comments)
 - [x] Display community rating averages on match pages (avg match/P1/P2 scores)
 - [x] Edit / delete own reviews (edit links to form, delete with inline confirm)
-- [ ] Comment threads on reviews
+- [x] Comment threads on reviews
 - [x] User profile page (/profile/[username]) — review history, ratings given, watch log, collections
 - [x] Watch log — grouped by collection on profile page
 - [ ] Achievement decal system (tiers, triggers, display)
-- [ ] Follow system (follow users, personalised feed)
+- [x] Follow system (follow/unfollow button on profiles, follower/following counts)
 
 ## Match Filtering
 - [x] MatchFilterBar — horizontal scrollable chip row with anchored dropdowns

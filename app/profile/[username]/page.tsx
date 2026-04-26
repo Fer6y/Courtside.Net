@@ -1,6 +1,8 @@
+import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import FollowButton from "@/components/FollowButton";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -55,6 +57,7 @@ function memberSince(iso: string): string {
 
 export default async function ProfilePage({ params }: Props) {
   const { username } = await params;
+  const { userId: currentClerkId } = await auth();
 
   const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -73,8 +76,27 @@ export default async function ProfilePage({ params }: Props) {
   const initials = displayName
     .split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
 
-  const [{ data: rawReviews }, { data: rawRatings }, { data: rawWatch }] =
-    await Promise.all([
+  const isOwnProfile = currentClerkId === profile.clerk_user_id;
+
+  // Resolve current user's profile id (for follow check)
+  let currentProfileId: string | null = null;
+  if (currentClerkId && !isOwnProfile) {
+    const { data: me } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("clerk_user_id", currentClerkId)
+      .single();
+    currentProfileId = me?.id ?? null;
+  }
+
+  const [
+    { data: rawReviews },
+    { data: rawRatings },
+    { data: rawWatch },
+    { count: followerCount },
+    { count: followingCount },
+    { data: followRow },
+  ] = await Promise.all([
       admin
         .from("reviews")
         .select(`
@@ -114,11 +136,37 @@ export default async function ProfilePage({ params }: Props) {
         `)
         .eq("user_id", profile.id)
         .order("created_at", { ascending: false }),
+
+      // Follower count
+      admin
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", profile.id),
+
+      // Following count
+      admin
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("follower_id", profile.id),
+
+      // Is current user following this profile?
+      currentProfileId
+        ? admin
+            .from("follows")
+            .select("follower_id")
+            .eq("follower_id", currentProfileId)
+            .eq("following_id", profile.id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
 
   const reviews  = (rawReviews  ?? []) as unknown as ReviewRow[];
   const ratings  = (rawRatings  ?? []) as unknown as RatingRow[];
   const watchLog = (rawWatch    ?? []) as unknown as WatchRow[];
+
+  const followers   = followerCount ?? 0;
+  const following   = followingCount ?? 0;
+  const isFollowing = !!followRow;
 
   // Derived sections — all computed from existing data, no extra queries
   const favorites     = reviews.filter((r) => r.is_favorited);
@@ -154,10 +202,20 @@ export default async function ProfilePage({ params }: Props) {
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="font-mono text-3xl font-bold text-text-primary leading-none mb-1">
-            {displayName}
-          </h1>
-          <p className="font-mono text-sm text-text-dim mb-2">@{profile.username}</p>
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h1 className="font-mono text-3xl font-bold text-text-primary leading-none mb-1">
+                {displayName}
+              </h1>
+              <p className="font-mono text-sm text-text-dim mb-2">@{profile.username}</p>
+            </div>
+            {currentClerkId && !isOwnProfile && (
+              <FollowButton
+                targetProfileId={profile.id}
+                initialIsFollowing={isFollowing}
+              />
+            )}
+          </div>
           {profile.bio && (
             <p className="font-sans text-sm text-text-mid mb-2 max-w-md">{profile.bio}</p>
           )}
@@ -177,6 +235,8 @@ export default async function ProfilePage({ params }: Props) {
           { value: favorites.length, label: "Favorites" },
           { value: ratings.length,   label: "Players Rated" },
           { value: watchLog.length,  label: "Watched" },
+          { value: followers,        label: "Followers" },
+          { value: following,        label: "Following" },
         ].map(({ value, label }, i) => (
           <div key={label} className="flex items-center">
             {i > 0 && (
