@@ -54,16 +54,17 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
   );
 
   // ── Fetch filter options ─────────────────────────────────────────────────────
-  const [{ data: tournamentRows }, { data: yearRows }, { data: surfaceRows }] = await Promise.all([
+  const [{ data: tournamentRows }, { data: yearRows }] = await Promise.all([
     supabase.from("matches").select("tournament").order("tournament").limit(500),
     supabase.from("matches").select("match_date").not("match_date", "is", null).limit(10000),
-    supabase.from("matches").select("surface").not("surface", "is", null).limit(500),
   ]);
 
   const tournaments = [...new Set((tournamentRows ?? []).map((r) => r.tournament).filter(Boolean))].sort();
   const years = [...new Set((yearRows ?? []).map((r) => r.match_date?.slice(0, 4)).filter(Boolean))]
     .sort((a, b) => Number(b) - Number(a)) as string[];
-  const surfaces = [...new Set((surfaceRows ?? []).map((r) => r.surface).filter(Boolean))].sort() as string[];
+
+  // Surfaces are schema-defined constants — no need to query
+  const surfaces = ["Hard", "Clay", "Grass"];
 
   // ── Min rating: pre-fetch qualifying match IDs ───────────────────────────────
   let ratedMatchIds: string[] | null = null;

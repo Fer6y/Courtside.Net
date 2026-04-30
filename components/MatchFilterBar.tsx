@@ -5,12 +5,16 @@ import { useRouter } from "next/navigation";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const ROUND_ORDER = ["R128", "R64", "R32", "R16", "QF", "SF", "F", "RR"];
-const ROUND_LABELS: Record<string, string> = {
-  R128: "R128 — First Round",   R64: "R64 — Second Round",
-  R32:  "R32 — Third Round",    R16: "Round of 16",
-  QF:   "Quarterfinal",         SF:  "Semifinal",
-  F:    "Final",                RR:  "Round Robin",
+// These must match the values stored in the DB (expanded by import-matches.ts)
+const ROUND_ORDER = [
+  "Round of 128", "Round of 64", "Round of 32", "Round of 16",
+  "Quarterfinal", "Semifinal", "Final", "Round Robin",
+];
+const ROUND_SHORT: Record<string, string> = {
+  "Round of 128": "R128", "Round of 64": "R64",
+  "Round of 32":  "R32",  "Round of 16": "R16",
+  "Quarterfinal": "QF",   "Semifinal":   "SF",
+  "Final":        "F",    "Round Robin": "RR",
 };
 
 const LEVEL_OPTIONS  = [
@@ -221,7 +225,7 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
 
   const chips = [
     { key: "level",      label: multiLabel("level",   "Level",   LEVEL_OPTIONS) },
-    { key: "round",      label: multiLabel("round",   "Round",   ROUND_ORDER.map((r) => ({ label: r, value: r }))) },
+    { key: "round",      label: multiLabel("round", "Round", ROUND_ORDER.map((r) => ({ label: ROUND_SHORT[r] ?? r, value: r })))  },
     { key: "tournament", label: singleLabel("tournament", "Tournament") },
     { key: "surface",    label: multiLabel("surface", "Surface", options.surfaces.map((s) => ({ label: s, value: s }))) },
     { key: "year",       label: singleLabel("year",   "Year",    yearRanges) },
@@ -298,8 +302,8 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
               <DropLabel>Select rounds</DropLabel>
               {ROUND_ORDER.map((r) => (
                 <CheckRow key={r}
-                  label={ROUND_LABELS[r]}
-                  sublabel={["QF","SF","F","RR"].includes(r) ? undefined : r}
+                  label={r}
+                  sublabel={ROUND_SHORT[r]}
                   checked={isOn(eff.round, r)}
                   onClick={() => toggle("round", r)} />
               ))}
