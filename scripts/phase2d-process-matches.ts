@@ -62,13 +62,19 @@ function normaliseSurface(raw: unknown): "Hard" | "Clay" | "Grass" | "Carpet" | 
   return null;
 }
 
-// roundId is numeric in MatchStat. Common mapping (Grand Slam, 128 draw):
-// 1=R128, 2=R64, 3=R32, 4=R16, 5=QF, 6=SF, 7=F, 12=SF(ATP Finals), 13=F(ATP Finals), 14=RR
+// roundId is numeric in MatchStat. Confirmed from AO 2026 draw (128-player):
+// 4=R128(64), 5=R64(32), 6=R32(16), 7=R16(8), 9=QF(4), 10=SF(2), 12=Final(1)
 const ROUND_ID_MAP: Record<number, string> = {
-  1: "Round of 128", 2: "Round of 64", 3: "Round of 32",
-  4: "Round of 16",  5: "Quarterfinal", 6: "Semifinal", 7: "Final",
-  8: "Qualifying",   9: "Qualifying R2", 10: "Qualifying R1",
-  11: "Round Robin", 12: "Semifinal", 13: "Final", 14: "Round Robin",
+  4:  "Round of 128",
+  5:  "Round of 64",
+  6:  "Round of 32",
+  7:  "Round of 16",
+  9:  "Quarterfinal",
+  10: "Semifinal",
+  11: "Round Robin",
+  12: "Final",
+  13: "Final",
+  14: "Round Robin",
 };
 
 function normaliseRound(raw: unknown): string | null {
