@@ -20,17 +20,18 @@ const SURFACE_COLOR: Record<string, string> = {
 };
 
 const SKILL_KEYS = [
-  "focus","clutch","resilience","serve","forehand","backhand",
-  "net_play","touch","return_play","reaction_time",
-  "speed","court_coverage","positioning",
+  "focus","clutch","resilience","processing_time",
+  "serve","forehand","backhand","shot_variety",
+  "net_play","touch","return_play","reaction_time","deception",
+  "speed","court_coverage","positioning","anticipation",
 ] as const;
 
 const SKILL_LABELS: Record<string, string> = {
-  focus: "Focus", clutch: "Clutch", resilience: "Resilience",
-  serve: "Serve", forehand: "Forehand", backhand: "Backhand",
-  net_play: "Net Play", touch: "Touch", return_play: "Return",
-  reaction_time: "Reaction", speed: "Speed",
-  court_coverage: "Coverage", positioning: "Positioning",
+  focus: "Focus", clutch: "Clutch", resilience: "Resilience", processing_time: "Proc. Time",
+  serve: "Serve", forehand: "Forehand", backhand: "Backhand", shot_variety: "Shot Variety",
+  net_play: "Net Play", touch: "Touch", return_play: "Return", reaction_time: "Reaction",
+  deception: "Deception", speed: "Speed", court_coverage: "Coverage",
+  positioning: "Positioning", anticipation: "Anticipation",
 };
 
 function timeAgo(iso: string): string {
@@ -200,9 +201,10 @@ async function TabContent({
         .from("skill_ratings")
         .select(`
           player_id, created_at,
-          focus, clutch, resilience, serve, forehand, backhand,
-          net_play, touch, return_play, reaction_time,
-          speed, court_coverage, positioning,
+          focus, clutch, resilience, processing_time,
+          serve, forehand, backhand, shot_variety,
+          net_play, touch, return_play, reaction_time, deception,
+          speed, court_coverage, positioning, anticipation,
           player:player_id ( id, name, country, current_rank )
         `)
         .eq("user_id", profile.id)

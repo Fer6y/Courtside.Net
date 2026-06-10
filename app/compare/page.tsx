@@ -11,10 +11,10 @@ export const metadata = { title: "Compare Players — Courtside" };
 type SearchParams = Promise<{ p1?: string; p2?: string }>;
 
 const SKILL_KEYS = [
-  "focus", "clutch", "resilience",
-  "serve", "forehand", "backhand",
-  "net_play", "touch", "return_play", "reaction_time",
-  "speed", "court_coverage", "positioning",
+  "focus", "clutch", "resilience", "processing_time",
+  "serve", "forehand", "backhand", "shot_variety",
+  "net_play", "touch", "return_play", "reaction_time", "deception",
+  "speed", "court_coverage", "positioning", "anticipation",
 ] as const;
 
 async function fetchPlayerWithRatings(id: string) {

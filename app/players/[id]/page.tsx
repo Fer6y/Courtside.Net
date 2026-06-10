@@ -72,9 +72,10 @@ export default async function PlayerPage({ params, searchParams }: Props) {
 
   // Fetch all community skill ratings and average them in JS
   const SKILL_KEYS = [
-    "focus","clutch","resilience","serve","forehand","backhand",
-    "net_play","touch","return_play","reaction_time",
-    "speed","court_coverage","positioning",
+    "focus","clutch","resilience","processing_time",
+    "serve","forehand","backhand","shot_variety",
+    "net_play","touch","return_play","reaction_time","deception",
+    "speed","court_coverage","positioning","anticipation",
   ] as const;
 
   const { data: skillRows } = await supabase
