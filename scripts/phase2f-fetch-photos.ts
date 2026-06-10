@@ -70,7 +70,7 @@ function getCodeFromProfile(profile: Record<string, unknown>): string | null {
 function extractWtaId(url: string | null | undefined): string | null {
   if (!url) return null;
   // Matches /players/{numeric-id}/{slug}/... — ID is purely numeric
-  const match = url.match(/\/players\/(\d+)\//);
+  const match = url.match(/\/players\/(\d+)\//) ?? url.match(/\/player-profile\/(\d+)/);
   return match ? match[1] : null;
 }
 
