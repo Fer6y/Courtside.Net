@@ -273,6 +273,18 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       </div>
 
       {/* Community Rating */}
+      {reviewCount === 0 && (
+        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-8 mb-10 text-center">
+          <p className="font-mono text-xs uppercase tracking-widest text-text-dim mb-2">Community Rating</p>
+          <p className="font-sans text-sm text-text-dim mb-4">No one has reviewed a match featuring {p.name} yet.</p>
+          <Link
+            href="/matches"
+            className="font-mono text-xs text-primary hover:text-primary/80 transition-colors duration-150"
+          >
+            Browse matches →
+          </Link>
+        </div>
+      )}
       {reviewCount > 0 && (
         <div className="rounded-lg border border-white/5 bg-white/[0.02] p-6 mb-10">
           <div className="flex items-center justify-between mb-5">

@@ -268,7 +268,19 @@ export default async function ProfilePage({ params }: Props) {
 
       {isEmpty && (
         <div className="rounded-lg border border-white/5 bg-white/[0.02] p-10 text-center">
-          <p className="font-sans text-text-dim text-sm">No activity yet.</p>
+          <p className="font-mono text-xs uppercase tracking-widest text-text-dim mb-3">No activity yet</p>
+          <p className="font-sans text-sm text-text-dim mb-5">
+            Rate a player&apos;s skills or review a match to start building your catalogue.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Link href="/players" className="font-mono text-xs px-4 py-2 rounded-lg transition-colors duration-150"
+              style={{ background: "#22d68a", color: "#0e1116" }}>
+              Rate a player
+            </Link>
+            <Link href="/matches" className="font-mono text-xs px-4 py-2 rounded-lg border border-white/10 text-text-dim hover:text-text-primary transition-colors duration-150">
+              Browse matches
+            </Link>
+          </div>
         </div>
       )}
 
