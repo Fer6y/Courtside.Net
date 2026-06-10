@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { followUser, unfollowUser } from "@/app/profile/[username]/follow/actions";
+import AchievementBanner from "@/components/AchievementBanner";
 
 interface Props {
   targetProfileId: string;
@@ -12,6 +13,7 @@ interface Props {
 export default function FollowButton({ targetProfileId, initialIsFollowing }: Props) {
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [isPending, startTransition]  = useTransition();
+  const [earnedIds, setEarnedIds]     = useState<string[]>([]);
   const router = useRouter();
 
   function toggle() {
@@ -19,9 +21,13 @@ export default function FollowButton({ targetProfileId, initialIsFollowing }: Pr
       const prev = isFollowing;
       setIsFollowing(!prev); // optimistic
       try {
-        if (prev) await unfollowUser(targetProfileId);
-        else      await followUser(targetProfileId);
-        router.refresh(); // update follower counts
+        if (prev) {
+          await unfollowUser(targetProfileId);
+        } else {
+          const result = await followUser(targetProfileId);
+          if (result.newAchievements?.length) setEarnedIds(result.newAchievements);
+        }
+        router.refresh();
       } catch {
         setIsFollowing(prev); // revert on error
       }
@@ -29,6 +35,8 @@ export default function FollowButton({ targetProfileId, initialIsFollowing }: Pr
   }
 
   return (
+    <>
+    <AchievementBanner achievementIds={earnedIds} onClear={() => setEarnedIds([])} />
     <button
       onClick={toggle}
       disabled={isPending}
@@ -44,5 +52,6 @@ export default function FollowButton({ targetProfileId, initialIsFollowing }: Pr
     >
       {isFollowing ? "Following" : "Follow"}
     </button>
+    </>
   );
 }

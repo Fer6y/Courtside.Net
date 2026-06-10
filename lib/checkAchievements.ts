@@ -10,7 +10,10 @@ type ReviewWithMatch = {
   match: { surface: string | null; tournament: string } | null;
 };
 
-export async function checkAndAwardAchievements(profileId: string): Promise<string[]> {
+export async function checkAndAwardAchievements(
+  profileId: string,
+  opts?: { filterApplied?: boolean }
+): Promise<string[]> {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -101,7 +104,7 @@ export async function checkAndAwardAchievements(profileId: string): Promise<stri
   // ── Criteria map ─────────────────────────────────────────────────────────
   const criteria: Record<string, boolean> = {
     first_review:     totalReviews >= 1,
-    first_search:     totalReviews >= 1,  // browsed + reviewed — award together
+    first_search:     opts?.filterApplied === true,
     first_follow:     (followingCount ?? 0) >= 1,
     first_collection: namedCollections.size >= 1,
     scorekeeper:      totalReviews >= 10,

@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import RadarChart from "@/components/radar/RadarChart";
 import MatchFilterBar, { type MatchFilters } from "@/components/MatchFilterBar";
 import CountryFlag from "@/components/CountryFlag";
+import MatchHistoryList from "@/components/MatchHistoryList";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -118,7 +119,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
     `)
     .or(`player1_id.eq.${id},player2_id.eq.${id}`)
     .order("match_date", { ascending: false, nullsFirst: false })
-    .limit(50);
+    .limit(200);
 
   if (round)   matchQuery = matchQuery.eq("round", round);
   if (surface) matchQuery = matchQuery.eq("surface", surface);
@@ -334,11 +335,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
             )}
           </div>
         ) : (
-          <div className="divide-y divide-white/5">
-            {(matches as MatchWithPlayers[]).map((match) => (
-              <MatchRow key={match.id} match={match} playerId={id} />
-            ))}
-          </div>
+          <MatchHistoryList matches={matches as MatchWithPlayers[]} playerId={id} />
         )}
       </section>
     </main>
@@ -359,71 +356,3 @@ function RatingBar({ value, color }: { value: number; color: string }) {
   );
 }
 
-function MatchRow({
-  match,
-  playerId,
-}: {
-  match: MatchWithPlayers;
-  playerId: string;
-}) {
-  const won = match.winner_id === playerId;
-  const opponent =
-    match.player1_id === playerId ? match.player2 : match.player1;
-
-  const surfaceColor: Record<string, string> = {
-    Hard:  "text-court-hard",
-    Clay:  "text-court-clay",
-    Grass: "text-court-grass",
-  };
-
-  return (
-    <Link
-      href={`/matches/${match.id}`}
-      className="flex items-center justify-between py-3 px-2 hover:bg-white/[0.03] rounded transition-colors duration-150 group"
-    >
-      <div className="flex items-center gap-4">
-        {/* W/L */}
-        <span
-          className={`font-mono text-xs font-bold w-5 ${won ? "text-primary" : "text-loss"}`}
-        >
-          {won ? "W" : "L"}
-        </span>
-
-        {/* Opponent */}
-        <span className="font-sans text-text-primary group-hover:text-primary transition-colors duration-150">
-          {opponent?.name ?? "Unknown"}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-4 text-right">
-        {/* Score */}
-        {match.score && (
-          <span className="font-mono text-sm text-text-dim hidden sm:block">
-            {match.score}
-          </span>
-        )}
-
-        {/* Surface */}
-        {match.surface && (
-          <span
-            className={`font-mono text-xs ${surfaceColor[match.surface] ?? "text-text-dim"}`}
-          >
-            {match.surface}
-          </span>
-        )}
-
-        {/* Tournament + round */}
-        <span className="font-sans text-xs text-text-dim hidden md:block">
-          {match.tournament} · {match.round}
-        </span>
-
-        {/* Date */}
-        {match.match_date && (
-          <span className="font-mono text-xs text-text-dim">
-            {match.match_date.slice(0, 4)}
-          </span>
-        )}
-      </div>
-    </Link>
-  );
-}

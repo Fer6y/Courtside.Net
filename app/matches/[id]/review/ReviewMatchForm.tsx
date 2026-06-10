@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { submitMatchReview } from "./actions";
 import { useToast } from "@/components/toast/ToastContext";
+import AchievementBanner from "@/components/AchievementBanner";
 
 interface Player {
   id: string;
@@ -81,6 +82,7 @@ export default function ReviewMatchForm({ matchId, player1, player2, existing }:
   const [collection,    setCollection]    = useState(existing?.collection_name ?? "");
   const [pending,       setPending]       = useState(false);
   const [error,         setError]         = useState<string | null>(null);
+  const [earnedIds,     setEarnedIds]     = useState<string[]>([]);
 
   const formRef = useRef<HTMLFormElement>(null);
   const router  = useRouter();
@@ -94,9 +96,10 @@ export default function ReviewMatchForm({ matchId, player1, player2, existing }:
     try {
       const fd = new FormData(formRef.current!);
       fd.set("is_favorited", String(favorited));
-      await submitMatchReview(matchId, fd);
+      const result = await submitMatchReview(matchId, fd);
       toast.success(toastId, "Review saved!");
       setPending(false);
+      if (result.newAchievements?.length) setEarnedIds(result.newAchievements);
       router.push(`/matches/${matchId}`);
       router.refresh();
     } catch (err) {
@@ -108,6 +111,8 @@ export default function ReviewMatchForm({ matchId, player1, player2, existing }:
   }
 
   return (
+    <>
+    <AchievementBanner achievementIds={earnedIds} onClear={() => setEarnedIds([])} />
     <form ref={formRef} onSubmit={handleSubmit}>
       <div className="flex flex-col gap-10">
 
@@ -267,5 +272,6 @@ export default function ReviewMatchForm({ matchId, player1, player2, existing }:
         </a>
       </div>
     </form>
+    </>
   );
 }

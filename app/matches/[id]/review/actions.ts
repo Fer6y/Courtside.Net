@@ -65,10 +65,9 @@ export async function submitMatchReview(matchId: string, formData: FormData) {
 
   if (watchErr) throw new Error(watchErr.message);
 
-  // Check + award any newly earned achievements (fire-and-forget — don't block the response)
-  checkAndAwardAchievements(profile.id).catch(() => {});
+  const newAchievements = await checkAndAwardAchievements(profile.id).catch(() => [] as string[]);
 
-  return { success: true };
+  return { success: true, newAchievements };
 }
 
 export async function deleteReview(reviewId: string) {

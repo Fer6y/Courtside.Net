@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AchievementBanner from "@/components/AchievementBanner";
+import { awardScoutBadge } from "@/app/actions/scout";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -105,10 +107,12 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
   const [playerQuery, setPlayerQuery]     = useState("");
   const [playerResults, setPlayerResults] = useState<PlayerResult[]>([]);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scrollRowRef = useRef<HTMLDivElement>(null);
-  const chipRefs     = useRef<Record<string, HTMLDivElement | null>>({});
-  const debounceRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const scrollRowRef  = useRef<HTMLDivElement>(null);
+  const chipRefs      = useRef<Record<string, HTMLDivElement | null>>({});
+  const debounceRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scoutFiredRef = useRef(false);
+  const [earnedIds, setEarnedIds] = useState<string[]>([]);
 
   // Effective filters = URL params overridden by pending local changes
   const eff: MatchFilters = { ...filters, ...pending };
@@ -144,6 +148,12 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
     for (const k of ALL_KEYS) { const v = merged[k]; if (v) next[k] = v; }
     router.push(`${basePath}?${new URLSearchParams(next)}`);
     setPending({});
+
+    // Award Scout badge on first filter application this session
+    if (!scoutFiredRef.current) {
+      scoutFiredRef.current = true;
+      awardScoutBadge().then((ids) => { if (ids.length) setEarnedIds(ids); }).catch(() => {});
+    }
   }
 
   function applyAndClose() {
@@ -236,6 +246,8 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
+    <>
+    <AchievementBanner achievementIds={earnedIds} onClear={() => setEarnedIds([])} />
     <div ref={containerRef} style={{ position: "relative" }}>
 
       {/* Scrollable chip row */}
@@ -458,6 +470,7 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
         </div>
       )}
     </div>
+    </>
   );
 }
 

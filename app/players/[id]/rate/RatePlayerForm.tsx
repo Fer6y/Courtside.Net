@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { submitSkillRating } from "./actions";
 import { useToast } from "@/components/toast/ToastContext";
+import AchievementBanner from "@/components/AchievementBanner";
 
 const CATEGORIES = [
   {
@@ -72,7 +73,8 @@ export default function RatePlayerForm({
   const [values, setValues] = useState<Record<SkillKey, number>>(
     () => defaultValues(existing)
   );
-  const [pending, setPending] = useState(false);
+  const [pending, setPending]   = useState(false);
+  const [earnedIds, setEarnedIds] = useState<string[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const toast = useToast();
@@ -86,9 +88,10 @@ export default function RatePlayerForm({
     const toastId = toast.loading("Saving rating…");
     try {
       const fd = new FormData(formRef.current!);
-      await submitSkillRating(playerId, fd);
+      const result = await submitSkillRating(playerId, fd);
       toast.success(toastId, "Rating saved!");
       setPending(false);
+      if (result.newAchievements?.length) setEarnedIds(result.newAchievements);
       router.push(`/players/${playerId}`);
       router.refresh();
     } catch {
@@ -98,6 +101,8 @@ export default function RatePlayerForm({
   }
 
   return (
+    <>
+    <AchievementBanner achievementIds={earnedIds} onClear={() => setEarnedIds([])} />
     <form ref={formRef} onSubmit={handleSubmit}>
       <div className="flex flex-col gap-8">
         {CATEGORIES.map((cat) => (
@@ -189,5 +194,6 @@ export default function RatePlayerForm({
         </a>
       </div>
     </form>
+    </>
   );
 }
