@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { flagUrl } from "@/lib/countryFlags";
 
 interface CountryFlagProps {
@@ -18,13 +17,14 @@ export default function CountryFlag({ code, size = 20, className }: CountryFlagP
   const height = size === 20 ? 14 : size === 24 ? 16 : 28;
 
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src={url}
       alt={code ?? ""}
       width={size}
       height={height}
       className={className}
-      unoptimized
+      style={{ display: "inline-block" }}
     />
   );
 }
