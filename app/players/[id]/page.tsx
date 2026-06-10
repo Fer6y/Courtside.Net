@@ -126,10 +126,21 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   if (surface) matchQuery = matchQuery.eq("surface", surface);
   if (year)    matchQuery = matchQuery.gte("match_date", `${year}-01-01`).lte("match_date", `${year}-12-31`);
 
-  const { data: matches } = await matchQuery;
+  const { data: rawMatches } = await matchQuery;
+
+  // Secondary sort: within the same match_date, show Finals/Semis before early rounds
+  const ROUND_PRIORITY: Record<string, number> = {
+    "Final": 10, "Semifinal": 9, "Quarterfinal": 8,
+    "Round of 16": 7, "Round of 32": 6, "Round of 64": 5, "Round of 128": 4,
+  };
+  const matches = (rawMatches ?? []).sort((a, b) => {
+    const dateDiff = (b.match_date ?? "").localeCompare(a.match_date ?? "");
+    if (dateDiff !== 0) return dateDiff;
+    return (ROUND_PRIORITY[b.round ?? ""] ?? 0) - (ROUND_PRIORITY[a.round ?? ""] ?? 0);
+  });
 
   // Fetch community reviews for this player's matches
-  const matchIds = (matches ?? []).map((m) => m.id);
+  const matchIds = matches.map((m) => m.id);
   let avgPerformance = 0;
   let avgMatchQuality = 0;
   let reviewCount = 0;
@@ -144,7 +155,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
     if (reviewRows && reviewRows.length > 0) {
       // Map match_id → which position this player occupies
       const roleMap = new Map<string, "player1" | "player2">();
-      for (const m of matches as MatchWithPlayers[]) {
+      for (const m of matches as unknown as MatchWithPlayers[]) {
         roleMap.set(m.id, m.player1_id === id ? "player1" : "player2");
       }
 
@@ -348,7 +359,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
             )}
           </div>
         ) : (
-          <MatchHistoryList matches={matches as MatchWithPlayers[]} playerId={id} />
+          <MatchHistoryList matches={matches as unknown as MatchWithPlayers[]} playerId={id} />
         )}
       </section>
     </main>
