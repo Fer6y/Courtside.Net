@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="38" fill="#22d68a0d" stroke="#22d68a" stroke-width="2"/>
+  <!-- Crown -->
+  <path d="M26,44 L26,36 L32,41 L40,26 L48,41 L54,36 L54,44 Z" fill="none" stroke="#22d68a" stroke-width="2" stroke-linejoin="round"/>
+  <line x1="26" y1="46" x2="54" y2="46" stroke="#22d68a" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Pen nib beneath crown -->
+  <path d="M37,52 L40,60 L43,52 L40,50 Z" fill="#22d68a" stroke="none"/>
+  <line x1="38" y1="53" x2="42" y2="53" stroke="#22d68a0d" stroke-width="0.5"/>
+  <!-- Crown gems -->
+  <circle cx="26" cy="36" r="2" fill="#22d68a"/>
+  <circle cx="40" cy="26" r="2" fill="#22d68a"/>
+  <circle cx="54" cy="36" r="2" fill="#22d68a"/>
+</svg>

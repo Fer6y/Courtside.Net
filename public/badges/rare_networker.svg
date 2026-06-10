@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="38" fill="#f5c5180d" stroke="#f5c518" stroke-width="1.5"/>
+  <!-- Network nodes -->
+  <circle cx="40" cy="28" r="5" fill="#f5c51820" stroke="#f5c518" stroke-width="1.8"/>
+  <circle cx="22" cy="44" r="5" fill="#f5c51820" stroke="#f5c518" stroke-width="1.8"/>
+  <circle cx="58" cy="44" r="5" fill="#f5c51820" stroke="#f5c518" stroke-width="1.8"/>
+  <circle cx="30" cy="56" r="4" fill="#f5c51820" stroke="#f5c518" stroke-width="1.5"/>
+  <circle cx="50" cy="56" r="4" fill="#f5c51820" stroke="#f5c518" stroke-width="1.5"/>
+  <!-- Connections -->
+  <line x1="40" y1="33" x2="25" y2="40" stroke="#f5c518" stroke-width="1.3"/>
+  <line x1="40" y1="33" x2="55" y2="40" stroke="#f5c518" stroke-width="1.3"/>
+  <line x1="24" y1="49" x2="29" y2="52" stroke="#f5c518" stroke-width="1.3"/>
+  <line x1="55" y1="49" x2="51" y2="52" stroke="#f5c518" stroke-width="1.3"/>
+  <line x1="35" y1="56" x2="46" y2="56" stroke="#f5c518" stroke-width="1.3"/>
+</svg>

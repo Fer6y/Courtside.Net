@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="38" fill="#f5c5180d" stroke="#f5c518" stroke-width="1.5"/>
+  <!-- Crown -->
+  <path d="M22,50 L22,38 L30,44 L40,28 L50,44 L58,38 L58,50 Z" fill="none" stroke="#f5c518" stroke-width="2" stroke-linejoin="round"/>
+  <line x1="22" y1="52" x2="58" y2="52" stroke="#f5c518" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Crown gems -->
+  <circle cx="22" cy="38" r="2.5" fill="#f5c518"/>
+  <circle cx="40" cy="28" r="2.5" fill="#f5c518"/>
+  <circle cx="58" cy="38" r="2.5" fill="#f5c518"/>
+</svg>

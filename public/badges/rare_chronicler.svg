@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="38" fill="#f5c5180d" stroke="#f5c518" stroke-width="1.5"/>
+  <!-- Scroll -->
+  <rect x="26" y="30" width="28" height="26" rx="1" fill="none" stroke="#f5c518" stroke-width="1.8"/>
+  <!-- Scroll rolls at top and bottom -->
+  <ellipse cx="40" cy="30" rx="14" ry="4" fill="none" stroke="#f5c518" stroke-width="1.8"/>
+  <ellipse cx="40" cy="56" rx="14" ry="4" fill="none" stroke="#f5c518" stroke-width="1.8"/>
+  <!-- Text lines on scroll -->
+  <line x1="32" y1="38" x2="48" y2="38" stroke="#f5c518" stroke-width="1.3" stroke-linecap="round"/>
+  <line x1="32" y1="43" x2="48" y2="43" stroke="#f5c518" stroke-width="1.3" stroke-linecap="round"/>
+  <line x1="32" y1="48" x2="42" y2="48" stroke="#f5c518" stroke-width="1.3" stroke-linecap="round"/>
+</svg>

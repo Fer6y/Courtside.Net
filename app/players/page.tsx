@@ -1,7 +1,9 @@
 import { getSupabase } from "@/lib/supabase";
 import type { Player } from "@/types";
 import Link from "next/link";
+import Image from "next/image";
 import PlayerFilterBar from "@/components/PlayerFilterBar";
+import CountryFlag from "@/components/CountryFlag";
 
 export const metadata = {
   title: "Players — Courtside",
@@ -100,6 +102,7 @@ export default async function PlayersPage({
     .from("players")
     .select("country")
     .filter("career_stats->>tour", "eq", activeTour)
+    .not("api_player_key", "is", null)
     .not("country", "is", null)
     .order("country");
   const countries = [...new Set((countryRows ?? []).map((r) => r.country).filter(Boolean))].sort() as string[];
@@ -107,8 +110,9 @@ export default async function PlayersPage({
   // ── Fetch players ─────────────────────────────────────────────
   let query = supabase
     .from("players")
-    .select("id, name, country, age, current_rank, career_stats")
-    .filter("career_stats->>tour", "eq", activeTour);
+    .select("id, name, country, age, current_rank, career_stats, photo_url")
+    .filter("career_stats->>tour", "eq", activeTour)
+    .not("api_player_key", "is", null);
 
   // Filter by country
   if (country) query = query.eq("country", country);
@@ -350,20 +354,41 @@ function PlayerRow({
       href={`/players/${player.id}`}
       className="flex items-center justify-between py-3 px-2 hover:bg-white/[0.03] rounded transition-colors duration-150 group"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {/* Position number */}
         <span className="font-mono text-sm text-text-dim w-6 text-right shrink-0">
           {rank}
         </span>
 
+        {/* Player photo */}
+        <div className="w-9 h-9 rounded-full overflow-hidden bg-white/5 shrink-0 flex items-center justify-center">
+          {player.photo_url ? (
+            <Image
+              src={player.photo_url}
+              alt={player.name}
+              width={36}
+              height={36}
+              className="w-full h-full object-cover object-top"
+              unoptimized
+            />
+          ) : (
+            <span className="font-mono text-xs text-text-dim">
+              {player.name.charAt(0)}
+            </span>
+          )}
+        </div>
+
         {/* Name + country */}
-        <div>
+        <div className="flex items-center gap-2">
           <span className="font-sans text-text-primary group-hover:text-primary transition-colors duration-150">
             {player.name}
           </span>
           {player.country && (
-            <span className="font-mono text-xs text-text-dim ml-2">
-              {player.country}
+            <span className="flex items-center gap-1.5">
+              <CountryFlag code={player.country} size={20} />
+              <span className="font-mono text-xs text-text-dim">
+                {player.country}
+              </span>
             </span>
           )}
         </div>

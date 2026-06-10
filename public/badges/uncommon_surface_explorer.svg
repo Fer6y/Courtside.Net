@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="38" fill="#4a9eff0d" stroke="#4a9eff" stroke-width="1.5"/>
+  <!-- Hard (blue) -->
+  <circle cx="28" cy="36" r="10" fill="#4a90d922" stroke="#4a90d9" stroke-width="2"/>
+  <text x="28" y="40" font-size="8" fill="#4a90d9" font-family="monospace" text-anchor="middle" font-weight="bold">H</text>
+  <!-- Clay (coral) -->
+  <circle cx="52" cy="36" r="10" fill="#d4734e22" stroke="#d4734e" stroke-width="2"/>
+  <text x="52" y="40" font-size="8" fill="#d4734e" font-family="monospace" text-anchor="middle" font-weight="bold">C</text>
+  <!-- Grass (green) -->
+  <circle cx="40" cy="52" r="10" fill="#5cb85c22" stroke="#5cb85c" stroke-width="2"/>
+  <text x="40" y="56" font-size="8" fill="#5cb85c" font-family="monospace" text-anchor="middle" font-weight="bold">G</text>
+</svg>

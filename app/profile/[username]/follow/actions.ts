@@ -2,6 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkAndAwardAchievements } from "@/lib/checkAchievements";
 
 function adminClient() {
   return createClient(
@@ -31,6 +32,12 @@ export async function followUser(targetProfileId: string) {
 
   // Ignore duplicate — already following
   if (error && error.code !== "23505") throw new Error(error.message);
+
+  // Check follow-based achievements for the follower
+  checkAndAwardAchievements(profile.id).catch(() => {});
+  // Check follower-count achievements for the person being followed
+  checkAndAwardAchievements(targetProfileId).catch(() => {});
+
   return { success: true };
 }
 

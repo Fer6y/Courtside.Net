@@ -10,7 +10,17 @@
     "import:players": "tsx scripts/import-players.ts",
     "import:matches": "tsx scripts/import-matches.ts",
     "merge:players": "tsx scripts/merge-duplicate-players.ts",
-    "fix:links": "tsx scripts/fix-player-match-links.ts"
+    "fix:links": "tsx scripts/fix-player-match-links.ts",
+    "migrate:phase0": "tsx scripts/phase0-verify.ts",
+    "migrate:phase2a": "tsx scripts/phase2a-fetch-tournaments.ts",
+    "migrate:phase2b": "tsx scripts/phase2b-fetch-fixtures.ts",
+    "migrate:phase2c": "tsx scripts/phase2c-process-players.ts",
+    "migrate:phase2d": "tsx scripts/phase2d-process-matches.ts",
+    "migrate:phase2e": "tsx scripts/phase2e-fetch-standings.ts",
+    "migrate:phase2f": "tsx scripts/phase2f-fetch-photos.ts",
+    "migrate:phase3": "tsx scripts/phase3-build-crosswalk.ts",
+    "migrate:phase4": "tsx scripts/phase4-cutover.ts",
+    "migrate:phase5": "tsx scripts/phase5-cleanup.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

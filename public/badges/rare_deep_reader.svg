@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="38" fill="#f5c5180d" stroke="#f5c518" stroke-width="1.5"/>
+  <!-- Open book -->
+  <path d="M22,28 C22,28 30,30 40,30 C50,30 58,28 58,28 L58,54 C58,54 50,52 40,52 C30,52 22,54 22,54 Z" fill="none" stroke="#f5c518" stroke-width="1.8"/>
+  <line x1="40" y1="30" x2="40" y2="52" stroke="#f5c518" stroke-width="1.5"/>
+  <line x1="27" y1="36" x2="38" y2="36" stroke="#f5c518" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="27" y1="41" x2="38" y2="41" stroke="#f5c518" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="27" y1="46" x2="38" y2="46" stroke="#f5c518" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="42" y1="36" x2="53" y2="36" stroke="#f5c518" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="42" y1="41" x2="53" y2="41" stroke="#f5c518" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="42" y1="46" x2="53" y2="46" stroke="#f5c518" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

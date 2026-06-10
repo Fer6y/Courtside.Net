@@ -56,7 +56,7 @@
 - [x] Comment threads on reviews
 - [x] User profile page (/profile/[username]) — review history, ratings given, watch log, collections
 - [x] Watch log — grouped by collection on profile page
-- [ ] Achievement decal system (tiers, triggers, display)
+- [x] Achievement decal system (tiers, triggers, display)
 - [x] Follow system (follow/unfollow button on profiles, follower/following counts)
 
 ## Match Filtering
@@ -69,7 +69,7 @@
 
 ## Phase 4: Polish & Performance
 - [ ] Dynamic OG images for player/match pages
-- [ ] sitemap.xml and robots.txt
+- [x] sitemap.xml and robots.txt
 - [x] Toast notifications for user actions (save, delete, error)
 - [ ] Empty states for all list pages
 - [ ] Accessibility audit

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="38" fill="#f5c5180d" stroke="#f5c518" stroke-width="1.5"/>
+  <!-- Trophy cup -->
+  <path d="M30,24 L50,24 L50,42 C50,50 44,54 40,54 C36,54 30,50 30,42 Z" fill="none" stroke="#f5c518" stroke-width="2"/>
+  <!-- Trophy handles -->
+  <path d="M30,28 C24,28 22,34 26,38 L30,38" fill="none" stroke="#f5c518" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M50,28 C56,28 58,34 54,38 L50,38" fill="none" stroke="#f5c518" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Trophy stem -->
+  <line x1="40" y1="54" x2="40" y2="60" stroke="#f5c518" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Trophy base -->
+  <line x1="33" y1="60" x2="47" y2="60" stroke="#f5c518" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

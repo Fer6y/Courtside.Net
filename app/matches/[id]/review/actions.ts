@@ -2,6 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkAndAwardAchievements } from "@/lib/checkAchievements";
 
 function adminClient() {
   return createClient(
@@ -63,6 +64,9 @@ export async function submitMatchReview(matchId: string, formData: FormData) {
     );
 
   if (watchErr) throw new Error(watchErr.message);
+
+  // Check + award any newly earned achievements (fire-and-forget — don't block the response)
+  checkAndAwardAchievements(profile.id).catch(() => {});
 
   return { success: true };
 }

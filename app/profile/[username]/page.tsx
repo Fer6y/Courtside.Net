@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import FollowButton from "@/components/FollowButton";
+import TrophyCase from "@/components/TrophyCase";
+import { type AchievementTier } from "@/lib/achievements";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -96,6 +98,7 @@ export default async function ProfilePage({ params }: Props) {
     { count: followerCount },
     { count: followingCount },
     { data: followRow },
+    { data: rawAchievements },
   ] = await Promise.all([
       admin
         .from("reviews")
@@ -158,11 +161,19 @@ export default async function ProfilePage({ params }: Props) {
             .eq("following_id", profile.id)
             .maybeSingle()
         : Promise.resolve({ data: null }),
+
+      // Achievements
+      admin
+        .from("achievements")
+        .select("achievement_type, tier, earned_at")
+        .eq("user_id", profile.id)
+        .order("earned_at", { ascending: false }),
     ]);
 
-  const reviews  = (rawReviews  ?? []) as unknown as ReviewRow[];
-  const ratings  = (rawRatings  ?? []) as unknown as RatingRow[];
-  const watchLog = (rawWatch    ?? []) as unknown as WatchRow[];
+  const reviews  = (rawReviews      ?? []) as unknown as ReviewRow[];
+  const ratings  = (rawRatings      ?? []) as unknown as RatingRow[];
+  const watchLog = (rawWatch        ?? []) as unknown as WatchRow[];
+  const achievements = (rawAchievements ?? []) as { achievement_type: string; tier: AchievementTier; earned_at: string }[];
 
   const followers   = followerCount ?? 0;
   const following   = followingCount ?? 0;
@@ -231,12 +242,13 @@ export default async function ProfilePage({ params }: Props) {
         style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
       >
         {[
-          { value: reviews.length,   label: "Reviews",        tab: "reviews"   },
-          { value: favorites.length, label: "Favorites",      tab: "favorites" },
-          { value: ratings.length,   label: "Players Rated",  tab: "ratings"   },
-          { value: namedCollections.length, label: "Collections", tab: "collections" },
-          { value: followers,        label: "Followers",      tab: "followers" },
-          { value: following,        label: "Following",      tab: "following" },
+          { value: reviews.length,         label: "Reviews",        tab: "reviews"      },
+          { value: favorites.length,       label: "Favorites",      tab: "favorites"    },
+          { value: ratings.length,         label: "Players Rated",  tab: "ratings"      },
+          { value: namedCollections.length, label: "Collections",   tab: "collections"  },
+          { value: achievements.length,    label: "Trophies",       tab: "trophies"     },
+          { value: followers,              label: "Followers",      tab: "followers"    },
+          { value: following,              label: "Following",      tab: "following"    },
         ].map(({ value, label, tab }, i) => (
           <div key={label} className="flex items-center">
             {i > 0 && (
@@ -386,6 +398,12 @@ export default async function ProfilePage({ params }: Props) {
           </div>
         </section>
       )}
+
+      {/* ── Trophy Case ──────────────────────────────────────────── */}
+      <section className="mb-12">
+        <SectionHeader title="Trophy Case" count={achievements.length} />
+        <TrophyCase achievements={achievements} isOwnProfile={isOwnProfile} />
+      </section>
 
       {/* ── Two-column: Recent Watched + Recent Rated ─────────────── */}
       {(recentWatched.length > 0 || recentRated.length > 0) && (

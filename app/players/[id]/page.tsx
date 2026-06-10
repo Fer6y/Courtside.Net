@@ -1,11 +1,14 @@
+import React from "react";
 import { auth } from "@clerk/nextjs/server";
 import { getSupabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import type { Player, MatchWithPlayers } from "@/types";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import RadarChart from "@/components/radar/RadarChart";
 import MatchFilterBar, { type MatchFilters } from "@/components/MatchFilterBar";
+import CountryFlag from "@/components/CountryFlag";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -25,6 +28,26 @@ export async function generateMetadata({ params }: Props) {
 
 function avg(vals: number[]): number {
   return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+}
+
+function rankFrameStyle(rank: number | null | undefined): React.CSSProperties {
+  if (!rank) return { border: "2px solid rgba(34,214,138,0.2)" };
+  if (rank <= 10) return {
+    background: "linear-gradient(135deg, #f5c518, #e0a800, #f5c518)",
+    boxShadow: "0 0 14px rgba(245,197,24,0.5), 0 0 28px rgba(245,197,24,0.2)",
+    padding: "2px",
+  };
+  if (rank <= 50) return {
+    background: "linear-gradient(135deg, #c0c0c0, #e8e8e8, #a8a8a8)",
+    boxShadow: "0 0 10px rgba(192,192,192,0.4)",
+    padding: "2px",
+  };
+  if (rank <= 100) return {
+    background: "linear-gradient(135deg, #4a9eff, #6ab4ff, #3a8ef0)",
+    boxShadow: "0 0 8px rgba(74,158,255,0.35)",
+    padding: "2px",
+  };
+  return { border: "2px solid rgba(34,214,138,0.2)" };
 }
 
 export default async function PlayerPage({ params, searchParams }: Props) {
@@ -94,7 +117,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       player2:player2_id ( id, name, country, current_rank )
     `)
     .or(`player1_id.eq.${id},player2_id.eq.${id}`)
-    .order("match_date", { ascending: false })
+    .order("match_date", { ascending: false, nullsFirst: false })
     .limit(50);
 
   if (round)   matchQuery = matchQuery.eq("round", round);
@@ -158,13 +181,40 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       {/* Header */}
       <div className="mb-10">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex items-start gap-5">
+            {/* Player photo or initials avatar with ranking frame */}
+            {(p.photo_url || p.image_url) ? (
+              <div
+                className="w-20 h-20 rounded-full shrink-0 p-0.5"
+                style={rankFrameStyle(p.current_rank)}
+              >
+                <Image
+                  src={p.photo_url ?? p.image_url ?? ""}
+                  alt={p.name}
+                  width={80}
+                  height={80}
+                  className="w-full h-full rounded-full object-cover object-top"
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center font-mono text-2xl font-bold shrink-0"
+                style={{ background: "rgba(34,214,138,0.1)", color: "#22d68a", border: "2px solid rgba(34,214,138,0.2)" }}
+              >
+                {p.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+              </div>
+            )}
           <div>
             <h1 className="font-mono text-4xl font-bold text-text-primary">
               {p.name}
             </h1>
             <div className="flex items-center gap-3 mt-2">
               {p.country && (
-                <span className="font-mono text-sm text-text-mid">{p.country}</span>
+                <span className="flex items-center gap-1.5">
+                  <CountryFlag code={p.country} size={20} />
+                  <span className="font-mono text-sm text-text-mid">{p.country}</span>
+                </span>
               )}
               {tour && (
                 <span className="font-mono text-xs text-text-dim uppercase tracking-widest">
@@ -177,6 +227,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 </span>
               )}
             </div>
+          </div>
           </div>
 
           {/* Rank + Rate button */}

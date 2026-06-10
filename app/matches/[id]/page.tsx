@@ -3,10 +3,12 @@ import { getSupabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import type { Surface } from "@/types";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import PlayerNameWithBubble from "@/components/PlayerNameWithBubble";
 import DeleteReviewButton from "@/components/DeleteReviewButton";
 import CommentThread, { type Comment } from "@/components/CommentThread";
+import CountryFlag from "@/components/CountryFlag";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -80,8 +82,8 @@ export default async function MatchPage({ params }: Props) {
     .from("matches")
     .select(`
       *,
-      player1:player1_id ( id, name, country, current_rank ),
-      player2:player2_id ( id, name, country, current_rank )
+      player1:player1_id ( id, name, country, current_rank, photo_url ),
+      player2:player2_id ( id, name, country, current_rank, photo_url )
     `)
     .eq("id", id)
     .single();
@@ -135,8 +137,8 @@ export default async function MatchPage({ params }: Props) {
     ? reviews.some((r) => r.profile?.clerk_user_id === userId)
     : false;
 
-  const p1 = match.player1 as { id: string; name: string; country: string | null; current_rank: number | null };
-  const p2 = match.player2 as { id: string; name: string; country: string | null; current_rank: number | null };
+  const p1 = match.player1 as { id: string; name: string; country: string | null; current_rank: number | null; photo_url: string | null };
+  const p2 = match.player2 as { id: string; name: string; country: string | null; current_rank: number | null; photo_url: string | null };
   const surface = match.surface as Surface | null;
   const won1 = match.winner_id === p1.id;
 
@@ -172,37 +174,115 @@ export default async function MatchPage({ params }: Props) {
         )}
       </div>
 
-      {/* Players vs score */}
+      {/* Players vs score — hero */}
       <div className="rounded-lg border border-white/5 bg-white/[0.02] p-6 mb-10">
-        <div className="flex items-center justify-between gap-4">
-          <Link href={`/players/${p1.id}`} className="flex-1 group">
-            <div className={`font-mono text-2xl font-bold transition-colors duration-150 group-hover:text-primary ${won1 ? "text-primary" : "text-text-primary"}`}>
-              <PlayerNameWithBubble playerId={p1.id} playerName={p1.name} />
+        <div className="flex items-center gap-4">
+
+          {/* Player 1 */}
+          <Link href={`/players/${p1.id}`} className="flex-1 group min-w-0">
+            <div className="flex flex-col items-center text-center gap-3">
+              {/* Photo */}
+              <div
+                className="w-20 h-20 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
+                style={{
+                  border: won1
+                    ? "2px solid rgba(34,214,138,0.5)"
+                    : "2px solid rgba(255,255,255,0.08)",
+                  background: "rgba(255,255,255,0.04)",
+                }}
+              >
+                {p1.photo_url ? (
+                  <Image
+                    src={p1.photo_url}
+                    alt={p1.name}
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover object-top"
+                    unoptimized
+                  />
+                ) : (
+                  <span className="font-mono text-xl font-bold text-text-dim">
+                    {p1.name.charAt(0)}
+                  </span>
+                )}
+              </div>
+              {/* Name */}
+              <div>
+                <div className={`font-mono text-base font-bold leading-tight transition-colors duration-150 group-hover:text-primary ${won1 ? "text-primary" : "text-text-primary"}`}>
+                  <PlayerNameWithBubble playerId={p1.id} playerName={p1.name} />
+                </div>
+                <div className="flex items-center justify-center gap-1.5 mt-1">
+                  <CountryFlag code={p1.country} size={20} />
+                  {p1.current_rank && (
+                    <span className="font-mono text-xs text-text-dim">#{p1.current_rank}</span>
+                  )}
+                </div>
+                {won1 && (
+                  <span className="font-mono text-xs text-primary mt-1 block">Winner</span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              {p1.country    && <span className="font-mono text-xs text-text-dim">{p1.country}</span>}
-              {p1.current_rank && <span className="font-mono text-xs text-text-dim">#{p1.current_rank}</span>}
-            </div>
-            {won1 && <span className="font-mono text-xs text-primary mt-1 block">Winner</span>}
           </Link>
 
-          <div className="text-center px-4">
-            {match.score
-              ? <div className="font-mono text-lg text-text-primary whitespace-nowrap">{match.score}</div>
-              : <div className="font-mono text-2xl text-text-dim">vs</div>
-            }
+          {/* Score + VS */}
+          <div className="flex flex-col items-center gap-2 shrink-0 px-2">
+            {match.score ? (
+              <div className="font-mono text-sm sm:text-base text-text-primary whitespace-nowrap text-center leading-relaxed">
+                {match.score.split(" ").map((set: string, i: number) => (
+                  <div key={i}>{set}</div>
+                ))}
+              </div>
+            ) : (
+              <div className="font-mono text-2xl text-text-dim">vs</div>
+            )}
           </div>
 
-          <Link href={`/players/${p2.id}`} className="flex-1 text-right group">
-            <div className={`font-mono text-2xl font-bold transition-colors duration-150 group-hover:text-primary ${!won1 ? "text-primary" : "text-text-primary"}`}>
-              <PlayerNameWithBubble playerId={p2.id} playerName={p2.name} />
+          {/* Player 2 */}
+          <Link href={`/players/${p2.id}`} className="flex-1 group min-w-0">
+            <div className="flex flex-col items-center text-center gap-3">
+              {/* Photo */}
+              <div
+                className="w-20 h-20 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
+                style={{
+                  border: !won1
+                    ? "2px solid rgba(34,214,138,0.5)"
+                    : "2px solid rgba(255,255,255,0.08)",
+                  background: "rgba(255,255,255,0.04)",
+                }}
+              >
+                {p2.photo_url ? (
+                  <Image
+                    src={p2.photo_url}
+                    alt={p2.name}
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover object-top"
+                    unoptimized
+                  />
+                ) : (
+                  <span className="font-mono text-xl font-bold text-text-dim">
+                    {p2.name.charAt(0)}
+                  </span>
+                )}
+              </div>
+              {/* Name */}
+              <div>
+                <div className={`font-mono text-base font-bold leading-tight transition-colors duration-150 group-hover:text-primary ${!won1 ? "text-primary" : "text-text-primary"}`}>
+                  <PlayerNameWithBubble playerId={p2.id} playerName={p2.name} />
+                </div>
+                <div className="flex items-center justify-center gap-1.5 mt-1">
+                  <CountryFlag code={p2.country} size={20} />
+                  {p2.current_rank && (
+                    <span className="font-mono text-xs text-text-dim">#{p2.current_rank}</span>
+                  )}
+                </div>
+                {!won1 && (
+                  <span className="font-mono text-xs text-primary mt-1 block">Winner</span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2 mt-1 justify-end">
-              {p2.current_rank && <span className="font-mono text-xs text-text-dim">#{p2.current_rank}</span>}
-              {p2.country      && <span className="font-mono text-xs text-text-dim">{p2.country}</span>}
-            </div>
-            {!won1 && <span className="font-mono text-xs text-primary mt-1 block">Winner</span>}
           </Link>
+
         </div>
       </div>
 

@@ -3,6 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
+import { checkAndAwardAchievements } from "@/lib/checkAchievements";
 
 const AXES = [
   "focus","clutch","resilience",
@@ -46,6 +47,8 @@ export async function submitSkillRating(playerId: string, formData: FormData) {
     .upsert(rating, { onConflict: "user_id,player_id" });
 
   if (error) throw new Error(error.message);
+
+  checkAndAwardAchievements(profile.id).catch(() => {});
 
   return { success: true };
 }

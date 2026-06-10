@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="38" fill="#f5c5180d" stroke="#f5c518" stroke-width="1.5"/>
+  <!-- Radar pentagon: 5 axes -->
+  <!-- Outer polygon (5 points) -->
+  <polygon points="40,20 57,31 51,52 29,52 23,31" fill="#f5c51812" stroke="#f5c518" stroke-width="1.5"/>
+  <!-- Mid polygon (70%) -->
+  <polygon points="40,27 51,35 47,49 33,49 29,35" fill="none" stroke="#f5c51860" stroke-width="1"/>
+  <!-- Inner polygon (40%) -->
+  <polygon points="40,33 46,38 44,46 36,46 34,38" fill="none" stroke="#f5c51840" stroke-width="0.8"/>
+  <!-- Spokes -->
+  <line x1="40" y1="40" x2="40" y2="20" stroke="#f5c51850" stroke-width="0.8"/>
+  <line x1="40" y1="40" x2="57" y2="31" stroke="#f5c51850" stroke-width="0.8"/>
+  <line x1="40" y1="40" x2="51" y2="52" stroke="#f5c51850" stroke-width="0.8"/>
+  <line x1="40" y1="40" x2="29" y2="52" stroke="#f5c51850" stroke-width="0.8"/>
+  <line x1="40" y1="40" x2="23" y2="31" stroke="#f5c51850" stroke-width="0.8"/>
+  <circle cx="40" cy="40" r="2" fill="#f5c518"/>
+</svg>

@@ -18,6 +18,7 @@ const SLAM_PATTERNS = [
 ];
 
 type SearchParams = Promise<{
+  tour?:       string;
   round?:      string;
   tournament?: string;
   surface?:    string;
@@ -44,8 +45,10 @@ function scoreSetCount(score: string | null): number {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function MatchesPage({ searchParams }: { searchParams: SearchParams }) {
-  const { round, tournament, surface, year, player, playerName, level, sets, minRating } =
+  const { tour, round, tournament, surface, year, player, playerName, level, sets, minRating } =
     await searchParams;
+
+  const activeTour = tour === "WTA" ? "WTA" : "ATP";
 
   const supabase = getSupabase();
   const admin = createClient(
@@ -65,6 +68,22 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
 
   // Surfaces are schema-defined constants — no need to query
   const surfaces = ["Hard", "Clay", "Grass"];
+
+  // ── Tour URL builder (preserves all other search params) ────────────────────
+  function buildTourUrl(t: string): string {
+    const qs = new URLSearchParams();
+    qs.set("tour", t);
+    if (round)       qs.set("round", round);
+    if (tournament)  qs.set("tournament", tournament);
+    if (surface)     qs.set("surface", surface);
+    if (year)        qs.set("year", year);
+    if (player)      qs.set("player", player);
+    if (playerName)  qs.set("playerName", playerName);
+    if (level)       qs.set("level", level);
+    if (sets)        qs.set("sets", sets);
+    if (minRating)   qs.set("minRating", minRating);
+    return `/matches?${qs.toString()}`;
+  }
 
   // ── Min rating: pre-fetch qualifying match IDs ───────────────────────────────
   let ratedMatchIds: string[] | null = null;
@@ -104,6 +123,9 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
     .select(`*, player1:player1_id(id,name,country,current_rank), player2:player2_id(id,name,country,current_rank)`)
     .order("match_date", { ascending: false })
     .limit(fetchLimit);
+
+  // Tour
+  query = query.eq("tour", activeTour);
 
   // Round (multi)
   if (rounds.length === 1)      query = query.eq("round", rounds[0]);
@@ -161,11 +183,29 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
 
   const hasAnyFilter = !!(round || tournament || surface || year || player || level || sets || minRating);
   const filters: MatchFilters = { round, tournament, surface, year, player, playerName, level, sets, minRating };
+  const tourSubtitle = activeTour === "WTA" ? "Grand Slams & Premier · WTA" : "Grand Slams & Masters 1000 · ATP";
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-12">
       <h1 className="font-mono text-3xl font-bold text-text-primary mb-2">Matches</h1>
-      <p className="font-sans text-text-mid mb-8">Grand Slams &amp; Masters 1000 · ATP &amp; WTA</p>
+      <p className="font-sans text-text-mid mb-6">{tourSubtitle}</p>
+
+      {/* Tour tabs */}
+      <div className="flex items-center gap-2 mb-6">
+        {(["ATP", "WTA"] as const).map((t) => (
+          <Link
+            key={t}
+            href={buildTourUrl(t)}
+            className={`font-mono text-sm font-semibold px-5 py-2 rounded-full border transition-colors duration-150 ${
+              activeTour === t
+                ? "border-primary text-primary bg-primary/10"
+                : "border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
+            }`}
+          >
+            {t}
+          </Link>
+        ))}
+      </div>
 
       <div className="mb-8">
         <MatchFilterBar filters={filters} options={{ tournaments, surfaces, years }} basePath="/matches" />

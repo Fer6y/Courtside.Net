@@ -6,10 +6,14 @@ export type Player = {
   country: string | null;
   age: number | null;
   current_rank: number | null;
-  image_url: string | null;
-  api_id: string | null;
+  image_url: string | null;    // legacy column
+  photo_url: string | null;    // api-tennis.com player_logo URL (preferred)
+  api_id: string | null;       // Sackmann numeric ID (legacy)
+  api_player_key: string | null; // api-tennis.com player_key
   career_stats: {
     tour?: "ATP" | "WTA";
+    dob?: string;              // ISO date, stored for crosswalk
+    country_full?: string;     // Full country name from API
     [key: string]: unknown;
   };
   created_at: string;
@@ -29,7 +33,10 @@ export type Match = {
   score: string | null;
   surface: Surface | null;
   match_date: string | null;
-  api_match_id: string | null;
+  api_match_id: string | null;    // Sackmann dedup key (legacy)
+  api_event_key: string | null;   // api-tennis.com event_key
+  tournament_season: number | null;
+  source: "sackmann" | "api_tennis" | null;
   created_at: string;
 };
 
