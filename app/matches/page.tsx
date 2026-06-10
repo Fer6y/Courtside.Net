@@ -121,7 +121,7 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
   let query = supabase
     .from("matches")
     .select(`*, player1:player1_id(id,name,country,current_rank), player2:player2_id(id,name,country,current_rank)`)
-    .order("match_date", { ascending: false })
+    .order("match_date", { ascending: false, nullsFirst: false })
     .limit(fetchLimit);
 
   // Tour
