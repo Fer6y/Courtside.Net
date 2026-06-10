@@ -6,10 +6,10 @@ import { redirect } from "next/navigation";
 import { checkAndAwardAchievements } from "@/lib/checkAchievements";
 
 const AXES = [
-  "focus","clutch","resilience",
-  "serve","forehand","backhand",
-  "net_play","touch","return_play","reaction_time",
-  "speed","court_coverage","positioning",
+  "focus","clutch","resilience","processing_time",
+  "serve","forehand","backhand","shot_variety",
+  "net_play","touch","return_play","reaction_time","deception",
+  "speed","court_coverage","positioning","anticipation",
 ] as const;
 
 export async function submitSkillRating(playerId: string, formData: FormData) {

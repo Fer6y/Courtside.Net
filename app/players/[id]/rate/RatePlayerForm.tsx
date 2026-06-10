@@ -11,18 +11,20 @@ const CATEGORIES = [
     name: "MENTAL",
     color: "#d4734e",
     skills: [
-      { key: "focus",      label: "Focus",      desc: "Concentration across long matches" },
-      { key: "clutch",     label: "Clutch",     desc: "Performance on break points & tiebreaks" },
-      { key: "resilience", label: "Resilience", desc: "Bouncing back from lost sets & momentum shifts" },
+      { key: "focus",           label: "Focus",       desc: "Concentration across long matches" },
+      { key: "clutch",          label: "Clutch",      desc: "Performance on break points & tiebreaks" },
+      { key: "resilience",      label: "Resilience",  desc: "Bouncing back from lost sets & momentum shifts" },
+      { key: "processing_time", label: "Proc. Time",  desc: "Speed of reading situations & making decisions" },
     ],
   },
   {
     name: "TECHNIQUE",
     color: "#22d68a",
     skills: [
-      { key: "serve",     label: "Serve",     desc: "Power, placement & variation" },
-      { key: "forehand",  label: "Forehand",  desc: "Forehand groundstroke quality" },
-      { key: "backhand",  label: "Backhand",  desc: "Backhand groundstroke quality" },
+      { key: "serve",        label: "Serve",        desc: "Power, placement & variation" },
+      { key: "forehand",     label: "Forehand",     desc: "Forehand groundstroke quality" },
+      { key: "backhand",     label: "Backhand",     desc: "Backhand groundstroke quality" },
+      { key: "shot_variety", label: "Shot Variety", desc: "Range of shots & tactical diversity" },
     ],
   },
   {
@@ -33,24 +35,26 @@ const CATEGORIES = [
       { key: "touch",         label: "Touch",       desc: "Drop shots, lobs & feel" },
       { key: "return_play",   label: "Ret. Play",   desc: "Quality of service return" },
       { key: "reaction_time", label: "React. Time", desc: "Response speed to opponent's shots" },
+      { key: "deception",     label: "Deception",   desc: "Disguise on shots, fakes & misdirection" },
     ],
   },
   {
     name: "MOVEMENT",
     color: "#4a9eff",
     skills: [
-      { key: "speed",          label: "Speed",       desc: "Raw foot speed & first-step quickness" },
-      { key: "court_coverage", label: "Coverage",    desc: "Reaching balls across the full court" },
-      { key: "positioning",    label: "Positioning", desc: "Court awareness & anticipation" },
+      { key: "speed",          label: "Speed",        desc: "Raw foot speed & first-step quickness" },
+      { key: "court_coverage", label: "Coverage",     desc: "Reaching balls across the full court" },
+      { key: "positioning",    label: "Positioning",  desc: "Court awareness & optimal positioning" },
+      { key: "anticipation",   label: "Anticipation", desc: "Reading play & predicting opponent's shots" },
     ],
   },
 ] as const;
 
 type SkillKey =
-  | "focus" | "clutch" | "resilience"
-  | "serve" | "forehand" | "backhand"
-  | "net_play" | "touch" | "return_play" | "reaction_time"
-  | "speed" | "court_coverage" | "positioning";
+  | "focus" | "clutch" | "resilience" | "processing_time"
+  | "serve" | "forehand" | "backhand" | "shot_variety"
+  | "net_play" | "touch" | "return_play" | "reaction_time" | "deception"
+  | "speed" | "court_coverage" | "positioning" | "anticipation";
 
 function defaultValues(existing: Record<string, unknown> | null): Record<SkillKey, number> {
   const defaults: Record<string, number> = {};

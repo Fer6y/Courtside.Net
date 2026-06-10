@@ -21,18 +21,20 @@ const CATEGORIES = [
     name: "MENTAL",
     startAngle: 315,
     skills: [
-      { key: "focus",      label: "Focus"      },
-      { key: "clutch",     label: "Clutch"     },
-      { key: "resilience", label: "Resilience" },
+      { key: "focus",           label: "Focus"       },
+      { key: "clutch",          label: "Clutch"      },
+      { key: "resilience",      label: "Resilience"  },
+      { key: "processing_time", label: "Proc. Time"  },
     ],
   },
   {
     name: "TECHNIQUE",
     startAngle: 45,
     skills: [
-      { key: "serve",     label: "Serve"     },
-      { key: "forehand",  label: "Forehand"  },
-      { key: "backhand",  label: "Backhand"  },
+      { key: "serve",        label: "Serve"        },
+      { key: "forehand",     label: "Forehand"     },
+      { key: "backhand",     label: "Backhand"     },
+      { key: "shot_variety", label: "Shot Variety" },
     ],
   },
   {
@@ -43,15 +45,17 @@ const CATEGORIES = [
       { key: "touch",         label: "Touch"       },
       { key: "return_play",   label: "Ret. Play"   },
       { key: "reaction_time", label: "React. Time" },
+      { key: "deception",     label: "Deception"   },
     ],
   },
   {
     name: "MOVEMENT",
     startAngle: 225,
     skills: [
-      { key: "speed",          label: "Speed"       },
-      { key: "court_coverage", label: "Coverage"    },
-      { key: "positioning",    label: "Positioning" },
+      { key: "speed",          label: "Speed"        },
+      { key: "court_coverage", label: "Coverage"     },
+      { key: "positioning",    label: "Positioning"  },
+      { key: "anticipation",   label: "Anticipation" },
     ],
   },
 ] as const;
