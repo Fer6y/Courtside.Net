@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 import Link from "next/link";
 import CountryFlag from "@/components/CountryFlag";
+import GuideBanner from "@/components/GuideBanner";
 
 export const revalidate = 300;
 
@@ -59,6 +60,13 @@ export default async function HomePage() {
   const { userId: clerkId } = await auth();
   const db = adminDb();
 
+  // Resolve current user's profile ID (needed for their review count)
+  let currentProfileId: string | null = null;
+  if (clerkId) {
+    const { data: me } = await db.from("profiles").select("id").eq("clerk_user_id", clerkId).single();
+    currentProfileId = me?.id ?? null;
+  }
+
   const [
     { data: topPlayers },
     { data: rawReviews },
@@ -66,6 +74,7 @@ export default async function HomePage() {
     { count: matchCount },
     { count: reviewCount },
     { count: ratingCount },
+    { count: userReviewCount },
   ] = await Promise.all([
     db.from("players")
       .select("id, name, country, current_rank, photo_url, image_url")
@@ -90,6 +99,11 @@ export default async function HomePage() {
     db.from("matches").select("*", { count: "exact", head: true }),
     db.from("reviews").select("*", { count: "exact", head: true }),
     db.from("skill_ratings").select("*", { count: "exact", head: true }),
+
+    // Current user's own review count — used to decide whether to show the guide banner
+    currentProfileId
+      ? db.from("reviews").select("*", { count: "exact", head: true }).eq("user_id", currentProfileId)
+      : Promise.resolve({ count: 999 }), // not logged in → never show banner
   ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -105,6 +119,9 @@ export default async function HomePage() {
 
   return (
     <div>
+
+      {/* ── Guide banner (shown to logged-in users with < 5 reviews) ─────── */}
+      {clerkId && <GuideBanner reviewCount={userReviewCount ?? 0} />}
 
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
       <section
@@ -375,7 +392,13 @@ export default async function HomePage() {
       <section className="py-16 px-4" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="font-mono text-xl font-bold text-text-primary mb-2">How it works</h2>
-          <p className="font-sans text-sm text-text-dim mb-12">Three ways to engage with the tennis you watch</p>
+          <p className="font-sans text-sm text-text-dim mb-3">Three ways to engage with the tennis you watch</p>
+          <Link
+            href="/guide"
+            className="font-mono text-xs text-text-dim hover:text-primary transition-colors duration-150 inline-block mb-12"
+          >
+            Full guide →
+          </Link>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[

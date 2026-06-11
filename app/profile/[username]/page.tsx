@@ -584,6 +584,13 @@ export default async function ProfilePage({ params }: Props) {
                   >
                     Customize
                   </Link>
+                  <Link
+                    href="/guide"
+                    className="font-mono text-xs px-3 py-1.5 rounded-lg transition-all duration-150 border border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
+                    title="How Courtside works"
+                  >
+                    ?
+                  </Link>
                 </>
               )}
               {currentClerkId && !isOwnProfile && (
