@@ -78,16 +78,15 @@ export async function POST(req: Request) {
     }
   }
 
-  // Handle user.updated — keep display name and avatar in sync
+  // Handle user.updated — only sync avatar_url.
+  // display_name is user-controlled in Courtside and must NOT be overwritten
+  // by Clerk (which fires user.updated on any account change like email/password).
   if (event.type === "user.updated") {
-    const { id, first_name, last_name, image_url } = event.data;
-
-    const displayName =
-      [first_name, last_name].filter(Boolean).join(" ") || null;
+    const { id, image_url } = event.data;
 
     const { error } = await supabaseAdmin
       .from("profiles")
-      .update({ display_name: displayName, avatar_url: image_url })
+      .update({ avatar_url: image_url })
       .eq("clerk_user_id", id);
 
     if (error) {

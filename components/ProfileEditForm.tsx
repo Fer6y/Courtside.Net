@@ -77,7 +77,7 @@ export default function ProfileEditForm({
           onBlur={(e)  => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)")}
         />
         <p className="font-sans text-[10px] text-text-dim mt-1.5">
-          {displayName.length}/60 characters
+          This is your public name — shown on your profile, reviews, and in the activity feed. Use your real name, a nickname, or an alias. {displayName.length}/60
         </p>
       </div>
 

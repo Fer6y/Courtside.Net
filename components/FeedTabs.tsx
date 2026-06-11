@@ -121,7 +121,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
           <div className="mt-1.5">
             <span
               className="font-mono text-[10px] px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(34,214,138,0.12)", color: "#22d68a" }}
+              style={{ background: "rgba(255,255,255,0.06)", color: "#9ca3af", border: "1px solid rgba(255,255,255,0.08)" }}
             >
               {item.topSkill.label} {item.topSkill.value.toFixed(1)}
             </span>

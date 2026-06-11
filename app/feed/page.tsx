@@ -48,6 +48,16 @@ const SURFACE_COLOR: Record<string, string> = {
   Hard: "#4a90d9", Clay: "#d4734e", Grass: "#5cb85c",
 };
 
+// reviewCount × (avgRating / 5) gives a combined heat score
+function heatEmojis(reviewCount: number, avgRating: number): number {
+  const score = reviewCount * (avgRating / 5);
+  if (score >= 10) return 5;
+  if (score >= 6)  return 4;
+  if (score >= 3)  return 3;
+  if (score >= 1.5) return 2;
+  return 1;
+}
+
 function timeAgo(iso: string) {
   const diff  = Date.now() - new Date(iso).getTime();
   const days  = Math.floor(diff / 86400000);
@@ -104,7 +114,7 @@ export default async function FeedPage() {
     admin
       .from("skill_ratings")
       .select(`
-        player_id, created_at, user_id,
+        player_id, created_at, user_id, highlighted_skill,
         focus, clutch, resilience, processing_time,
         serve, forehand, backhand, shot_variety,
         net_play, touch, return_play, reaction_time, deception,
@@ -157,14 +167,21 @@ export default async function FeedPage() {
 
   const ratingItems: ActivityItem[] = ratings
     .filter((r) => r.user)
-    .map((r): ActivityItem => ({
-      type:       "rating",
-      id:         `rating-${r.user_id}-${r.player_id}-${r.created_at}`,
-      created_at: r.created_at,
-      user:       r.user as ProfileMini,
-      player:     r.player as PlayerMini | null,
-      topSkill:   topSkillFromRow(r as Record<string, unknown>),
-    }));
+    .map((r): ActivityItem => {
+      // Prefer the user's chosen highlighted skill, fall back to computed highest
+      const highlighted = r.highlighted_skill as string | null;
+      const topSkill = highlighted && SKILL_LABELS[highlighted]
+        ? { label: SKILL_LABELS[highlighted], value: Number(r[highlighted]) }
+        : topSkillFromRow(r as Record<string, unknown>);
+      return {
+        type:       "rating",
+        id:         `rating-${r.user_id}-${r.player_id}-${r.created_at}`,
+        created_at: r.created_at,
+        user:       r.user as ProfileMini,
+        player:     r.player as PlayerMini | null,
+        topSkill,
+      };
+    });
 
   const allItems: ActivityItem[] = [...reviewItems, ...ratingItems]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -298,13 +315,7 @@ export default async function FeedPage() {
                   <Link
                     key={player.id}
                     href={`/players/${player.id}`}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-150 group"
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border:     "1px solid rgba(255,255,255,0.06)",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)")}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-150 group bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12]"
                   >
                     <span className="font-mono text-xs text-text-dim w-4 shrink-0">{i + 1}</span>
                     <div className="flex-1 min-w-0">
@@ -320,7 +331,7 @@ export default async function FeedPage() {
                       {topSkill && (
                         <span
                           className="font-mono text-[10px] px-2 py-0.5 rounded-full block mb-0.5"
-                          style={{ background: "rgba(34,214,138,0.1)", color: "#22d68a" }}
+                          style={{ background: "rgba(255,255,255,0.06)", color: "#9ca3af", border: "1px solid rgba(255,255,255,0.08)" }}
                         >
                           {topSkill.label}
                         </span>
@@ -352,13 +363,7 @@ export default async function FeedPage() {
                   <Link
                     key={m.id}
                     href={`/matches/${m.id}`}
-                    className="rounded-xl px-3 py-2.5 transition-all duration-150 group block"
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border:     "1px solid rgba(74,158,255,0.15)",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(74,158,255,0.35)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(74,158,255,0.15)")}
+                    className="rounded-xl px-3 py-2.5 transition-colors duration-150 group block bg-white/[0.02] border border-accent/[0.15] hover:border-accent/[0.35]"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
@@ -420,13 +425,7 @@ export default async function FeedPage() {
                   <Link
                     key={m.id}
                     href={`/matches/${m.id}`}
-                    className="rounded-xl px-3 py-2.5 transition-all duration-150 group block"
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border:     "1px solid rgba(245,197,24,0.12)",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(245,197,24,0.3)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(245,197,24,0.12)")}
+                    className="rounded-xl px-3 py-2.5 transition-colors duration-150 group block bg-white/[0.02] border border-amber/[0.12] hover:border-amber/[0.30]"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
@@ -442,12 +441,17 @@ export default async function FeedPage() {
                         <span className="font-mono text-[10px] text-text-dim truncate block">{m.tournament}</span>
                       </div>
                       <div className="text-right shrink-0">
-                        <span
-                          className="font-mono text-sm font-bold block"
-                          style={{ color: "#f5c518" }}
-                        >
-                          {avgRating.toFixed(1)}
-                        </span>
+                        <div className="flex items-center justify-end gap-1 mb-0.5">
+                          <span className="text-[11px] leading-none tracking-tighter">
+                            {"🔥".repeat(heatEmojis(reviewCount, avgRating))}
+                          </span>
+                          <span
+                            className="font-mono text-sm font-bold"
+                            style={{ color: "#f5c518" }}
+                          >
+                            {avgRating.toFixed(1)}
+                          </span>
+                        </div>
                         <span className="font-mono text-[9px] text-text-dim">{reviewCount} review{reviewCount !== 1 ? "s" : ""}</span>
                       </div>
                     </div>

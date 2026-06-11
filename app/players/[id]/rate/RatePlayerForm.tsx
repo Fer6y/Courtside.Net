@@ -67,6 +67,20 @@ function defaultValues(existing: Record<string, unknown> | null): Record<SkillKe
   return defaults as Record<SkillKey, number>;
 }
 
+// Flat list of all skills for the highlight picker
+const ALL_SKILLS = CATEGORIES.flatMap((cat) =>
+  cat.skills.map((s) => ({ key: s.key as SkillKey, label: s.label, color: cat.color }))
+);
+
+function topSkillKey(vals: Record<SkillKey, number>): SkillKey {
+  let best: SkillKey = "serve";
+  let bestVal = 0;
+  for (const { key } of ALL_SKILLS) {
+    if (vals[key] > bestVal) { bestVal = vals[key]; best = key; }
+  }
+  return best;
+}
+
 export default function RatePlayerForm({
   playerId,
   existing,
@@ -77,6 +91,13 @@ export default function RatePlayerForm({
   const [values, setValues] = useState<Record<SkillKey, number>>(
     () => defaultValues(existing)
   );
+  const [highlightedSkill, setHighlightedSkill] = useState<SkillKey>(() => {
+    const existingHighlight = existing?.highlighted_skill as string | undefined;
+    if (existingHighlight && ALL_SKILLS.some((s) => s.key === existingHighlight)) {
+      return existingHighlight as SkillKey;
+    }
+    return topSkillKey(defaultValues(existing));
+  });
   const [pending, setPending]   = useState(false);
   const [earnedIds, setEarnedIds] = useState<string[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
@@ -175,6 +196,42 @@ export default function RatePlayerForm({
           </section>
         ))}
       </div>
+
+      {/* Hidden field for highlighted skill */}
+      <input type="hidden" name="highlighted_skill" value={highlightedSkill} />
+
+      {/* Highlight picker */}
+      <section className="mt-8">
+        <div
+          className="font-mono text-xs font-semibold uppercase tracking-widest mb-1 pb-2 border-b"
+          style={{ color: "#9ca3af", borderColor: "rgba(255,255,255,0.07)" }}
+        >
+          Featured Skill
+        </div>
+        <p className="font-sans text-xs text-text-dim mb-4 mt-2">
+          Choose one skill to highlight on your profile and in the activity feed.
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {ALL_SKILLS.map(({ key, label, color }) => {
+            const isSelected = highlightedSkill === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setHighlightedSkill(key)}
+                className="font-mono text-[10px] px-2.5 py-1 rounded-full transition-all duration-150"
+                style={{
+                  background: isSelected ? `${color}18` : "rgba(255,255,255,0.04)",
+                  border:     isSelected ? `1px solid ${color}44` : "1px solid rgba(255,255,255,0.08)",
+                  color:      isSelected ? color : "#6b7280",
+                }}
+              >
+                {label} <span style={{ opacity: 0.7 }}>{values[key].toFixed(1)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Submit */}
       <div className="mt-10 flex gap-3">

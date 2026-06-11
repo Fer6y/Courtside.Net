@@ -30,7 +30,7 @@ export async function submitSkillRating(playerId: string, formData: FormData) {
 
   if (profileErr || !profile) throw new Error("Profile not found");
 
-  const rating: Record<string, number | string> = {
+  const rating: Record<string, number | string | null> = {
     user_id:   profile.id,
     player_id: playerId,
   };
@@ -40,6 +40,11 @@ export async function submitSkillRating(playerId: string, formData: FormData) {
     if (!isNaN(val) && val >= 1 && val <= 5) {
       rating[axis] = Math.round(val * 2) / 2; // snap to 0.5 increments
     }
+  }
+
+  const highlighted = (formData.get("highlighted_skill") as string | null)?.trim() || null;
+  if (highlighted && (AXES as readonly string[]).includes(highlighted)) {
+    rating.highlighted_skill = highlighted;
   }
 
   const { error } = await supabase
