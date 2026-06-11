@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import FollowButton from "@/components/FollowButton";
 import TrophyCase from "@/components/TrophyCase";
+import UserAvatar from "@/components/UserAvatar";
 import { type AchievementTier } from "@/lib/achievements";
 import { resolveLayout, getVariant, type LayoutConfig, type SectionId } from "@/lib/profileLayout";
+import { type AvatarConfig } from "@/lib/avatarTemplates";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -111,17 +113,20 @@ export default async function ProfilePage({ params }: Props) {
 
   if (!profile) notFound();
 
-  // Fetch layout_config separately so a missing column never breaks the page
+  // Fetch layout_config + avatar_config separately so missing columns never break the page
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let rawLayoutConfig: any = null;
+  let avatarConfig: AvatarConfig | null = null;
   try {
     const { data } = await admin
       .from("profiles")
-      .select("layout_config")
+      .select("layout_config, avatar_config")
       .eq("id", profile.id)
       .single();
-    rawLayoutConfig = (data as Record<string, unknown> | null)?.layout_config ?? null;
-  } catch { /* column may not exist yet */ }
+    const row = data as Record<string, unknown> | null;
+    rawLayoutConfig = row?.layout_config ?? null;
+    avatarConfig    = (row?.avatar_config as AvatarConfig) ?? null;
+  } catch { /* columns may not exist yet */ }
 
   const displayName = profile.display_name ?? profile.username;
   const initials    = displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
@@ -557,12 +562,7 @@ export default async function ProfilePage({ params }: Props) {
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row items-start gap-6 mb-8">
-        <div
-          className="w-20 h-20 rounded-full flex items-center justify-center font-mono text-2xl font-bold shrink-0"
-          style={{ background: "rgba(34,214,138,0.15)", color: "#22d68a" }}
-        >
-          {initials}
-        </div>
+        <UserAvatar config={avatarConfig} initials={initials} size={80} />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
@@ -571,12 +571,20 @@ export default async function ProfilePage({ params }: Props) {
             </div>
             <div className="flex items-center gap-2">
               {isOwnProfile && (
-                <Link
-                  href={`/profile/${profile.username}/customize`}
-                  className="font-mono text-xs px-3 py-1.5 rounded-lg transition-all duration-150 border border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
-                >
-                  Customize
-                </Link>
+                <>
+                  <Link
+                    href={`/profile/${profile.username}/edit`}
+                    className="font-mono text-xs px-3 py-1.5 rounded-lg transition-all duration-150 border border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
+                  >
+                    Edit Profile
+                  </Link>
+                  <Link
+                    href={`/profile/${profile.username}/customize`}
+                    className="font-mono text-xs px-3 py-1.5 rounded-lg transition-all duration-150 border border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
+                  >
+                    Customize
+                  </Link>
+                </>
               )}
               {currentClerkId && !isOwnProfile && (
                 <FollowButton targetProfileId={profile.id} initialIsFollowing={isFollowing} />

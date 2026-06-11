@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
@@ -11,6 +12,7 @@ import {
   User,
   Search,
 } from "lucide-react";
+import GlobalSearch from "@/components/GlobalSearch";
 
 const DESKTOP_LINKS = [
   { label: "Players", href: "/players" },
@@ -32,8 +34,21 @@ function isActive(pathname: string, href: string) {
 }
 
 export default function Navbar() {
-  const pathname = usePathname();
+  const pathname    = usePathname();
   const { isSignedIn } = useUser();
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Cmd+K / Ctrl+K shortcut
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen((v) => !v);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <>
@@ -85,12 +100,19 @@ export default function Navbar() {
 
           {/* Right side */}
           <div className="ml-auto flex items-center gap-4">
-            {/* Search icon */}
+            {/* Search icon + Cmd+K hint */}
             <button
-              className="text-[#6b7280] hover:text-[#9ca3af] transition-colors duration-150"
-              aria-label="Search"
+              onClick={() => setSearchOpen(true)}
+              className="flex items-center gap-2 text-[#6b7280] hover:text-[#9ca3af] transition-colors duration-150"
+              aria-label="Search (⌘K)"
             >
               <Search size={18} />
+              <kbd
+                className="font-mono text-[9px] px-1.5 py-0.5 rounded border hidden lg:inline"
+                style={{ color: "#6b7280", borderColor: "rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)" }}
+              >
+                ⌘K
+              </kbd>
             </button>
 
             {/* Divider */}
@@ -141,19 +163,30 @@ export default function Navbar() {
 
       {/* ── Mobile top header ────────────────────────────────────────── */}
       <header
-        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-center h-[44px]"
+        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-[44px]"
         style={{
           background: "#0e1116",
           borderBottom: "1px solid rgba(255,255,255,0.05)",
         }}
       >
+        <div className="w-8" />
         <Link
           href="/"
           className="font-mono font-semibold text-lg text-primary"
         >
           Courtside
         </Link>
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="w-8 flex justify-end text-[#6b7280] hover:text-[#9ca3af] transition-colors"
+          aria-label="Search"
+        >
+          <Search size={18} />
+        </button>
       </header>
+
+      {/* ── Global search modal ──────────────────────────────────────── */}
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* ── Mobile bottom tab bar ─────────────────────────────────────── */}
       <nav
