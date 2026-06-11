@@ -17,17 +17,28 @@ function MatchRow({ match, playerId }: { match: MatchWithPlayers; playerId: stri
   const opponent = match.player1_id === playerId ? match.player2 : match.player1;
 
   return (
-    <Link
-      href={`/matches/${match.id}`}
-      className="flex items-center justify-between py-3 px-2 hover:bg-white/[0.03] rounded transition-colors duration-150 group"
-    >
-      <div className="flex items-center gap-4">
-        <span className={`font-mono text-xs font-bold w-5 ${won ? "text-primary" : "text-loss"}`}>
+    <div className="flex items-center justify-between py-3 px-2 hover:bg-white/[0.03] rounded transition-colors duration-150 group">
+      <div className="flex items-center gap-4 min-w-0">
+        <span className={`font-mono text-xs font-bold w-5 shrink-0 ${won ? "text-primary" : "text-loss"}`}>
           {won ? "W" : "L"}
         </span>
-        <span className="font-sans text-text-primary group-hover:text-primary transition-colors duration-150">
-          {opponent?.name ?? "Unknown"}
-        </span>
+        <div className="flex items-center gap-2 min-w-0">
+          <Link
+            href={`/matches/${match.id}`}
+            className="font-sans text-text-primary group-hover:text-primary transition-colors duration-150 truncate"
+          >
+            {opponent?.name ?? "Unknown"}
+          </Link>
+          {opponent?.id && (
+            <Link
+              href={`/h2h/${playerId}/${opponent.id}`}
+              className="font-mono text-xs text-text-dim hover:text-accent transition-colors duration-150 shrink-0 border border-white/10 hover:border-accent/30 px-1.5 py-0.5 rounded"
+              onClick={(e) => e.stopPropagation()}
+            >
+              H2H
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-4 text-right">
@@ -49,8 +60,14 @@ function MatchRow({ match, playerId }: { match: MatchWithPlayers; playerId: stri
             {match.match_date.slice(0, 4)}
           </span>
         )}
+        <Link
+          href={`/matches/${match.id}`}
+          className="font-mono text-xs text-text-dim hover:text-text-mid transition-colors duration-150 shrink-0"
+        >
+          →
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }
 
