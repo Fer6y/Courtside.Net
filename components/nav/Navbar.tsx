@@ -17,15 +17,16 @@ import GlobalSearch from "@/components/GlobalSearch";
 const DESKTOP_LINKS = [
   { label: "Players", href: "/players" },
   { label: "Matches", href: "/matches" },
+  { label: "Activity", href: "/feed" },
   { label: "Compare", href: "/compare" },
 ];
 
 const MOBILE_TABS = [
-  { label: "Home",    href: "/",        icon: Home },
-  { label: "Players", href: "/players", icon: Users },
-  { label: "Matches", href: "/matches", icon: Calendar },
-  { label: "Compare", href: "/compare", icon: GitCompare },
-  { label: "Profile", href: "/profile", icon: User },
+  { label: "Home",     href: "/",        icon: Home },
+  { label: "Players",  href: "/players", icon: Users },
+  { label: "Matches",  href: "/matches", icon: Calendar },
+  { label: "Activity", href: "/feed",    icon: GitCompare },
+  { label: "Profile",  href: "/profile", icon: User },
 ];
 
 function isActive(pathname: string, href: string) {
