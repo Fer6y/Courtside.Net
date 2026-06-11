@@ -98,21 +98,11 @@ function polarToXY(r: number, angleDeg: number): { x: number; y: number } {
 
 function buildPolygonPath(points: { x: number; y: number }[]): string {
   if (points.length === 0) return "";
-  const n = points.length;
-  const mid = (
-    a: { x: number; y: number },
-    b: { x: number; y: number }
-  ) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
-
-  const start = mid(points[n - 1], points[0]);
-  let d = `M ${start.x.toFixed(2)} ${start.y.toFixed(2)}`;
-  for (let i = 0; i < n; i++) {
-    const curr = points[i];
-    const next = points[(i + 1) % n];
-    const m = mid(curr, next);
-    d += ` Q ${curr.x.toFixed(2)} ${curr.y.toFixed(2)} ${m.x.toFixed(2)} ${m.y.toFixed(2)}`;
-  }
-  return d + " Z";
+  return (
+    points
+      .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+      .join(" ") + " Z"
+  );
 }
 
 /** Returns SVG textAnchor based on position around the circle */
