@@ -105,11 +105,23 @@ export default async function ProfilePage({ params }: Props) {
 
   const { data: profile } = await admin
     .from("profiles")
-    .select("id, username, display_name, bio, clerk_user_id, created_at, layout_config")
+    .select("id, username, display_name, bio, clerk_user_id, created_at")
     .eq("username", username)
     .single();
 
   if (!profile) notFound();
+
+  // Fetch layout_config separately so a missing column never breaks the page
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let rawLayoutConfig: any = null;
+  try {
+    const { data } = await admin
+      .from("profiles")
+      .select("layout_config")
+      .eq("id", profile.id)
+      .single();
+    rawLayoutConfig = (data as Record<string, unknown> | null)?.layout_config ?? null;
+  } catch { /* column may not exist yet */ }
 
   const displayName = profile.display_name ?? profile.username;
   const initials    = displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
@@ -194,8 +206,7 @@ export default async function ProfilePage({ params }: Props) {
 
   const isEmpty = reviews.length === 0 && ratings.length === 0 && watchLog.length === 0;
 
-  // Layout config
-  const layoutConfig = profile.layout_config as LayoutConfig | null;
+  const layoutConfig = rawLayoutConfig as LayoutConfig | null;
   const { order: effectiveOrder, variants: variantsMap } = resolveLayout(layoutConfig);
 
   // ── Section renderers ────────────────────────────────────────────────────────
