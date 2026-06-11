@@ -8,17 +8,27 @@ const supabase = createClient(
 );
 
 async function main() {
-  const { data } = await supabase
+  // Check a few WTA players in api_raw_staging to see what photo the API gave us
+  const { data: players } = await supabase
     .from("players")
-    .select("name, photo_url, career_stats")
+    .select("name, api_player_key, photo_url, career_stats")
     .filter("career_stats->>tour", "eq", "WTA")
     .not("api_player_key", "is", null)
-    .not("photo_url", "is", null)
     .order("current_rank", { ascending: true, nullsFirst: false })
-    .limit(10);
+    .limit(5);
 
-  for (const p of data ?? []) {
-    console.log(`${p.name}: ${p.photo_url}`);
+  for (const p of players ?? []) {
+    const { data: staged } = await supabase
+      .from("api_raw_staging")
+      .select("response")
+      .eq("method", "get_players")
+      .eq("params->>player_id", p.api_player_key)
+      .single();
+
+    const apiPhoto = (staged?.response as Record<string, unknown>)?.data?.photo ?? null;
+    console.log(`\n${p.name}`);
+    console.log(`  current photo_url: ${p.photo_url}`);
+    console.log(`  api_raw photo:     ${apiPhoto}`);
   }
 }
 
