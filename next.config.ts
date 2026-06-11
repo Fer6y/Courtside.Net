@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "www.wtatennis.com",
       },
+      {
+        protocol: "https",
+        hostname: "photoresources.wtatennis.com",
+      },
     ],
   },
 };
