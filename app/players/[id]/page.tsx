@@ -10,6 +10,7 @@ import RadarChart from "@/components/radar/RadarChart";
 import MatchFilterBar, { type MatchFilters } from "@/components/MatchFilterBar";
 import CountryFlag from "@/components/CountryFlag";
 import MatchHistoryList from "@/components/MatchHistoryList";
+import PlayerTrophyCase from "@/components/PlayerTrophyCase";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -283,6 +284,11 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           ratingCount={ratingCount > 0 ? ratingCount : undefined}
         />
       </div>
+
+      {/* Trophy Case */}
+      {!!p.career_stats?.slam_wins && (
+        <PlayerTrophyCase slamWins={p.career_stats.slam_wins as Record<string, number>} />
+      )}
 
       {/* Community Rating */}
       {reviewCount === 0 && (
