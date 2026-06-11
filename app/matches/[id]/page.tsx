@@ -8,7 +8,9 @@ import { notFound } from "next/navigation";
 import PlayerNameWithBubble from "@/components/PlayerNameWithBubble";
 import DeleteReviewButton from "@/components/DeleteReviewButton";
 import CommentThread, { type Comment } from "@/components/CommentThread";
+import ReactionBar, { type ReactionSummary, EMPTY_REACTIONS } from "@/components/ReactionBar";
 import CountryFlag from "@/components/CountryFlag";
+import type { EmojiKey } from "@/components/ReactionBar";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -102,10 +104,11 @@ export default async function MatchPage({ params }: Props) {
     .order("created_at", { ascending: false });
 
   const reviews = (rawReviews ?? []) as unknown as ReviewRow[];
+  const reviewIds = reviews.map((r) => r.id);
 
   // Fetch comments for all reviews
-  const reviewIds = reviews.map((r) => r.id);
   let commentsByReview: Record<string, Comment[]> = {};
+  const allComments: Comment[] = [];
   if (reviewIds.length > 0) {
     const { data: rawComments } = await admin
       .from("comments")
@@ -116,7 +119,9 @@ export default async function MatchPage({ params }: Props) {
       .in("review_id", reviewIds)
       .order("created_at", { ascending: true });
 
-    commentsByReview = ((rawComments ?? []) as unknown as Comment[]).reduce(
+    const comments = (rawComments ?? []) as unknown as Comment[];
+    allComments.push(...comments);
+    commentsByReview = comments.reduce(
       (acc, c) => {
         if (!acc[c.review_id]) acc[c.review_id] = [];
         acc[c.review_id].push(c);
@@ -126,16 +131,55 @@ export default async function MatchPage({ params }: Props) {
     );
   }
 
+  // Resolve current user's profile ID (for reactions "mine" check)
+  let currentProfileId: string | null = null;
+  if (userId) {
+    const { data: myProfile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("clerk_user_id", userId)
+      .single();
+    currentProfileId = myProfile?.id ?? null;
+  }
+
+  // Fetch all reactions for this match's reviews + comments
+  const allCommentIds = allComments.map((c) => c.id);
+  const allTargetIds  = [...reviewIds, ...allCommentIds];
+  const reactionsMap: Record<string, ReactionSummary> = {};
+
+  if (allTargetIds.length > 0) {
+    const { data: rawReactions } = await admin
+      .from("reactions")
+      .select("target_id, emoji, user_id")
+      .in("target_id", allTargetIds);
+
+    for (const r of (rawReactions ?? []) as { target_id: string; emoji: string; user_id: string }[]) {
+      if (!reactionsMap[r.target_id]) {
+        reactionsMap[r.target_id] = { ...EMPTY_REACTIONS,
+          fire:    { count: 0, mine: false },
+          shocked: { count: 0, mine: false },
+          dislike: { count: 0, mine: false },
+        };
+      }
+      const key = r.emoji as EmojiKey;
+      if (reactionsMap[r.target_id][key]) {
+        reactionsMap[r.target_id][key].count++;
+        if (r.user_id === currentProfileId) reactionsMap[r.target_id][key].mine = true;
+      }
+    }
+  }
+
   // Compute averages
-  const count = reviews.length;
+  const count    = reviews.length;
   const avgMatch = avg(reviews.map((r) => r.match_rating));
   const avgP1    = avg(reviews.map((r) => r.player1_rating));
   const avgP2    = avg(reviews.map((r) => r.player2_rating));
 
-  // Check if current user has already reviewed
   const userHasReviewed = userId
     ? reviews.some((r) => r.profile?.clerk_user_id === userId)
     : false;
+
+  const isLoggedIn = !!userId;
 
   const p1 = match.player1 as { id: string; name: string; country: string | null; current_rank: number | null; photo_url: string | null };
   const p2 = match.player2 as { id: string; name: string; country: string | null; current_rank: number | null; photo_url: string | null };
@@ -181,50 +225,34 @@ export default async function MatchPage({ params }: Props) {
           {/* Player 1 */}
           <Link href={`/players/${p1.id}`} className="flex-1 group min-w-0">
             <div className="flex flex-col items-center text-center gap-3">
-              {/* Photo */}
               <div
                 className="w-20 h-20 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
                 style={{
-                  border: won1
-                    ? "2px solid rgba(34,214,138,0.5)"
-                    : "2px solid rgba(255,255,255,0.08)",
+                  border: won1 ? "2px solid rgba(34,214,138,0.5)" : "2px solid rgba(255,255,255,0.08)",
                   background: "rgba(255,255,255,0.04)",
                 }}
               >
                 {p1.photo_url ? (
-                  <Image
-                    src={p1.photo_url}
-                    alt={p1.name}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover object-top"
-                    unoptimized
-                  />
+                  <Image src={p1.photo_url} alt={p1.name} width={80} height={80}
+                    className="w-full h-full object-cover object-top" unoptimized />
                 ) : (
-                  <span className="font-mono text-xl font-bold text-text-dim">
-                    {p1.name.charAt(0)}
-                  </span>
+                  <span className="font-mono text-xl font-bold text-text-dim">{p1.name.charAt(0)}</span>
                 )}
               </div>
-              {/* Name */}
               <div>
                 <div className={`font-mono text-base font-bold leading-tight transition-colors duration-150 group-hover:text-primary ${won1 ? "text-primary" : "text-text-primary"}`}>
                   <PlayerNameWithBubble playerId={p1.id} playerName={p1.name} />
                 </div>
                 <div className="flex items-center justify-center gap-1.5 mt-1">
                   <CountryFlag code={p1.country} size={20} />
-                  {p1.current_rank && (
-                    <span className="font-mono text-xs text-text-dim">#{p1.current_rank}</span>
-                  )}
+                  {p1.current_rank && <span className="font-mono text-xs text-text-dim">#{p1.current_rank}</span>}
                 </div>
-                {won1 && (
-                  <span className="font-mono text-xs text-primary mt-1 block">Winner</span>
-                )}
+                {won1 && <span className="font-mono text-xs text-primary mt-1 block">Winner</span>}
               </div>
             </div>
           </Link>
 
-          {/* Score + VS */}
+          {/* Score */}
           <div className="flex flex-col items-center gap-2 shrink-0 px-2">
             {match.score ? (
               <div className="font-mono text-sm sm:text-base text-text-primary whitespace-nowrap text-center leading-relaxed">
@@ -240,45 +268,29 @@ export default async function MatchPage({ params }: Props) {
           {/* Player 2 */}
           <Link href={`/players/${p2.id}`} className="flex-1 group min-w-0">
             <div className="flex flex-col items-center text-center gap-3">
-              {/* Photo */}
               <div
                 className="w-20 h-20 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
                 style={{
-                  border: !won1
-                    ? "2px solid rgba(34,214,138,0.5)"
-                    : "2px solid rgba(255,255,255,0.08)",
+                  border: !won1 ? "2px solid rgba(34,214,138,0.5)" : "2px solid rgba(255,255,255,0.08)",
                   background: "rgba(255,255,255,0.04)",
                 }}
               >
                 {p2.photo_url ? (
-                  <Image
-                    src={p2.photo_url}
-                    alt={p2.name}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover object-top"
-                    unoptimized
-                  />
+                  <Image src={p2.photo_url} alt={p2.name} width={80} height={80}
+                    className="w-full h-full object-cover object-top" unoptimized />
                 ) : (
-                  <span className="font-mono text-xl font-bold text-text-dim">
-                    {p2.name.charAt(0)}
-                  </span>
+                  <span className="font-mono text-xl font-bold text-text-dim">{p2.name.charAt(0)}</span>
                 )}
               </div>
-              {/* Name */}
               <div>
                 <div className={`font-mono text-base font-bold leading-tight transition-colors duration-150 group-hover:text-primary ${!won1 ? "text-primary" : "text-text-primary"}`}>
                   <PlayerNameWithBubble playerId={p2.id} playerName={p2.name} />
                 </div>
                 <div className="flex items-center justify-center gap-1.5 mt-1">
                   <CountryFlag code={p2.country} size={20} />
-                  {p2.current_rank && (
-                    <span className="font-mono text-xs text-text-dim">#{p2.current_rank}</span>
-                  )}
+                  {p2.current_rank && <span className="font-mono text-xs text-text-dim">#{p2.current_rank}</span>}
                 </div>
-                {!won1 && (
-                  <span className="font-mono text-xs text-primary mt-1 block">Winner</span>
-                )}
+                {!won1 && <span className="font-mono text-xs text-primary mt-1 block">Winner</span>}
               </div>
             </div>
           </Link>
@@ -286,7 +298,7 @@ export default async function MatchPage({ params }: Props) {
         </div>
       </div>
 
-      {/* ── Community Rating Summary ───────────────────────────── */}
+      {/* ── Community Rating Summary ─────────────────────────────── */}
       {count > 0 && (
         <div className="rounded-lg border border-white/5 bg-white/[0.02] p-6 mb-10">
           <div className="flex items-center justify-between mb-5">
@@ -299,56 +311,26 @@ export default async function MatchPage({ params }: Props) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Match quality */}
             <div className="text-center">
-              <div
-                className="font-mono text-4xl font-bold mb-1"
-                style={{ color: "#f5c518" }}
-              >
-                {fmt(avgMatch)}
-              </div>
+              <div className="font-mono text-4xl font-bold mb-1" style={{ color: "#f5c518" }}>{fmt(avgMatch)}</div>
               <div className="font-mono text-xs text-text-dim mb-3">Match Quality</div>
               <RatingBar value={avgMatch} color="#f5c518" />
             </div>
-
-            {/* Player 1 */}
             <div className="text-center">
-              <div
-                className="font-mono text-4xl font-bold mb-1"
-                style={{ color: "#22d68a" }}
-              >
-                {fmt(avgP1)}
-              </div>
-              <div
-                className="font-mono text-xs text-text-dim mb-3 truncate px-1"
-                title={p1.name}
-              >
-                {p1.name.split(" ").pop()}
-              </div>
+              <div className="font-mono text-4xl font-bold mb-1" style={{ color: "#22d68a" }}>{fmt(avgP1)}</div>
+              <div className="font-mono text-xs text-text-dim mb-3 truncate px-1" title={p1.name}>{p1.name.split(" ").pop()}</div>
               <RatingBar value={avgP1} color="#22d68a" />
             </div>
-
-            {/* Player 2 */}
             <div className="text-center">
-              <div
-                className="font-mono text-4xl font-bold mb-1"
-                style={{ color: "#4a9eff" }}
-              >
-                {fmt(avgP2)}
-              </div>
-              <div
-                className="font-mono text-xs text-text-dim mb-3 truncate px-1"
-                title={p2.name}
-              >
-                {p2.name.split(" ").pop()}
-              </div>
+              <div className="font-mono text-4xl font-bold mb-1" style={{ color: "#4a9eff" }}>{fmt(avgP2)}</div>
+              <div className="font-mono text-xs text-text-dim mb-3 truncate px-1" title={p2.name}>{p2.name.split(" ").pop()}</div>
               <RatingBar value={avgP2} color="#4a9eff" />
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Reviews section ───────────────────────────────────── */}
+      {/* ── Reviews section ──────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-mono text-lg font-semibold text-text-mid uppercase tracking-widest">
           {count > 0 ? `Reviews (${count})` : "Reviews"}
@@ -380,6 +362,9 @@ export default async function MatchPage({ params }: Props) {
               matchId={id}
               comments={commentsByReview[review.id] ?? []}
               currentClerkUserId={userId ?? null}
+              reviewReactions={reactionsMap[review.id] ?? EMPTY_REACTIONS}
+              commentReactions={reactionsMap}
+              isLoggedIn={isLoggedIn}
             />
           ))}
         </div>
@@ -388,18 +373,12 @@ export default async function MatchPage({ params }: Props) {
   );
 }
 
-// ── Sub-components ─────────────────────────────────────────────
+// ── Sub-components ──────────────────────────────────────────────
 
 function RatingBar({ value, color }: { value: number; color: string }) {
   return (
-    <div
-      className="w-full h-1 rounded-full overflow-hidden mx-auto"
-      style={{ background: "rgba(255,255,255,0.06)", maxWidth: 80 }}
-    >
-      <div
-        className="h-full rounded-full"
-        style={{ width: `${(value / 10) * 100}%`, background: color, opacity: 0.7 }}
-      />
+    <div className="w-full h-1 rounded-full overflow-hidden mx-auto" style={{ background: "rgba(255,255,255,0.06)", maxWidth: 80 }}>
+      <div className="h-full rounded-full" style={{ width: `${(value / 10) * 100}%`, background: color, opacity: 0.7 }} />
     </div>
   );
 }
@@ -412,6 +391,9 @@ function ReviewCard({
   matchId,
   comments,
   currentClerkUserId,
+  reviewReactions,
+  commentReactions,
+  isLoggedIn,
 }: {
   review: ReviewRow;
   p1Name: string;
@@ -420,15 +402,17 @@ function ReviewCard({
   matchId: string;
   comments: Comment[];
   currentClerkUserId: string | null;
+  reviewReactions: ReactionSummary;
+  commentReactions: Record<string, ReactionSummary>;
+  isLoggedIn: boolean;
 }) {
   const name = review.profile?.display_name ?? review.profile?.username ?? "Anonymous";
 
   return (
     <div className="rounded-lg border border-white/5 bg-white/[0.02] p-5">
-      {/* Header row */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          {/* Avatar initial */}
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs font-bold shrink-0"
             style={{ background: "rgba(34,214,138,0.15)", color: "#22d68a" }}
@@ -436,13 +420,9 @@ function ReviewCard({
             {name[0]?.toUpperCase()}
           </div>
           <div>
-            <span className="font-sans text-sm font-medium text-text-primary">
-              {name}
-            </span>
+            <span className="font-sans text-sm font-medium text-text-primary">{name}</span>
             {review.profile?.username && (
-              <span className="font-mono text-xs text-text-dim ml-2">
-                @{review.profile.username}
-              </span>
+              <span className="font-mono text-xs text-text-dim ml-2">@{review.profile.username}</span>
             )}
           </div>
           {review.is_favorited && (
@@ -454,63 +434,53 @@ function ReviewCard({
         <div className="flex items-center gap-3">
           {isOwn && (
             <>
-              <Link
-                href={`/matches/${matchId}/review`}
-                className="font-mono text-xs text-text-dim hover:text-primary transition-colors duration-150"
-              >
+              <Link href={`/matches/${matchId}/review`} className="font-mono text-xs text-text-dim hover:text-primary transition-colors duration-150">
                 Edit
               </Link>
               <DeleteReviewButton reviewId={review.id} />
             </>
           )}
-          <span className="font-mono text-xs text-text-dim">
-            {timeAgo(review.created_at)}
-          </span>
+          <span className="font-mono text-xs text-text-dim">{timeAgo(review.created_at)}</span>
         </div>
       </div>
 
-      {/* Ratings row */}
+      {/* Ratings */}
       <div className="flex items-center gap-4 mb-4 flex-wrap">
-        <RatingBadge label="Match" value={review.match_rating} color="#f5c518" />
-        <RatingBadge label={p1Name.split(" ").pop()!} value={review.player1_rating} color="#22d68a" />
-        <RatingBadge label={p2Name.split(" ").pop()!} value={review.player2_rating} color="#4a9eff" />
+        <RatingBadge label="Match"                               value={review.match_rating}   color="#f5c518" />
+        <RatingBadge label={p1Name.split(" ").pop()!}            value={review.player1_rating} color="#22d68a" />
+        <RatingBadge label={p2Name.split(" ").pop()!}            value={review.player2_rating} color="#4a9eff" />
       </div>
 
       {/* Comment */}
       {review.comment && (
-        <p className="font-sans text-sm text-text-mid leading-relaxed">
-          {review.comment}
-        </p>
+        <p className="font-sans text-sm text-text-mid leading-relaxed mb-3">{review.comment}</p>
       )}
+
+      {/* Reactions on the review */}
+      <ReactionBar
+        targetType="review"
+        targetId={review.id}
+        initial={reviewReactions}
+        isLoggedIn={isLoggedIn}
+      />
 
       {/* Comment thread */}
       <CommentThread
         reviewId={review.id}
         initialComments={comments}
         currentClerkUserId={currentClerkUserId}
+        initialReactions={commentReactions}
+        isLoggedIn={isLoggedIn}
       />
     </div>
   );
 }
 
-function RatingBadge({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
+function RatingBadge({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="flex items-center gap-1.5">
       <span className="font-mono text-xs text-text-dim">{label}</span>
-      <span
-        className="font-mono text-sm font-bold"
-        style={{ color }}
-      >
-        {value.toFixed(1)}
-      </span>
+      <span className="font-mono text-sm font-bold" style={{ color }}>{value.toFixed(1)}</span>
     </div>
   );
 }

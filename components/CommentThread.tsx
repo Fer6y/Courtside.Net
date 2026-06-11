@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { addComment, deleteComment } from "@/app/matches/[id]/comments/actions";
+import ReactionBar, { type ReactionSummary, EMPTY_REACTIONS } from "@/components/ReactionBar";
 
 export interface Comment {
   id: string;
@@ -21,6 +22,8 @@ interface Props {
   reviewId: string;
   initialComments: Comment[];
   currentClerkUserId: string | null;
+  initialReactions: Record<string, ReactionSummary>;
+  isLoggedIn: boolean;
 }
 
 function timeAgo(iso: string): string {
@@ -34,14 +37,20 @@ function timeAgo(iso: string): string {
   return `${Math.floor(months / 12)}y ago`;
 }
 
-export default function CommentThread({ reviewId, initialComments, currentClerkUserId }: Props) {
+export default function CommentThread({
+  reviewId,
+  initialComments,
+  currentClerkUserId,
+  initialReactions,
+  isLoggedIn,
+}: Props) {
   const [comments, setComments]   = useState<Comment[]>(initialComments);
   const [newBody, setNewBody]     = useState("");
   const [replyTo, setReplyTo]     = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const topLevel = comments.filter((c) => !c.parent_comment_id);
+  const topLevel   = comments.filter((c) => !c.parent_comment_id);
   const repliesFor = (parentId: string) => comments.filter((c) => c.parent_comment_id === parentId);
 
   function handleAdd(body: string, parentId: string | null) {
@@ -50,8 +59,8 @@ export default function CommentThread({ reviewId, initialComments, currentClerkU
         const created = await addComment(reviewId, body, parentId);
         setComments((prev) => [...prev, created as unknown as Comment]);
         if (parentId) { setReplyTo(null); setReplyBody(""); }
-        else           { setNewBody(""); }
-      } catch { /* silent — toast already handles feedback */ }
+        else          { setNewBody(""); }
+      } catch { /* silent */ }
     });
   }
 
@@ -77,6 +86,7 @@ export default function CommentThread({ reviewId, initialComments, currentClerkU
             const replies  = repliesFor(comment.id);
             const isOwn    = comment.profile?.clerk_user_id === currentClerkUserId;
             const name     = comment.profile?.display_name ?? comment.profile?.username ?? "Anonymous";
+            const commentReactions = initialReactions[comment.id] ?? EMPTY_REACTIONS;
 
             return (
               <div key={comment.id}>
@@ -94,10 +104,25 @@ export default function CommentThread({ reviewId, initialComments, currentClerkU
                       <span className="font-mono text-[10px] text-text-dim">{timeAgo(comment.created_at)}</span>
                     </div>
                     <p className="font-sans text-sm text-text-mid leading-relaxed">{comment.body}</p>
+
+                    {/* Reactions on comment */}
+                    <div className="mt-2">
+                      <ReactionBar
+                        targetType="comment"
+                        targetId={comment.id}
+                        initial={commentReactions}
+                        isLoggedIn={isLoggedIn}
+                        size="sm"
+                      />
+                    </div>
+
                     <div className="flex items-center gap-3 mt-1.5">
                       {currentClerkUserId && (
                         <button
-                          onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
+                          onClick={() => {
+                            setReplyTo(replyTo === comment.id ? null : comment.id);
+                            setReplyBody("");
+                          }}
                           className="font-mono text-[10px] text-text-dim hover:text-text-primary transition-colors"
                         >
                           Reply
@@ -120,8 +145,9 @@ export default function CommentThread({ reviewId, initialComments, currentClerkU
                 {replies.length > 0 && (
                   <div className="ml-8 mt-3 flex flex-col gap-3">
                     {replies.map((reply) => {
-                      const replyIsOwn = reply.profile?.clerk_user_id === currentClerkUserId;
-                      const replyName  = reply.profile?.display_name ?? reply.profile?.username ?? "Anonymous";
+                      const replyIsOwn       = reply.profile?.clerk_user_id === currentClerkUserId;
+                      const replyName        = reply.profile?.display_name ?? reply.profile?.username ?? "Anonymous";
+                      const replyReactions   = initialReactions[reply.id] ?? EMPTY_REACTIONS;
                       return (
                         <div key={reply.id} className="flex items-start gap-2">
                           <div
@@ -132,10 +158,22 @@ export default function CommentThread({ reviewId, initialComments, currentClerkU
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                              <span className="font-sans text-xs font-medium text-text-primary">{replyName}</span>
+                              <span className="font-sans text-xs font-medium text-text-mid">{replyName}</span>
                               <span className="font-mono text-[10px] text-text-dim">{timeAgo(reply.created_at)}</span>
                             </div>
-                            <p className="font-sans text-sm text-text-mid leading-relaxed">{reply.body}</p>
+                            <p className="font-sans text-xs text-text-dim leading-relaxed">{reply.body}</p>
+
+                            {/* Reactions on reply */}
+                            <div className="mt-1.5">
+                              <ReactionBar
+                                targetType="comment"
+                                targetId={reply.id}
+                                initial={replyReactions}
+                                isLoggedIn={isLoggedIn}
+                                size="sm"
+                              />
+                            </div>
+
                             {replyIsOwn && (
                               <button
                                 onClick={() => handleDelete(reply.id)}
@@ -171,9 +209,13 @@ export default function CommentThread({ reviewId, initialComments, currentClerkU
         </div>
       )}
 
-      {/* New comment input — only for signed-in users */}
+      {/* New top-level comment — signed-in only */}
       {currentClerkUserId && (
-        <div style={{ marginTop: topLevel.length > 0 ? 4 : 14, borderTop: topLevel.length === 0 ? "1px solid rgba(255,255,255,0.05)" : "none", paddingTop: topLevel.length === 0 ? 14 : 0 }}>
+        <div style={{
+          marginTop:  topLevel.length > 0 ? 4 : 14,
+          borderTop:  topLevel.length === 0 ? "1px solid rgba(255,255,255,0.05)" : "none",
+          paddingTop: topLevel.length === 0 ? 14 : 0,
+        }}>
           <CommentInput
             placeholder="Add a comment…"
             value={newBody}
@@ -217,10 +259,10 @@ function CommentInput({
         }}
         className="flex-1 font-sans text-sm text-text-primary placeholder:text-text-dim px-3 py-1.5 rounded-lg transition-colors duration-150"
         style={{
-          background:  "rgba(255,255,255,0.04)",
-          border:      "1px solid rgba(255,255,255,0.07)",
-          outline:     "none",
-          minHeight:   36,
+          background: "rgba(255,255,255,0.04)",
+          border:     "1px solid rgba(255,255,255,0.07)",
+          outline:    "none",
+          minHeight:  36,
         }}
         onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.15)")}
         onBlur={(e)  => (e.target.style.borderColor = "rgba(255,255,255,0.07)")}
@@ -231,8 +273,8 @@ function CommentInput({
         className="font-mono text-xs px-3 py-1.5 rounded-lg font-semibold transition-all duration-150 shrink-0"
         style={{
           background: isPending || !value.trim() ? "rgba(34,214,138,0.3)" : "#22d68a",
-          color:      isPending || !value.trim() ? "rgba(0,0,0,0.4)"       : "#0e1116",
-          cursor:     isPending || !value.trim() ? "not-allowed"            : "pointer",
+          color:      isPending || !value.trim() ? "rgba(0,0,0,0.4)"      : "#0e1116",
+          cursor:     isPending || !value.trim() ? "not-allowed"           : "pointer",
           minHeight:  36,
         }}
       >
