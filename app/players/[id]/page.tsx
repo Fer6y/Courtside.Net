@@ -258,10 +258,10 @@ export default async function PlayerPage({ params, searchParams }: Props) {
             )}
             <div className="flex gap-2">
               <Link
-                href={`/compare?p1=${id}`}
+                href={`/h2h/${id}`}
                 className="font-mono text-xs px-4 py-2 rounded-lg font-semibold transition-all duration-150 border border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
               >
-                Compare
+                H2H
               </Link>
               <Link
                 href={userId ? `/players/${id}/rate` : "/sign-in"}

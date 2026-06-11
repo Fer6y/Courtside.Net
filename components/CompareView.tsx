@@ -51,9 +51,10 @@ interface Props {
   p1: PlayerData;
   p2: PlayerData;
   h2hMatches: H2HMatch[];
+  showH2HCard?: boolean;
 }
 
-export default function CompareView({ p1, p2, h2hMatches }: Props) {
+export default function CompareView({ p1, p2, h2hMatches, showH2HCard = true }: Props) {
   const [p1Color, setP1Color] = useState("#22d68a");
   const [p2Color, setP2Color] = useState("#4a9eff");
 
@@ -265,7 +266,7 @@ export default function CompareView({ p1, p2, h2hMatches }: Props) {
         </StatCard>
 
         {/* H2H record */}
-        <StatCard title="Head to Head">
+        {showH2HCard && <StatCard title="Head to Head">
           {h2hMatches.length > 0 ? (
             <>
               {/* Win counts */}
@@ -340,7 +341,7 @@ export default function CompareView({ p1, p2, h2hMatches }: Props) {
               No matches between these players in our dataset.
             </p>
           )}
-        </StatCard>
+        </StatCard>}
       </div>
     </div>
   );

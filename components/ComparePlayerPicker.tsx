@@ -48,7 +48,7 @@ export default function ComparePlayerPicker({
   }, [query, p1Tour, p1Id]);
 
   const select = (p2Id: string) => {
-    router.push(`/compare?p1=${p1Id}&p2=${p2Id}`);
+    router.push(`/h2h/${p1Id}/${p2Id}`);
   };
 
   const displayList = query.length >= 2 ? results : similarPlayers;

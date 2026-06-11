@@ -1,9 +1,11 @@
 import { getSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import type { Player } from "@/types";
 import Link from "next/link";
 import Image from "next/image";
 import CountryFlag from "@/components/CountryFlag";
+import CompareView from "@/components/CompareView";
 
 type Props = { params: Promise<{ p1id: string; p2id: string }> };
 
@@ -29,12 +31,52 @@ const ROUND_PRIORITY: Record<string, number> = {
   "Round of 16": 7, "Round of 32": 6, "Round of 64": 5, "Round of 128": 4,
 };
 
+const SKILL_KEYS = [
+  "focus", "clutch", "resilience", "processing_time",
+  "serve", "forehand", "backhand", "shot_variety",
+  "net_play", "touch", "return_play", "reaction_time", "deception",
+  "speed", "court_coverage", "positioning", "anticipation",
+] as const;
+
+async function fetchRatings(id: string, admin: ReturnType<typeof createClient>) {
+  const { data: skillRows } = await admin
+    .from("skill_ratings")
+    .select(SKILL_KEYS.join(","))
+    .eq("player_id", id);
+
+  const ratings: Record<string, number> = {};
+  const ratingCount = skillRows?.length ?? 0;
+
+  if (ratingCount > 0) {
+    for (const key of SKILL_KEYS) {
+      const vals = (skillRows ?? [])
+        .map((r) => Number((r as unknown as Record<string, unknown>)[key]))
+        .filter((v) => !isNaN(v) && v > 0);
+      if (vals.length > 0) {
+        ratings[key] = Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+      }
+    }
+  }
+
+  return { ratings, ratingCount };
+}
+
 export default async function H2HPage({ params }: Props) {
   const { p1id, p2id } = await params;
   const supabase = getSupabase();
+  const admin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
-  // Fetch both players + all H2H matches in parallel
-  const [{ data: p1 }, { data: p2 }, { data: rawMatches }] = await Promise.all([
+  // Fetch both players, all H2H matches, and skill ratings in parallel
+  const [
+    { data: p1 },
+    { data: p2 },
+    { data: rawMatches },
+    p1RatingsData,
+    p2RatingsData,
+  ] = await Promise.all([
     supabase.from("players").select("*").eq("id", p1id).single(),
     supabase.from("players").select("*").eq("id", p2id).single(),
     supabase
@@ -43,6 +85,8 @@ export default async function H2HPage({ params }: Props) {
       .or(`and(player1_id.eq.${p1id},player2_id.eq.${p2id}),and(player1_id.eq.${p2id},player2_id.eq.${p1id})`)
       .order("match_date", { ascending: false, nullsFirst: false })
       .limit(100),
+    fetchRatings(p1id, admin),
+    fetchRatings(p2id, admin),
   ]);
 
   if (!p1 || !p2) notFound();
@@ -86,7 +130,6 @@ export default async function H2HPage({ params }: Props) {
   const total = p1Wins + p2Wins;
   const p1LeadsPct = total > 0 ? Math.round((p1Wins / total) * 100) : 50;
 
-  // Leader text
   const leader =
     p1Wins > p2Wins ? player1.name
     : p2Wins > p1Wins ? player2.name
@@ -100,6 +143,9 @@ export default async function H2HPage({ params }: Props) {
         <Link href={`/players/${p1id}`} className="font-sans text-sm text-text-dim hover:text-text-mid transition-colors duration-150">
           ← {player1.name}
         </Link>
+        <Link href={`/h2h/${p1id}`} className="font-sans text-sm text-text-dim hover:text-text-mid transition-colors duration-150">
+          Change opponent
+        </Link>
       </div>
 
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
@@ -108,7 +154,7 @@ export default async function H2HPage({ params }: Props) {
 
           {/* Player 1 */}
           <div className="flex flex-col items-center gap-3 flex-1 min-w-0">
-            <PlayerAvatar player={player1} wins={p1Wins} isLeader={p1Wins > p2Wins} />
+            <PlayerAvatar player={player1} isLeader={p1Wins > p2Wins} />
             <div className="text-center">
               <p className="font-mono font-bold text-text-primary text-base sm:text-lg leading-tight">{player1.name}</p>
               <div className="flex items-center justify-center gap-1.5 mt-1">
@@ -146,7 +192,7 @@ export default async function H2HPage({ params }: Props) {
 
           {/* Player 2 */}
           <div className="flex flex-col items-center gap-3 flex-1 min-w-0">
-            <PlayerAvatar player={player2} wins={p2Wins} isLeader={p2Wins > p1Wins} />
+            <PlayerAvatar player={player2} isLeader={p2Wins > p1Wins} />
             <div className="text-center">
               <p className="font-mono font-bold text-text-primary text-base sm:text-lg leading-tight">{player2.name}</p>
               <div className="flex items-center justify-center gap-1.5 mt-1">
@@ -216,6 +262,33 @@ export default async function H2HPage({ params }: Props) {
         </div>
       )}
 
+      {/* ── Skill Comparison ────────────────────────────────────────────────── */}
+      <div className="mb-8">
+        <h2 className="font-mono text-xs uppercase tracking-widest text-text-dim mb-6">
+          Skill Comparison
+        </h2>
+        <CompareView
+          p1={{
+            id: p1id,
+            name: player1.name,
+            country: player1.country ?? null,
+            current_rank: player1.current_rank ?? null,
+            ratings: p1RatingsData.ratings,
+            ratingCount: p1RatingsData.ratingCount,
+          }}
+          p2={{
+            id: p2id,
+            name: player2.name,
+            country: player2.country ?? null,
+            current_rank: player2.current_rank ?? null,
+            ratings: p2RatingsData.ratings,
+            ratingCount: p2RatingsData.ratingCount,
+          }}
+          h2hMatches={matches}
+          showH2HCard={false}
+        />
+      </div>
+
       {/* ── Match history ───────────────────────────────────────────────────── */}
       <section>
         <h2 className="font-mono text-xs uppercase tracking-widest text-text-dim mb-4">
@@ -279,7 +352,7 @@ export default async function H2HPage({ params }: Props) {
   );
 }
 
-function PlayerAvatar({ player, wins, isLeader }: { player: Player; wins: number; isLeader: boolean }) {
+function PlayerAvatar({ player, isLeader }: { player: Player; isLeader: boolean }) {
   const frameStyle: React.CSSProperties = isLeader
     ? { background: "linear-gradient(135deg, #22d68a, #16a863)", padding: "2px", boxShadow: "0 0 12px rgba(34,214,138,0.4)" }
     : { border: "2px solid rgba(255,255,255,0.08)" };
