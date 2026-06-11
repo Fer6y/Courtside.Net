@@ -38,7 +38,8 @@ const SKILL_KEYS = [
   "speed", "court_coverage", "positioning", "anticipation",
 ] as const;
 
-async function fetchRatings(id: string, admin: ReturnType<typeof createClient>) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchRatings(id: string, admin: any) {
   const { data: skillRows } = await admin
     .from("skill_ratings")
     .select(SKILL_KEYS.join(","))
@@ -50,10 +51,10 @@ async function fetchRatings(id: string, admin: ReturnType<typeof createClient>) 
   if (ratingCount > 0) {
     for (const key of SKILL_KEYS) {
       const vals = (skillRows ?? [])
-        .map((r) => Number((r as unknown as Record<string, unknown>)[key]))
-        .filter((v) => !isNaN(v) && v > 0);
+        .map((r: unknown) => Number((r as Record<string, unknown>)[key]))
+        .filter((v: number) => !isNaN(v) && v > 0);
       if (vals.length > 0) {
-        ratings[key] = Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+        ratings[key] = Math.round((vals.reduce((a: number, b: number) => a + b, 0) / vals.length) * 10) / 10;
       }
     }
   }
