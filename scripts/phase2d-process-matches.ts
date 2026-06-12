@@ -97,6 +97,8 @@ function normaliseRound(raw: unknown): string | null {
 function normaliseDate(raw: unknown): string | null {
   if (!raw) return null;
   const s = String(raw).trim();
+  // ISO timestamp ("2020-01-26T00:00:00.000Z") — the format the API actually returns
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return s.slice(0, 10);
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
   if (/^\d{2}\.\d{2}\.\d{4}$/.test(s)) {
     const [d, m, y] = s.split(".");
