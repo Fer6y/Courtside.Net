@@ -1,4 +1,6 @@
 import { getSupabase } from "@/lib/supabase";
+import { unstable_cache } from "next/cache";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 import type { Player } from "@/types";
 import Link from "next/link";
 import Image from "next/image";
@@ -85,6 +87,25 @@ function winPct(wins: number, total: number): number | null {
   return Math.round((wins / total) * 100);
 }
 
+// All match rows for a tour, cached hourly (match results only change on
+// import). The previous version built one query containing every player ID
+// (~56,000 characters) which the database rejected outright — and even if
+// it hadn't, the unbounded select would have been silently capped at 1,000
+// of ~9,000 rows, computing wrong stats.
+const getTourMatchRows = unstable_cache(
+  async (tour: string) => {
+    const db = getSupabase();
+    return fetchAllRows<MatchRow>((from, to) =>
+      db.from("matches")
+        .select("player1_id, player2_id, winner_id, surface, match_date")
+        .eq("tour", tour)
+        .range(from, to)
+    );
+  },
+  ["players-stat-matches"],
+  { revalidate: 3600 }
+);
+
 export default async function PlayersPage({
   searchParams,
 }: {
@@ -140,15 +161,7 @@ export default async function PlayersPage({
   let statsMap = new Map<string, PlayerStats>();
 
   if (STAT_SORTS.has(activeSort) && players.length > 0) {
-    const playerIds = players.map((p) => p.id);
-
-    // Fetch all relevant matches in one query
-    const { data: matches } = await supabase
-      .from("matches")
-      .select("player1_id, player2_id, winner_id, surface, match_date")
-      .or(`player1_id.in.(${playerIds.join(",")}),player2_id.in.(${playerIds.join(",")})`);
-
-    const matchRows = (matches ?? []) as MatchRow[];
+    const matchRows = await getTourMatchRows(activeTour);
 
     for (const p of players) {
       statsMap.set(p.id, computeStats(p.id, matchRows));
