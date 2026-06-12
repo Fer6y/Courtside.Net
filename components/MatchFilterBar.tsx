@@ -272,8 +272,14 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
         {hasAnyFilter && (
           <button
             onClick={clearAll}
-            className="font-mono text-xs text-text-dim hover:text-text-primary transition-colors shrink-0 px-2"
-            style={{ whiteSpace: "nowrap" }}
+            className="font-mono transition-colors shrink-0 px-2 uppercase"
+            style={{
+              whiteSpace: "nowrap",
+              fontSize: 10,
+              letterSpacing: "0.18em",
+              color: "rgba(236,229,216,0.35)",
+              paddingTop: 6,
+            }}
           >
             Clear all
           </button>
@@ -285,14 +291,14 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
         <div
           style={{
             position: "absolute",
-            top: 40,
+            top: 36,
             left: dropdownLeft,
-            background: "#1a1e26",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: 12,
+            background: "#171b17",
+            border: "1px solid var(--hairline)",
+            borderRadius: 10,
             padding: 10,
             zIndex: 200,
-            boxShadow: "0 12px 40px rgba(0,0,0,0.7)",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.6)",
             minWidth: 160,
           }}
         >
@@ -401,9 +407,9 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
                     <button key={o.value} onClick={() => toggle("sets", o.value)}
                       className="font-mono text-base font-bold px-4 py-2 rounded-lg transition-all duration-100"
                       style={{
-                        background: checked ? "rgba(34,214,138,0.15)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${checked ? "rgba(34,214,138,0.5)" : "rgba(255,255,255,0.1)"}`,
-                        color: checked ? "#22d68a" : "#9ca3af",
+                        background: checked ? "rgba(201,169,106,0.12)" : "rgba(236,229,216,0.04)",
+                        border: `1px solid ${checked ? "rgba(201,169,106,0.5)" : "rgba(236,229,216,0.12)"}`,
+                        color: checked ? "#c9a96a" : "rgba(236,229,216,0.55)",
                         cursor: "pointer",
                         minWidth: 44,
                       }}
@@ -478,7 +484,10 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
 
 function DropLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="font-mono text-[10px] text-text-dim uppercase tracking-wider px-1 pb-1">
+    <p
+      className="font-mono text-[10px] uppercase px-1 pb-1"
+      style={{ letterSpacing: "0.18em", color: "rgba(236,229,216,0.4)" }}
+    >
       {children}
     </p>
   );
@@ -487,16 +496,24 @@ function DropLabel({ children }: { children: React.ReactNode }) {
 function ChipBtn({ label, active, isOpen, onToggle, onClear }: {
   label: string; active: boolean; isOpen: boolean; onToggle: () => void; onClear: () => void;
 }) {
+  // Programme styling: small-caps text links with a gold underline when
+  // active — pills retired with the redesign
   return (
-    <div style={{ display: "flex", alignItems: "center" }}>
-      <button onClick={onToggle} className="font-mono text-xs transition-colors duration-150"
+    <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+      <button onClick={onToggle} className="font-mono transition-colors duration-150"
         style={{
-          padding: "6px 12px",
-          borderRadius: active ? "20px 0 0 20px" : 20,
-          border: `1px solid ${isOpen && !active ? "rgba(255,255,255,0.2)" : active ? "rgba(34,214,138,0.4)" : "rgba(255,255,255,0.1)"}`,
-          borderRight: active ? "none" : undefined,
-          background: active ? "rgba(34,214,138,0.08)" : isOpen ? "rgba(255,255,255,0.04)" : "transparent",
-          color: active ? "#22d68a" : isOpen ? "#e8eaed" : "#9ca3af",
+          fontSize: 10,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          padding: "6px 2px 4px",
+          border: "none",
+          borderBottom: active
+            ? "1px solid rgba(201,169,106,0.6)"
+            : isOpen
+            ? "1px solid rgba(236,229,216,0.3)"
+            : "1px solid transparent",
+          background: "transparent",
+          color: active ? "#c9a96a" : isOpen ? "#ece5d8" : "rgba(236,229,216,0.45)",
           cursor: "pointer", whiteSpace: "nowrap", maxWidth: 180,
           overflow: "hidden", textOverflow: "ellipsis",
         }}
@@ -505,11 +522,13 @@ function ChipBtn({ label, active, isOpen, onToggle, onClear }: {
       </button>
       {active && (
         <button onClick={(e) => { e.stopPropagation(); onClear(); }}
+          aria-label={`Clear ${label} filter`}
           style={{
-            padding: "6px 8px", borderRadius: "0 20px 20px 0",
-            border: "1px solid rgba(34,214,138,0.4)", borderLeft: "none",
-            background: "rgba(34,214,138,0.08)", color: "#22d68a",
-            cursor: "pointer", opacity: 0.7, fontFamily: "monospace", fontSize: 12,
+            padding: "4px 4px",
+            border: "none",
+            background: "transparent",
+            color: "rgba(201,169,106,0.7)",
+            cursor: "pointer", fontFamily: "monospace", fontSize: 11,
           }}
         >
           ×
@@ -525,21 +544,21 @@ function CheckRow({ label, sublabel, checked, onClick }: {
   return (
     <button onClick={onClick}
       className="w-full text-left flex items-center gap-2.5 px-2 py-1.5 rounded transition-colors duration-100"
-      style={{ background: checked ? "rgba(34,214,138,0.08)" : "transparent", cursor: "pointer" }}
-      onMouseEnter={(e) => { if (!checked) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)"; }}
+      style={{ background: checked ? "rgba(201,169,106,0.1)" : "transparent", cursor: "pointer" }}
+      onMouseEnter={(e) => { if (!checked) (e.currentTarget as HTMLButtonElement).style.background = "rgba(236,229,216,0.04)"; }}
       onMouseLeave={(e) => { if (!checked) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
     >
       <span className="w-3.5 h-3.5 rounded shrink-0 flex items-center justify-center"
-        style={{ border: `1.5px solid ${checked ? "#22d68a" : "rgba(255,255,255,0.25)"}`, background: checked ? "#22d68a" : "transparent" }}
+        style={{ border: `1.5px solid ${checked ? "#c9a96a" : "rgba(236,229,216,0.25)"}`, background: checked ? "#c9a96a" : "transparent" }}
       >
         {checked && (
           <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
-            <path d="M1 3L3 5L7 1" stroke="#0e1116" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M1 3L3 5L7 1" stroke="#0d1a11" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         )}
       </span>
-      <span className="font-mono text-xs flex-1 truncate" style={{ color: checked ? "#22d68a" : "#9ca3af" }}>{label}</span>
-      {sublabel && <span className="font-mono text-[10px] text-text-dim shrink-0">{sublabel}</span>}
+      <span className="font-mono text-xs flex-1 truncate" style={{ color: checked ? "#c9a96a" : "rgba(236,229,216,0.55)" }}>{label}</span>
+      {sublabel && <span className="font-mono text-[10px] shrink-0" style={{ color: "rgba(236,229,216,0.35)" }}>{sublabel}</span>}
     </button>
   );
 }
@@ -550,17 +569,17 @@ function RadioRow({ label, sublabel, active, onClick }: {
   return (
     <button onClick={onClick}
       className="w-full text-left flex items-center gap-2.5 px-2 py-1.5 rounded transition-colors duration-100"
-      style={{ background: active ? "rgba(34,214,138,0.08)" : "transparent", cursor: "pointer" }}
-      onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)"; }}
+      style={{ background: active ? "rgba(201,169,106,0.1)" : "transparent", cursor: "pointer" }}
+      onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = "rgba(236,229,216,0.04)"; }}
       onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
     >
       <span className="w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center"
-        style={{ border: `1.5px solid ${active ? "#22d68a" : "rgba(255,255,255,0.25)"}` }}
+        style={{ border: `1.5px solid ${active ? "#c9a96a" : "rgba(236,229,216,0.25)"}` }}
       >
-        {active && <span className="w-2 h-2 rounded-full" style={{ background: "#22d68a" }} />}
+        {active && <span className="w-2 h-2 rounded-full" style={{ background: "#c9a96a" }} />}
       </span>
-      <span className="font-mono text-xs flex-1 truncate" style={{ color: active ? "#22d68a" : "#9ca3af" }}>{label}</span>
-      {sublabel && <span className="font-mono text-[10px] text-text-dim shrink-0">{sublabel}</span>}
+      <span className="font-mono text-xs flex-1 truncate" style={{ color: active ? "#c9a96a" : "rgba(236,229,216,0.55)" }}>{label}</span>
+      {sublabel && <span className="font-mono text-[10px] shrink-0" style={{ color: "rgba(236,229,216,0.35)" }}>{sublabel}</span>}
     </button>
   );
 }

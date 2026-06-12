@@ -6,14 +6,31 @@ import type { MatchWithPlayers, Surface } from "@/types";
 import Link from "next/link";
 import PlayerNameWithBubble from "@/components/PlayerNameWithBubble";
 import MatchFilterBar, { type MatchFilters } from "@/components/MatchFilterBar";
-import TournamentBadge from "@/components/TournamentBadge";
 
 export const metadata = { title: "Matches — Courtside" };
 
 const SURFACE_COLORS: Record<Surface, string> = {
-  Hard: "text-court-hard", Clay: "text-court-clay",
-  Grass: "text-court-grass", Carpet: "text-text-dim",
+  Hard: "#4a90d9", Clay: "#d4734e", Grass: "#5cb85c", Carpet: "#9ca3af",
 };
+
+const ROUND_SHORT: Record<string, string> = {
+  "Round of 128": "R128", "Round of 64": "R64",
+  "Round of 32":  "R32",  "Round of 16": "R16",
+  "Quarterfinal": "QF",   "Semifinal":   "SF",
+  "Final":        "F",    "Round Robin": "RR",
+};
+
+// Short label for the order-of-play meta line. Slams get their gold
+// monogram; everything else shows its name (year stripped — the year has
+// its own slot in the line).
+function tournamentAbbrev(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes("australian open")) return "AO";
+  if (n.includes("roland garros") || n.includes("french open")) return "RG";
+  if (n.includes("wimbledon")) return "W";
+  if (n.includes("us open")) return "USO";
+  return name.replace(/\s+\d{4}$/, "").toUpperCase();
+}
 
 // Grand Slam name patterns — everything else in our dataset is Masters
 const SLAM_PATTERNS = [
@@ -220,25 +237,35 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-12">
-      <h1 className="font-mono text-3xl font-bold text-text-primary mb-2">Matches</h1>
-      <p className="font-sans text-text-mid mb-6">{tourSubtitle}</p>
 
-      {/* Tour tabs */}
-      <div className="flex items-center gap-2 mb-6">
-        {(["ATP", "WTA"] as const).map((t) => (
-          <Link
-            key={t}
-            href={buildTourUrl(t)}
-            className={`font-mono text-sm font-semibold px-5 py-2 rounded-full border transition-colors duration-150 ${
-              activeTour === t
-                ? "border-primary text-primary bg-primary/10"
-                : "border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
-            }`}
-          >
-            {t}
-          </Link>
-        ))}
+      {/* Masthead */}
+      <div className="flex items-baseline justify-between flex-wrap gap-2">
+        <h1 className="bill-name text-3xl" style={{ fontWeight: 500 }}>Order of Play</h1>
+        <div className="eyebrow" style={{ fontSize: 11 }}>
+          {(["ATP", "WTA"] as const).map((t, i) => (
+            <span key={t}>
+              {i > 0 && <span style={{ color: "#c9a96a" }}> · </span>}
+              <Link
+                href={buildTourUrl(t)}
+                className="transition-colors duration-150"
+                style={{
+                  color: activeTour === t ? "#c9a96a" : "rgba(236,229,216,0.35)",
+                  borderBottom: activeTour === t ? "1px solid rgba(201,169,106,0.6)" : "none",
+                  paddingBottom: 2,
+                }}
+              >
+                {t}
+              </Link>
+            </span>
+          ))}
+        </div>
       </div>
+      <p
+        className="bill-name italic mb-7 mt-1"
+        style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.5)" }}
+      >
+        {tourSubtitle}
+      </p>
 
       <div className="mb-8">
         <MatchFilterBar filters={filters} options={{ tournaments, surfaces, years }} basePath="/matches" />
@@ -247,16 +274,25 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
       {error ? (
         <p className="text-loss font-sans text-sm">Failed to load matches.</p>
       ) : (matches ?? []).length === 0 ? (
-        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-12 text-center">
-          <p className="font-mono text-text-dim text-sm mb-2">No matches found</p>
-          {hasAnyFilter && <p className="font-sans text-text-dim text-xs">Try adjusting your filters</p>}
+        <div
+          className="rounded-lg p-12 text-center"
+          style={{ border: "1px solid var(--hairline-soft)", background: "rgba(236,229,216,0.02)" }}
+        >
+          <p className="bill-name italic text-sm" style={{ fontWeight: 300, color: "rgba(236,229,216,0.5)" }}>
+            Nothing on the schedule.
+          </p>
+          {hasAnyFilter && (
+            <p className="font-sans text-xs mt-2" style={{ color: "rgba(236,229,216,0.35)" }}>
+              Try adjusting your filters
+            </p>
+          )}
         </div>
       ) : (
         <>
-          <p className="font-mono text-sm text-text-dim mb-4">
+          <p className="eyebrow mb-3" style={{ fontSize: 10, color: "rgba(236,229,216,0.35)" }}>
             {matches!.length}{matches!.length >= 100 ? "+" : ""} match{matches!.length !== 1 ? "es" : ""}
           </p>
-          <div className="divide-y divide-white/5">
+          <div>
             {(matches as MatchWithPlayers[]).map((match) => (
               <MatchRow key={match.id} match={match} />
             ))}
@@ -269,34 +305,49 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
 
 function MatchRow({ match }: { match: MatchWithPlayers }) {
   const surface = match.surface as Surface | null;
-  const p1Won = match.winner_id && match.player1 && match.winner_id === match.player1.id;
-  const p2Won = match.winner_id && match.player2 && match.winner_id === match.player2.id;
+  const p1Won = !!match.winner_id && match.winner_id === match.player1?.id;
+  const p2Won = !!match.winner_id && match.winner_id === match.player2?.id;
+  const hasWinner = p1Won || p2Won;
+
+  // Winner reads first on the bill — "Alcaraz d. Sinner"
+  const first  = p2Won ? match.player2 : match.player1;
+  const second = p2Won ? match.player1 : match.player2;
+
+  const abbrev  = tournamentAbbrev(match.tournament);
+  const tier    = match.tournament_tier;
+  const abbrevColor =
+    tier === "grand_slam" ? "#c9a96a" :
+    tier === "masters_1000" ? "rgba(192,192,192,0.7)" :
+    "rgba(236,229,216,0.45)";
+  const year = match.match_date?.slice(0, 4);
+  const round = ROUND_SHORT[match.round ?? ""] ?? match.round;
 
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="flex items-center justify-between py-3 px-2 hover:bg-white/[0.03] rounded transition-colors duration-150 group"
+      className="flex items-baseline justify-between gap-x-4 gap-y-0.5 flex-wrap py-3 px-1 transition-colors duration-150"
+      style={{ borderBottom: "1px solid var(--hairline-soft)" }}
     >
-      <div className="flex items-center gap-2 min-w-0">
-        <PlayerNameWithBubble
-          playerId={match.player1.id}
-          playerName={match.player1?.name ?? "Unknown"}
-          className={`font-sans truncate transition-colors duration-150 ${p1Won ? "text-primary font-semibold" : "text-text-primary"}`}
-        />
-        <span className="font-mono text-text-dim text-xs shrink-0">vs</span>
-        <PlayerNameWithBubble
-          playerId={match.player2.id}
-          playerName={match.player2?.name ?? "Unknown"}
-          className={`font-sans truncate ${p2Won ? "text-primary font-semibold" : "text-text-primary"}`}
-        />
-      </div>
-      <div className="flex items-center gap-3 shrink-0 ml-4">
-        <TournamentBadge tournamentName={match.tournament} tier={match.tournament_tier ?? undefined} />
-        {surface && <span className={`font-mono text-xs ${SURFACE_COLORS[surface]}`}>{surface}</span>}
-        <span className="font-sans text-xs text-text-dim hidden md:block">{match.tournament}</span>
-        <span className="font-mono text-xs text-text-dim hidden sm:block">{match.round}</span>
-        {match.match_date && <span className="font-mono text-xs text-text-dim">{match.match_date.slice(0, 4)}</span>}
-      </div>
+      <span className="bill-name min-w-0" style={{ fontSize: 16 }}>
+        <span style={{ fontWeight: hasWinner ? 500 : 400, color: "#ece5d8" }}>
+          <PlayerNameWithBubble playerId={first.id} playerName={first?.name ?? "Unknown"} />
+        </span>
+        <span className="italic" style={{ fontWeight: 300, fontSize: 13, color: "rgba(236,229,216,0.4)" }}>
+          {" "}{hasWinner ? "d." : "v."}{" "}
+        </span>
+        <span style={{ fontWeight: 300, color: hasWinner ? "rgba(236,229,216,0.65)" : "#ece5d8" }}>
+          <PlayerNameWithBubble playerId={second.id} playerName={second?.name ?? "Unknown"} />
+        </span>
+      </span>
+      <span
+        className="font-mono shrink-0"
+        style={{ fontSize: 11, letterSpacing: "0.08em", color: "rgba(236,229,216,0.45)" }}
+      >
+        <span style={{ color: abbrevColor }}>{abbrev}</span>
+        {round && <> · {round}</>}
+        {surface && <> · <span style={{ color: SURFACE_COLORS[surface] }}>{surface.toUpperCase()}</span></>}
+        {year && <> · {year}</>}
+      </span>
     </Link>
   );
 }
