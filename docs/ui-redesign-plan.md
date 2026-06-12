@@ -104,15 +104,42 @@ No change to philosophy — 150–200ms, functional. Springy popups stay.
 
 ---
 
-## 3. Page-by-page treatment
+## 3. Content principles (Scott's editorial rules — June 12, 2026)
+
+These govern *what* gets shown; the design language governs *how*. Scott has
+final say on content choices — when a redesign touches what data appears,
+propose, don't assume.
+
+1. **No vanity stats until there's real usage.** Site-wide counts ("913
+   players · 8,999 matches") come off the home page. Community-usage
+   boasting returns only when the community exists.
+2. **Factual career claims need a verified source.** The API provides
+   `career_stats.slam_wins` (verified) for some players — usable. It does
+   NOT provide career W–L records. Stats computed from our matches dataset
+   cover only 2020–2026 Slams + Masters, so they must never be labeled
+   "career". Either scope them honestly ("Since 2020 · Slams & Masters")
+   or omit them.
+3. **The community's voice is the product.** Player profiles lead with
+   community skill ratings (strongest-rated skills), community performance
+   ratings, and recent matches/wins from the catalogue.
+4. **Trophy decals get strong emphasis** — Grand Slam count (API-verified
+   where available) and tournament wins, rendered in gold as the profile's
+   honours row.
+5. **Player photo and country flag are always highly visible** on the
+   profile — large portrait, flag at full legibility, not tucked in a
+   corner.
+
+---
+
+## 3a. Page-by-page treatment
 
 | Page | Treatment |
 |------|-----------|
 | **Match detail** *(flagship — do first)* | Programme spread: slam cover band, centered bill lockup, dot-leader community ratings ("Notes from the gallery"), reviews as letterpress cards with serif reviewer names |
 | **Match list** | "Order of play" — typeset rows with hairlines, tour/year filter chips restyled as small-caps text links with underlines instead of pills |
-| **Player profile** | Name in large serif + country + rank as eyebrow; radar keeps mono axis labels; trophy case becomes "Honours"; match history = order-of-play rows |
+| **Player profile** | Large portrait with gold ring + prominent flag; name in large serif, rank/country/age as eyebrow; **Honours row in gold directly under the name** (slam count from API `slam_wins` where present, plus scoped catalogue titles); dot-leader block = community data only (skill rating avg, strongest skills, performance rating, recent form); match history = order-of-play rows. NO career W–L (unverifiable) |
 | **Players list** | Draw-sheet feel: ranked typeset rows, serif names, dot leaders to win % when stat-sorted |
-| **Home** | Programme cover: centered masthead "COURTSIDE" eyebrow + serif tagline, stats bar as a single typeset line with gold dividers, community reviews as order-of-play rows |
+| **Home** | Programme cover: centered masthead "COURTSIDE" eyebrow + serif tagline + CTAs. NO site-stats line (content rule 1). Below the fold: editorial "this fortnight" featured matches + community reviews as order-of-play rows (shown only when reviews exist) |
 | **H2H / Compare** | "The Rivalry" — two serif names with italic "v.", records in dot leaders, radar overlay unchanged |
 | **Feed** | Lighter touch: section dividers + typeset rows replace card stacks |
 | **Profile** | Name in serif, stats as dot leaders, achievements as "Honours" with gold tiers |
