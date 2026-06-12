@@ -139,12 +139,9 @@ old and new styles coexist per-page.
 
 ---
 
-## 5. Open decisions
+## 5. Decisions (locked June 12, 2026)
 
-1. **Background**: hint-of-green #101311 vs keeping neutral #0e1116.
-   (Mockup uses the green-black.)
-2. **Serif face**: Fraunces (recommended) vs Playfair Display vs Cormorant.
-3. **How far with cream**: serif display only (recommended) vs all text
-   warmed up.
-4. **Reaction icons**: thin line icons vs typographic marks (※ † ⁂) vs
-   keeping emoji.
+1. **Background**: ✅ green-black **#101311**
+2. **Serif face**: ✅ **Fraunces**
+3. **Cream text**: serif display only (body stays #e8eaed)
+4. **Reaction icons**: ✅ **thin line icons** in cream/gold, animation kept
