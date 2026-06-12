@@ -168,7 +168,19 @@ old and new styles coexist per-page.
 
 ## 5. Decisions (locked June 12, 2026)
 
-1. **Background**: ✅ green-black **#101311**
+1. **Background**: ✅ **"The Lawn"** — dark green **#0d1a11** with faint mowed
+   stripes (repeating vertical bands, ~2% lightness shift, ~52px wide) PLUS
+   an ultra-fine grain noise (tiny SVG turbulence filter, barely visible).
+   Supersedes the earlier #101311 choice.
 2. **Serif face**: ✅ **Fraunces**
 3. **Cream text**: serif display only (body stays #e8eaed)
 4. **Reaction icons**: ✅ **thin line icons** in cream/gold, animation kept
+5. **Trophy decals**: ✅ custom stroke-drawn gold SVG silhouettes, one per
+   slam — AO squat lidded cup, RG wide shallow bowl, Wimbledon tall cup
+   with ball finial, USO big-loop-handled cup — plus a smaller, muted-gold
+   generic cup for Masters. Built as a React component set
+   (`components/trophies/`, avatarTemplates pattern). Profile honours row
+   shows per-slam decals with ×N counts (only when API `slam_wins` is
+   present — verified source rule), then a separated Masters ×N from the
+   catalogue with scoped label. Tooltips say "Wimbledon ×2" (API has
+   counts, not years).
