@@ -26,12 +26,20 @@ export async function submitMatchReview(matchId: string, formData: FormData) {
 
   if (profileErr || !profile) throw new Error("Profile not found");
 
-  const matchRating   = parseFloat(formData.get("match_rating")   as string);
-  const player1Rating = parseFloat(formData.get("player1_rating") as string);
-  const player2Rating = parseFloat(formData.get("player2_rating") as string);
-  const comment       = (formData.get("comment") as string)?.trim() || null;
+  // Server-side validation — the UI sliders enforce these too, but a forged
+  // request could bypass the browser and poison community averages.
+  function parseRating(field: string): number {
+    const val = parseFloat(formData.get(field) as string);
+    if (isNaN(val) || val < 1 || val > 10) throw new Error(`Invalid ${field}: must be 1.0–10.0`);
+    return Math.round(val * 10) / 10;
+  }
+
+  const matchRating   = parseRating("match_rating");
+  const player1Rating = parseRating("player1_rating");
+  const player2Rating = parseRating("player2_rating");
+  const comment       = (formData.get("comment") as string)?.trim().slice(0, 2000) || null;
   const isFavorited   = formData.get("is_favorited") === "true";
-  const collection    = (formData.get("collection_name") as string)?.trim() || null;
+  const collection    = (formData.get("collection_name") as string)?.trim().slice(0, 100) || null;
 
   // Upsert review (one per user per match)
   const { error: reviewErr } = await supabase
@@ -95,7 +103,12 @@ export async function deleteReview(reviewId: string) {
   return { success: true };
 }
 
-export async function getExistingReview(matchId: string, clerkId: string) {
+export async function getExistingReview(matchId: string) {
+  // Identity comes from the session, never from a caller-supplied argument —
+  // every export in a "use server" file is a publicly callable endpoint.
+  const { userId: clerkId } = await auth();
+  if (!clerkId) return null;
+
   const supabase = adminClient();
 
   const { data: profile } = await supabase

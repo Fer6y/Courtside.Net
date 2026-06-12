@@ -20,6 +20,7 @@ export async function addComment(
 
   const trimmed = body.trim();
   if (!trimmed) throw new Error("Comment cannot be empty");
+  if (trimmed.length > 2000) throw new Error("Comment too long (max 2000 characters)");
 
   const supabase = adminClient();
 

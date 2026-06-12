@@ -23,6 +23,11 @@ export async function GET(
 ) {
   const { id } = await params;
 
+  // Validate UUID shape — id is interpolated into a filter string below
+  if (!/^[0-9a-f-]{36}$/i.test(id)) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const supabase = getSupabase();
   const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

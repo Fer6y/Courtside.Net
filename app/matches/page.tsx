@@ -148,8 +148,10 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
     }
   }
 
-  // Player (single)
-  if (player) query = query.or(`player1_id.eq.${player},player2_id.eq.${player}`);
+  // Player (single) — validate UUID shape before interpolating into the
+  // filter string; anything else could manipulate the query expression
+  const isUuid = player && /^[0-9a-f-]{36}$/i.test(player);
+  if (isUuid) query = query.or(`player1_id.eq.${player},player2_id.eq.${player}`);
 
   // Level (multi) — only apply when not both selected (both = no filter)
   if (levels.length === 1) {

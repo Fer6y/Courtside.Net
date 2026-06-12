@@ -10,6 +10,9 @@ function adminClient() {
   );
 }
 
+const VALID_EMOJIS = new Set(["fire", "shocked", "dislike"]);
+const VALID_TARGETS = new Set(["review", "comment"]);
+
 export async function toggleReaction(
   targetType: "review" | "comment",
   targetId: string,
@@ -17,6 +20,10 @@ export async function toggleReaction(
 ) {
   const { userId: clerkId } = await auth();
   if (!clerkId) throw new Error("Not authenticated");
+
+  // Whitelist — TypeScript types don't survive a forged request
+  if (!VALID_EMOJIS.has(emoji)) throw new Error("Invalid reaction");
+  if (!VALID_TARGETS.has(targetType)) throw new Error("Invalid target type");
 
   const supabase = adminClient();
 

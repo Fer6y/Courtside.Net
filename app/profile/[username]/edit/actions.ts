@@ -38,6 +38,11 @@ export async function saveProfile(
 ) {
   const { supabase, profileId } = await getOwnedProfile(username);
 
+  // Length caps — the form enforces these too, but server actions are
+  // publicly callable endpoints and must not trust the browser.
+  if (data.displayName.trim().length > 50) throw new Error("Display name too long (max 50 characters)");
+  if (data.bio.trim().length > 300) throw new Error("Bio too long (max 300 characters)");
+
   const { error } = await supabase
     .from("profiles")
     .update({

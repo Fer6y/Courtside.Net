@@ -18,7 +18,10 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = admin();
-  const pattern  = `%${q}%`;
+  // Strip PostgREST filter syntax characters — commas/parens inside an
+  // .or() string would break (or manipulate) the filter expression.
+  const safe    = q.replace(/[,()]/g, " ").trim();
+  const pattern = `%${safe}%`;
 
   const [{ data: players }, { data: profiles }] = await Promise.all([
     supabase

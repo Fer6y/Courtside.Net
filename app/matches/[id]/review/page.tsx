@@ -43,7 +43,7 @@ export default async function ReviewMatchPage({ params }: Props) {
   const p1 = match.player1 as unknown as { id: string; name: string; current_rank: number | null };
   const p2 = match.player2 as unknown as { id: string; name: string; current_rank: number | null };
 
-  const existing = await getExistingReview(id, userId);
+  const existing = await getExistingReview(id);
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-10">
