@@ -1,5 +1,15 @@
 # Courtside Code Review — June 12, 2026
 
+> **STATUS UPDATE (same day):** All critical and high-priority items below were
+> fixed and verified. Match dates were backfilled (8,999/8,999), stat sorting
+> and the tournament dropdown work, error boundaries are in place, server-side
+> validation was added, and RLS was probe-verified (anon key cannot write).
+> One additional bug was found during verification and fixed: the middleware
+> was blocking `/sitemap.xml`, `/robots.txt`, and `/guide` behind sign-in.
+> Still open (deliberately deferred): rate limiting (S5), admin-client
+> consolidation (P3), feed caching (P4), and the pre-existing React-compiler
+> lint warnings in a few components.
+
 **Scope:** Full codebase review focused on keeping the app live, plus optimization suggestions.
 **Method:** Production build + lint run, every page's data-fetching reviewed, all server actions audited for auth, and suspected bugs **verified against the live database** with read-only probes.
 
