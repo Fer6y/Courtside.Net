@@ -37,6 +37,7 @@ export type Match = {
   api_event_key: string | null;   // api-tennis.com event_key
   tournament_season: number | null;
   source: "sackmann" | "api_tennis" | null;
+  tournament_tier: "grand_slam" | "masters_1000" | "other" | null;
   created_at: string;
 };
 

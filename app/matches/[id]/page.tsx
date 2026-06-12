@@ -11,6 +11,8 @@ import CommentThread, { type Comment } from "@/components/CommentThread";
 import ReactionBar, { type ReactionSummary, EMPTY_REACTIONS } from "@/components/ReactionBar";
 import CountryFlag from "@/components/CountryFlag";
 import type { EmojiKey } from "@/components/ReactionBar";
+import TournamentBadge from "@/components/TournamentBadge";
+import { getTournamentTier } from "@/lib/tournamentTiers";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -185,6 +187,8 @@ export default async function MatchPage({ params }: Props) {
   const p2 = match.player2 as { id: string; name: string; country: string | null; current_rank: number | null; photo_url: string | null };
   const surface = match.surface as Surface | null;
   const won1 = match.winner_id === p1.id;
+  const tier = (match.tournament_tier as string | null) ?? getTournamentTier(match.tournament);
+  const isSlam = tier === "grand_slam";
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
@@ -200,6 +204,7 @@ export default async function MatchPage({ params }: Props) {
       {/* Tournament header */}
       <div className="flex items-center gap-3 mb-8 flex-wrap">
         <span className="font-mono text-sm text-text-mid">{match.tournament}</span>
+        <TournamentBadge tournamentName={match.tournament} tier={tier as "grand_slam" | "masters_1000" | "other"} size="md" />
         <span className="text-text-dim">·</span>
         <span className="font-mono text-sm text-text-dim">{match.round}</span>
         {surface && (
@@ -219,7 +224,14 @@ export default async function MatchPage({ params }: Props) {
       </div>
 
       {/* Players vs score — hero */}
-      <div className="rounded-lg border border-white/5 bg-white/[0.02] p-6 mb-10">
+      <div
+        className="rounded-lg p-6 mb-10"
+        style={{
+          border:     isSlam ? "1px solid rgba(245,197,24,0.3)" : "1px solid rgba(255,255,255,0.05)",
+          background: isSlam ? "rgba(245,197,24,0.03)"          : "rgba(255,255,255,0.02)",
+          boxShadow:  isSlam ? "0 0 24px rgba(245,197,24,0.08)" : "none",
+        }}
+      >
         <div className="flex items-center gap-4">
 
           {/* Player 1 */}

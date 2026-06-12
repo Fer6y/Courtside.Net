@@ -4,6 +4,7 @@ import type { MatchWithPlayers, Surface } from "@/types";
 import Link from "next/link";
 import PlayerNameWithBubble from "@/components/PlayerNameWithBubble";
 import MatchFilterBar, { type MatchFilters } from "@/components/MatchFilterBar";
+import TournamentBadge from "@/components/TournamentBadge";
 
 export const metadata = { title: "Matches — Courtside" };
 
@@ -257,7 +258,8 @@ function MatchRow({ match }: { match: MatchWithPlayers }) {
           className={`font-sans truncate ${p2Won ? "text-primary font-semibold" : "text-text-primary"}`}
         />
       </div>
-      <div className="flex items-center gap-4 shrink-0 ml-4">
+      <div className="flex items-center gap-3 shrink-0 ml-4">
+        <TournamentBadge tournamentName={match.tournament} tier={match.tournament_tier ?? undefined} />
         {surface && <span className={`font-mono text-xs ${SURFACE_COLORS[surface]}`}>{surface}</span>}
         <span className="font-sans text-xs text-text-dim hidden md:block">{match.tournament}</span>
         <span className="font-mono text-xs text-text-dim hidden sm:block">{match.round}</span>
