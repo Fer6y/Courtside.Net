@@ -1,0 +1,116 @@
+[
+  {
+    "slam": "Australian Open",
+    "year": 2020,
+    "tour": "ATP",
+    "seasonId": "16435"
+  },
+  {
+    "slam": "Roland Garros",
+    "year": 2020,
+    "tour": "ATP",
+    "seasonId": "16462"
+  },
+  {
+    "slam": "US Open",
+    "year": 2020,
+    "tour": "ATP",
+    "seasonId": "16485"
+  },
+  {
+    "slam": "Australian Open",
+    "year": 2021,
+    "tour": "ATP",
+    "seasonId": "16881"
+  },
+  {
+    "slam": "Roland Garros",
+    "year": 2021,
+    "tour": "ATP",
+    "seasonId": "16911"
+  },
+  {
+    "slam": "Wimbledon",
+    "year": 2021,
+    "tour": "ATP",
+    "seasonId": "16919"
+  },
+  {
+    "slam": "Australian Open",
+    "year": 2022,
+    "tour": "ATP",
+    "seasonId": "17535"
+  },
+  {
+    "slam": "Roland Garros",
+    "year": 2023,
+    "tour": "ATP",
+    "seasonId": "18432"
+  },
+  {
+    "slam": "Wimbledon",
+    "year": 2023,
+    "tour": "ATP",
+    "seasonId": "18440"
+  },
+  {
+    "slam": "Australian Open",
+    "year": 2024,
+    "tour": "ATP",
+    "seasonId": "19355"
+  },
+  {
+    "slam": "US Open",
+    "year": 2024,
+    "tour": "ATP",
+    "seasonId": "19405"
+  },
+  {
+    "slam": "Wimbledon",
+    "year": 2024,
+    "tour": "ATP",
+    "seasonId": "19391"
+  },
+  {
+    "slam": "Australian Open",
+    "year": 2025,
+    "tour": "ATP",
+    "seasonId": "20315"
+  },
+  {
+    "slam": "Australian Open",
+    "year": 2020,
+    "tour": "WTA",
+    "seasonId": "13017"
+  },
+  {
+    "slam": "Roland Garros",
+    "year": 2023,
+    "tour": "WTA",
+    "seasonId": "14528"
+  },
+  {
+    "slam": "Australian Open",
+    "year": 2024,
+    "tour": "WTA",
+    "seasonId": "15206"
+  },
+  {
+    "slam": "Roland Garros",
+    "year": 2025,
+    "tour": "WTA",
+    "seasonId": "15965"
+  },
+  {
+    "slam": "Australian Open",
+    "year": 2026,
+    "tour": "WTA",
+    "seasonId": "16705"
+  },
+  {
+    "slam": "Roland Garros",
+    "year": 2026,
+    "tour": "WTA",
+    "seasonId": "16725"
+  }
+]

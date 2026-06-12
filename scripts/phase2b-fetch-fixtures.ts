@@ -28,37 +28,40 @@ const supabase = createClient(
 );
 
 // Confirmed tournament IDs from discovery runs.
+// 2026-06-12: 18 seasonIds corrected after they were found to point at the
+// wrong events (see docs/match-data-validation-2026-06-12.md). Verified by
+// scripts/probe-slam-seasonids.ts against known finals.
 // Wimbledon 2020 cancelled (COVID). WTA AO 2024/2025 pending targeted probe.
 // Wimbledon/USO 2026 not yet played.
 const SLAM_SEASONS: { slam: string; year: number; seasonId: string; tour: "ATP" | "WTA" }[] = [
   // ── ATP ──────────────────────────────────────────────────────────────────
-  { slam: "Australian Open", year: 2020, seasonId: "16565", tour: "ATP" },
-  { slam: "Roland Garros",   year: 2020, seasonId: "16803", tour: "ATP" },
-  { slam: "US Open",         year: 2020, seasonId: "16459", tour: "ATP" },
-  { slam: "Australian Open", year: 2021, seasonId: "16879", tour: "ATP" },
-  { slam: "Roland Garros",   year: 2021, seasonId: "17177", tour: "ATP" },
-  { slam: "Wimbledon",       year: 2021, seasonId: "17163", tour: "ATP" },
+  { slam: "Australian Open", year: 2020, seasonId: "16435", tour: "ATP" },
+  { slam: "Roland Garros",   year: 2020, seasonId: "16462", tour: "ATP" },
+  { slam: "US Open",         year: 2020, seasonId: "16485", tour: "ATP" },
+  { slam: "Australian Open", year: 2021, seasonId: "16881", tour: "ATP" },
+  { slam: "Roland Garros",   year: 2021, seasonId: "16911", tour: "ATP" },
+  { slam: "Wimbledon",       year: 2021, seasonId: "16919", tour: "ATP" },
   { slam: "US Open",         year: 2021, seasonId: "16934", tour: "ATP" },
-  { slam: "Australian Open", year: 2022, seasonId: "17541", tour: "ATP" },
+  { slam: "Australian Open", year: 2022, seasonId: "17535", tour: "ATP" },
   { slam: "Roland Garros",   year: 2022, seasonId: "17563", tour: "ATP" },
   { slam: "Wimbledon",       year: 2022, seasonId: "17571", tour: "ATP" },
   { slam: "US Open",         year: 2022, seasonId: "17741", tour: "ATP" },
   { slam: "Australian Open", year: 2023, seasonId: "18405", tour: "ATP" },
-  { slam: "Roland Garros",   year: 2023, seasonId: "18844", tour: "ATP" },
-  { slam: "Wimbledon",       year: 2023, seasonId: "18862", tour: "ATP" },
+  { slam: "Roland Garros",   year: 2023, seasonId: "18432", tour: "ATP" },
+  { slam: "Wimbledon",       year: 2023, seasonId: "18440", tour: "ATP" },
   { slam: "US Open",         year: 2023, seasonId: "18507", tour: "ATP" },
-  { slam: "Australian Open", year: 2024, seasonId: "19359", tour: "ATP" },
+  { slam: "Australian Open", year: 2024, seasonId: "19355", tour: "ATP" },
   { slam: "Roland Garros",   year: 2024, seasonId: "19383", tour: "ATP" },
-  { slam: "Wimbledon",       year: 2024, seasonId: "19844", tour: "ATP" },
-  { slam: "US Open",         year: 2024, seasonId: "20106", tour: "ATP" },
-  { slam: "Australian Open", year: 2025, seasonId: "20419", tour: "ATP" },
+  { slam: "Wimbledon",       year: 2024, seasonId: "19391", tour: "ATP" },
+  { slam: "US Open",         year: 2024, seasonId: "19405", tour: "ATP" },
+  { slam: "Australian Open", year: 2025, seasonId: "20315", tour: "ATP" },
   { slam: "Roland Garros",   year: 2025, seasonId: "20340", tour: "ATP" },
   { slam: "Wimbledon",       year: 2025, seasonId: "20348", tour: "ATP" },
   { slam: "US Open",         year: 2025, seasonId: "20359", tour: "ATP" },
   { slam: "Australian Open", year: 2026, seasonId: "21305", tour: "ATP" },
   { slam: "Roland Garros",   year: 2026, seasonId: "21329", tour: "ATP" },
   // ── WTA ──────────────────────────────────────────────────────────────────
-  { slam: "Australian Open", year: 2020, seasonId: "13174", tour: "WTA" },
+  { slam: "Australian Open", year: 2020, seasonId: "13017", tour: "WTA" },
   { slam: "Roland Garros",   year: 2020, seasonId: "13039", tour: "WTA" },
   { slam: "US Open",         year: 2020, seasonId: "13059", tour: "WTA" },
   { slam: "Australian Open", year: 2021, seasonId: "13350", tour: "WTA" },
@@ -70,18 +73,18 @@ const SLAM_SEASONS: { slam: string; year: number; seasonId: string; tour: "ATP" 
   { slam: "Wimbledon",       year: 2022, seasonId: "13862", tour: "WTA" },
   { slam: "US Open",         year: 2022, seasonId: "14154", tour: "WTA" },
   { slam: "Australian Open", year: 2023, seasonId: "14505", tour: "WTA" },
-  { slam: "Roland Garros",   year: 2023, seasonId: "14870", tour: "WTA" },
+  { slam: "Roland Garros",   year: 2023, seasonId: "14528", tour: "WTA" },
   { slam: "Wimbledon",       year: 2023, seasonId: "14539", tour: "WTA" },
   { slam: "US Open",         year: 2023, seasonId: "14720", tour: "WTA" },
-  { slam: "Australian Open", year: 2024, seasonId: "15248", tour: "WTA" },
+  { slam: "Australian Open", year: 2024, seasonId: "15206", tour: "WTA" },
   { slam: "Roland Garros",   year: 2024, seasonId: "15225", tour: "WTA" },
   { slam: "Wimbledon",       year: 2024, seasonId: "15233", tour: "WTA" },
   { slam: "US Open",         year: 2024, seasonId: "15244", tour: "WTA" },
   { slam: "Australian Open", year: 2025, seasonId: "15945", tour: "WTA" },
-  { slam: "Roland Garros",   year: 2025, seasonId: "16252", tour: "WTA" },
+  { slam: "Roland Garros",   year: 2025, seasonId: "15965", tour: "WTA" },
   { slam: "Wimbledon",       year: 2025, seasonId: "15973", tour: "WTA" },
   { slam: "US Open",         year: 2025, seasonId: "15983", tour: "WTA" },
-  { slam: "Australian Open", year: 2026, seasonId: "16709", tour: "WTA" },
+  { slam: "Australian Open", year: 2026, seasonId: "16705", tour: "WTA" },
   { slam: "Roland Garros",   year: 2026, seasonId: "16725", tour: "WTA" },
 ];
 
