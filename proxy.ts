@@ -11,7 +11,10 @@ const isPublicRoute = createRouteMatcher([
   "/h2h(.*)",
   "/compare(.*)",
   "/profile(.*)",         // public profiles are readable by anyone
+  "/guide",               // onboarding guide — linked from home for guests
   "/api/webhooks(.*)",    // Clerk webhook must be public — no auth header
+  "/sitemap.xml",         // search engines can't sign in
+  "/robots.txt",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
