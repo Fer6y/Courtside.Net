@@ -151,7 +151,10 @@ propose, don't assume.
 1. **Foundation** — load Fraunces in layout.tsx, add tokens
    (`--color-gold`, cream, hairline values, `--font-serif`), add shared
    CSS utilities (`.eyebrow`, `.rule`, `.rule-divider`, `.dot-leader`,
-   `.bill-name`). Nothing visible changes yet.
+   `.bill-name`), build all three court-theme backgrounds behind
+   `data-court` (grass applied as default — this IS visible), and create
+   the `components/trophies/` SVG decal set. Court picker UI ships with
+   phase 6 (customize page); until then everyone's on grass.
 2. **Match detail page** — the flagship programme spread + slam cover bands.
 3. **Match list** — order-of-play rows + filter restyle.
 4. **Player profile + players list.**
@@ -168,10 +171,28 @@ old and new styles coexist per-page.
 
 ## 5. Decisions (locked June 12, 2026)
 
-1. **Background**: ✅ **"The Lawn"** — dark green **#0d1a11** with faint mowed
-   stripes (repeating vertical bands, ~2% lightness shift, ~52px wide) PLUS
-   an ultra-fine grain noise (tiny SVG turbulence filter, barely visible).
-   Supersedes the earlier #101311 choice.
+1. **Background**: ✅ **User-selectable court themes** (June 12, supersedes
+   all earlier single-background picks):
+   - **Grass — DEFAULT**: dark green #0d1a11, faint mowed stripes
+     (~2% lightness bands, ~52px) + ultra-fine grain
+   - **Clay**: dark speckled orangey-brown #1b110a, two-scale terracotta
+     speckle (radial-dot patterns at 8px/13px)
+   - **Hard**: deep acrylic blue #0c1623, single fine speckle (9px)
+
+   **Architecture**: `data-court="grass|clay|hard"` on `<html>`; per-theme
+   CSS variables scoped under attribute selectors. Only the background
+   (and at most 1–2 ambient tints) change per theme — cream/gold/serif
+   programme language is constant on all courts.
+
+   **Persistence**: `profiles.layout_config.court_theme` (JSONB column
+   already exists) for logged-in users, read server-side in the root
+   layout so there's no theme flash; cookie fallback for guests
+   (default grass). Picker lives in `/profile/[username]/customize` as
+   "Your court" — three swatch cards (see mockup).
+
+   **Slam cover bands are content identity, not preference** — AO blue,
+   RG terracotta, Wimbledon green/purple, USO navy render identically on
+   every court theme.
 2. **Serif face**: ✅ **Fraunces**
 3. **Cream text**: serif display only (body stays #e8eaed)
 4. **Reaction icons**: ✅ **thin line icons** in cream/gold, animation kept
