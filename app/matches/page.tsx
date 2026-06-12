@@ -1,5 +1,7 @@
 import { getSupabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 import type { MatchWithPlayers, Surface } from "@/types";
 import Link from "next/link";
 import PlayerNameWithBubble from "@/components/PlayerNameWithBubble";
@@ -43,6 +45,37 @@ function scoreSetCount(score: string | null): number {
   return score.trim().split(" ").length;
 }
 
+// Filter dropdown options, cached for an hour — they only change when new
+// tournaments are imported. The previous version read the first 500 rows
+// alphabetically, so the dropdown showed only "Australian Open 2020–2023"
+// (4 of 86 tournaments) and the year list was derived from a capped query.
+const getFilterOptions = unstable_cache(
+  async () => {
+    const db = getSupabase();
+
+    const rows = await fetchAllRows<{ tournament: string }>((from, to) =>
+      db.from("matches").select("tournament").range(from, to)
+    );
+    const tournaments = [...new Set(rows.map((r) => r.tournament).filter(Boolean))].sort();
+
+    const [{ data: minRow }, { data: maxRow }] = await Promise.all([
+      db.from("matches").select("tournament_season").not("tournament_season", "is", null)
+        .order("tournament_season", { ascending: true }).limit(1).maybeSingle(),
+      db.from("matches").select("tournament_season").not("tournament_season", "is", null)
+        .order("tournament_season", { ascending: false }).limit(1).maybeSingle(),
+    ]);
+
+    const years: string[] = [];
+    const lo = minRow?.tournament_season as number | undefined;
+    const hi = maxRow?.tournament_season as number | undefined;
+    if (lo && hi) for (let y = hi; y >= lo; y--) years.push(String(y));
+
+    return { tournaments, years };
+  },
+  ["match-filter-options"],
+  { revalidate: 3600 }
+);
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function MatchesPage({ searchParams }: { searchParams: SearchParams }) {
@@ -57,15 +90,8 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // ── Fetch filter options ─────────────────────────────────────────────────────
-  const [{ data: tournamentRows }, { data: yearRows }] = await Promise.all([
-    supabase.from("matches").select("tournament").order("tournament").limit(500),
-    supabase.from("matches").select("match_date").not("match_date", "is", null).limit(10000),
-  ]);
-
-  const tournaments = [...new Set((tournamentRows ?? []).map((r) => r.tournament).filter(Boolean))].sort();
-  const years = [...new Set((yearRows ?? []).map((r) => r.match_date?.slice(0, 4)).filter(Boolean))]
-    .sort((a, b) => Number(b) - Number(a)) as string[];
+  // ── Fetch filter options (cached hourly) ─────────────────────────────────────
+  const { tournaments, years } = await getFilterOptions();
 
   // Surfaces are schema-defined constants — no need to query
   const surfaces = ["Hard", "Clay", "Grass"];
@@ -90,7 +116,11 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
   let ratedMatchIds: string[] | null = null;
   if (minRating) {
     const threshold = Number(minRating);
-    const { data: ratingRows } = await admin.from("reviews").select("match_id, match_rating");
+    // Page through all reviews — an unbounded select silently caps at 1,000
+    // rows, which would compute wrong averages once reviews grow past that
+    const ratingRows = await fetchAllRows<{ match_id: string; match_rating: number }>(
+      (from, to) => admin.from("reviews").select("match_id, match_rating").range(from, to)
+    );
     if (ratingRows && ratingRows.length > 0) {
       const totals = new Map<string, { sum: number; count: number }>();
       for (const row of ratingRows) {
