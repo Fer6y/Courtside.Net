@@ -177,14 +177,20 @@ function Chip({
       <div style={{ display: "flex", alignItems: "center" }}>
         <button
           onClick={onToggle}
-          className="font-mono text-xs transition-colors duration-150"
+          className="font-mono transition-colors duration-150"
           style={{
-            padding: "6px 12px",
-            borderRadius: active ? "20px 0 0 20px" : 20,
-            border: `1px solid ${active ? "rgba(34,214,138,0.4)" : "rgba(255,255,255,0.1)"}`,
-            borderRight: active ? "none" : undefined,
-            background: active ? "rgba(34,214,138,0.08)" : "transparent",
-            color: active ? "#22d68a" : "#9ca3af",
+            fontSize: 10,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            padding: "6px 2px 4px",
+            border: "none",
+            borderBottom: active
+              ? "1px solid rgba(201,169,106,0.6)"
+              : isOpen
+              ? "1px solid rgba(236,229,216,0.3)"
+              : "1px solid transparent",
+            background: "transparent",
+            color: active ? "#c9a96a" : isOpen ? "#ece5d8" : "rgba(236,229,216,0.45)",
             cursor: "pointer",
             whiteSpace: "nowrap",
             maxWidth: 160,
@@ -197,16 +203,15 @@ function Chip({
         {active && (
           <button
             onClick={(e) => { e.stopPropagation(); onClear(); }}
-            className="font-mono text-xs transition-colors duration-150"
+            className="font-mono transition-colors duration-150"
+            aria-label={`Clear ${label} filter`}
             style={{
-              padding: "6px 8px",
-              borderRadius: "0 20px 20px 0",
-              border: "1px solid rgba(34,214,138,0.4)",
-              borderLeft: "none",
-              background: "rgba(34,214,138,0.08)",
-              color: "#22d68a",
+              padding: "4px 4px",
+              border: "none",
+              background: "transparent",
+              color: "rgba(201,169,106,0.7)",
               cursor: "pointer",
-              opacity: 0.7,
+              fontSize: 11,
             }}
           >
             ×
@@ -219,8 +224,8 @@ function Chip({
             position: "absolute",
             top: "calc(100% + 6px)",
             left: 0,
-            background: "#1a1e26",
-            border: "1px solid rgba(255,255,255,0.1)",
+            background: "#171b17",
+            border: "1px solid var(--hairline)",
             borderRadius: 10,
             padding: 8,
             zIndex: 100,
@@ -246,8 +251,8 @@ function OptionButton({
       onClick={onClick}
       className="w-full text-left font-mono text-xs px-2 py-1.5 rounded transition-colors duration-100"
       style={{
-        background: active ? "rgba(34,214,138,0.12)" : "transparent",
-        color: active ? "#22d68a" : "#9ca3af",
+        background: active ? "rgba(201,169,106,0.1)" : "transparent",
+        color: active ? "#c9a96a" : "rgba(236,229,216,0.55)",
         cursor: "pointer",
         display: "flex",
         alignItems: "center",
@@ -255,7 +260,7 @@ function OptionButton({
         gap: 8,
       }}
       onMouseEnter={(e) => {
-        if (!active) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)";
+        if (!active) (e.currentTarget as HTMLButtonElement).style.background = "rgba(236,229,216,0.04)";
       }}
       onMouseLeave={(e) => {
         if (!active) (e.currentTarget as HTMLButtonElement).style.background = "transparent";

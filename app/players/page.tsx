@@ -218,42 +218,52 @@ export default async function PlayersPage({
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-12">
-      <h1 className="font-mono text-3xl font-bold text-text-primary mb-2">
-        Players
-      </h1>
-      <p className="font-sans text-text-mid mb-8">
-        Grand Slam &amp; Masters 1000 · 2020–2024
+
+      {/* Masthead */}
+      <div className="flex items-baseline justify-between flex-wrap gap-2">
+        <h1 className="bill-name text-3xl" style={{ fontWeight: 500 }}>The Field</h1>
+        <div className="eyebrow" style={{ fontSize: 11 }}>
+          {(["ATP", "WTA"] as const).map((t, i) => (
+            <span key={t}>
+              {i > 0 && <span style={{ color: "#c9a96a" }}> · </span>}
+              <Link
+                href={buildUrl({ tour: t })}
+                className="transition-colors duration-150"
+                style={{
+                  color: activeTour === t ? "#c9a96a" : "rgba(236,229,216,0.35)",
+                  borderBottom: activeTour === t ? "1px solid rgba(201,169,106,0.6)" : "none",
+                  paddingBottom: 2,
+                }}
+              >
+                {t}
+              </Link>
+            </span>
+          ))}
+        </div>
+      </div>
+      <p
+        className="bill-name italic mb-7 mt-1"
+        style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.5)" }}
+      >
+        Every player in the catalogue — Grand Slams &amp; Masters 1000
       </p>
 
-      {/* Tour tabs */}
-      <div className="flex items-center gap-2 mb-6">
-        {(["ATP", "WTA"] as const).map((t) => (
-          <Link
-            key={t}
-            href={buildUrl({ tour: t })}
-            className={`font-mono text-sm font-semibold px-5 py-2 rounded-full border transition-colors duration-150 ${
-              activeTour === t
-                ? "border-primary text-primary bg-primary/10"
-                : "border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
-            }`}
-          >
-            {t}
-          </Link>
-        ))}
-      </div>
-
       {/* Sort options */}
-      <div className="flex items-center gap-2 flex-wrap mb-6">
-        <span className="font-sans text-xs text-text-dim mr-1">Sort by</span>
+      <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap mb-4">
+        <span className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.35)" }}>
+          Sort —
+        </span>
         {SORT_OPTIONS.map(({ label, value }) => (
           <Link
             key={value}
             href={buildUrl({ sort: value })}
-            className={`font-mono text-xs px-3 py-1.5 rounded-full border transition-colors duration-150 ${
-              activeSort === value
-                ? "border-primary/50 text-primary bg-primary/5"
-                : "border-white/10 text-text-dim hover:text-text-primary"
-            }`}
+            className="eyebrow transition-colors duration-150"
+            style={{
+              fontSize: 10,
+              color: activeSort === value ? "#c9a96a" : "rgba(236,229,216,0.45)",
+              borderBottom: activeSort === value ? "1px solid rgba(201,169,106,0.6)" : "1px solid transparent",
+              paddingBottom: 2,
+            }}
           >
             {label}
           </Link>
@@ -274,16 +284,21 @@ export default async function PlayersPage({
         <p className="text-loss font-sans text-sm">Failed to load players.</p>
       ) : (
         <>
-          <p className="font-mono text-sm text-text-dim mb-4">
+          <p className="eyebrow mb-3" style={{ fontSize: 10, color: "rgba(236,229,216,0.35)" }}>
             {sorted.length} players
           </p>
 
           {sorted.length === 0 ? (
-            <div className="rounded-lg border border-white/5 bg-white/[0.02] p-12 text-center">
-              <p className="font-sans text-text-dim text-sm">No players found.</p>
+            <div
+              className="rounded-lg p-12 text-center"
+              style={{ border: "1px solid var(--hairline-soft)", background: "rgba(236,229,216,0.02)" }}
+            >
+              <p className="bill-name italic text-sm" style={{ fontWeight: 300, color: "rgba(236,229,216,0.5)" }}>
+                No players found.
+              </p>
             </div>
           ) : (
-          <div className="divide-y divide-white/5">
+          <div>
             {sorted.map((player, i) => (
               <PlayerRow
                 key={player.id}
@@ -312,69 +327,62 @@ function PlayerRow({
   activeSort: string;
   stats: PlayerStats | null;
 }) {
+  const dim  = { color: "rgba(236,229,216,0.45)" };
+  const stat = (value: React.ReactNode, label: string, color?: string) => (
+    <span className="font-mono" style={{ fontSize: 13, letterSpacing: "0.06em", color: color ?? "#ece5d8" }}>
+      {value}{" "}
+      <span className="uppercase" style={{ fontSize: 9, letterSpacing: "0.15em", ...dim }}>{label}</span>
+    </span>
+  );
+
   // Decide what to show on the right side based on active sort
   function statDisplay(): React.ReactNode {
     if (!stats) {
-      if (activeSort === "age" && player.age)
-        return <span className="font-mono text-sm text-text-dim">Age {player.age}</span>;
-      if (activeSort === "country" && player.country)
-        return <span className="font-mono text-sm text-text-dim">{player.country}</span>;
+      if (activeSort === "age" && player.age) return stat(player.age, "yrs");
+      if (activeSort === "country" && player.country) return stat(player.country, "");
       return player.current_rank
-        ? <span className="font-mono text-sm text-text-dim">#{player.current_rank}</span>
+        ? <span className="font-mono" style={{ fontSize: 13, ...dim }}>No. {player.current_rank}</span>
         : null;
     }
 
-    if (activeSort === "matches") {
-      return (
-        <span className="font-mono text-sm text-text-mid">
-          {stats.totalMatches} <span className="text-text-dim text-xs">matches</span>
-        </span>
-      );
-    }
+    if (activeSort === "matches") return stat(stats.totalMatches, "matches");
     if (activeSort === "hard") {
       const pct = winPct(stats.hardWins, stats.hardTotal);
-      return pct !== null
-        ? <span className="font-mono text-sm text-court-hard">{pct}% <span className="text-text-dim text-xs">hard ({stats.hardTotal})</span></span>
-        : <span className="font-mono text-sm text-text-dim">— hard</span>;
+      return pct !== null ? stat(`${pct}%`, `hard (${stats.hardTotal})`, "#4a90d9") : stat("—", "hard");
     }
     if (activeSort === "clay") {
       const pct = winPct(stats.clayWins, stats.clayTotal);
-      return pct !== null
-        ? <span className="font-mono text-sm text-court-clay">{pct}% <span className="text-text-dim text-xs">clay ({stats.clayTotal})</span></span>
-        : <span className="font-mono text-sm text-text-dim">— clay</span>;
+      return pct !== null ? stat(`${pct}%`, `clay (${stats.clayTotal})`, "#d4734e") : stat("—", "clay");
     }
     if (activeSort === "grass") {
       const pct = winPct(stats.grassWins, stats.grassTotal);
-      return pct !== null
-        ? <span className="font-mono text-sm text-court-grass">{pct}% <span className="text-text-dim text-xs">grass ({stats.grassTotal})</span></span>
-        : <span className="font-mono text-sm text-text-dim">— grass</span>;
+      return pct !== null ? stat(`${pct}%`, `grass (${stats.grassTotal})`, "#5cb85c") : stat("—", "grass");
     }
-    if (activeSort === "streak") {
-      return (
-        <span className="font-mono text-sm text-primary">
-          {stats.streak}W <span className="text-text-dim text-xs">streak</span>
-        </span>
-      );
-    }
+    if (activeSort === "streak") return stat(`${stats.streak}W`, "streak", "#22d68a");
+
     // Default: rank
     return player.current_rank
-      ? <span className="font-mono text-sm text-text-dim">#{player.current_rank}</span>
+      ? <span className="font-mono" style={{ fontSize: 13, ...dim }}>No. {player.current_rank}</span>
       : null;
   }
 
   return (
     <Link
       href={`/players/${player.id}`}
-      className="flex items-center justify-between py-3 px-2 hover:bg-white/[0.03] rounded transition-colors duration-150 group"
+      className="flex items-center justify-between gap-4 py-2.5 px-1 transition-colors duration-150"
+      style={{ borderBottom: "1px solid var(--hairline-soft)" }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0">
         {/* Position number */}
-        <span className="font-mono text-sm text-text-dim w-6 text-right shrink-0">
+        <span className="font-mono w-6 text-right shrink-0" style={{ fontSize: 11, color: "rgba(236,229,216,0.35)" }}>
           {rank}
         </span>
 
         {/* Player photo */}
-        <div className="w-9 h-9 rounded-full overflow-hidden bg-white/5 shrink-0 flex items-center justify-center">
+        <div
+          className="w-9 h-9 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
+          style={{ border: "1px solid rgba(236,229,216,0.18)", background: "rgba(236,229,216,0.04)" }}
+        >
           {player.photo_url ? (
             <Image
               src={player.photo_url}
@@ -385,30 +393,28 @@ function PlayerRow({
               unoptimized
             />
           ) : (
-            <span className="font-mono text-xs text-text-dim">
+            <span className="bill-name" style={{ fontSize: 13, color: "rgba(236,229,216,0.45)" }}>
               {player.name.charAt(0)}
             </span>
           )}
         </div>
 
         {/* Name + country */}
-        <div className="flex items-center gap-2">
-          <span className="font-sans text-text-primary group-hover:text-primary transition-colors duration-150">
-            {player.name}
-          </span>
-          {player.country && (
-            <span className="flex items-center gap-1.5">
-              <CountryFlag code={player.country} size={20} />
-              <span className="font-mono text-xs text-text-dim">
-                {player.country}
-              </span>
+        <span className="bill-name truncate" style={{ fontSize: 16, color: "#ece5d8" }}>
+          {player.name}
+        </span>
+        {player.country && (
+          <span className="flex items-center gap-1.5 shrink-0">
+            <CountryFlag code={player.country} size={20} />
+            <span className="font-mono hidden sm:inline" style={{ fontSize: 10, color: "rgba(236,229,216,0.35)", letterSpacing: "0.1em" }}>
+              {player.country}
             </span>
-          )}
-        </div>
+          </span>
+        )}
       </div>
 
       {/* Stat display */}
-      <div>{statDisplay()}</div>
+      <div className="shrink-0">{statDisplay()}</div>
     </Link>
   );
 }

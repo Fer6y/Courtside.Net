@@ -7,10 +7,21 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import RadarChart from "@/components/radar/RadarChart";
-import MatchFilterBar, { type MatchFilters } from "@/components/MatchFilterBar";
+import MatchFilterBar from "@/components/MatchFilterBar";
 import CountryFlag from "@/components/CountryFlag";
 import MatchHistoryList from "@/components/MatchHistoryList";
-import PlayerTrophyCase from "@/components/PlayerTrophyCase";
+import { SLAM_TROPHIES, MastersTrophy } from "@/components/trophies/TrophyDecals";
+
+const SKILL_LABELS: Record<string, string> = {
+  focus: "Focus", clutch: "Clutch", resilience: "Resilience", processing_time: "Processing time",
+  serve: "Serve", forehand: "Forehand", backhand: "Backhand", shot_variety: "Shot variety",
+  net_play: "Net play", touch: "Touch", return_play: "Return", reaction_time: "Reaction time",
+  deception: "Deception", speed: "Speed", court_coverage: "Court coverage",
+  positioning: "Positioning", anticipation: "Anticipation",
+};
+
+// Calendar order for the honours row
+const SLAM_DISPLAY_ORDER = ["Australian Open", "French Open", "Roland Garros", "Wimbledon", "US Open"];
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -32,24 +43,12 @@ function avg(vals: number[]): number {
   return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
 }
 
-function rankFrameStyle(rank: number | null | undefined): React.CSSProperties {
-  if (!rank) return { border: "2px solid rgba(34,214,138,0.2)" };
-  if (rank <= 10) return {
-    background: "linear-gradient(135deg, #f5c518, #e0a800, #f5c518)",
-    boxShadow: "0 0 14px rgba(245,197,24,0.5), 0 0 28px rgba(245,197,24,0.2)",
-    padding: "2px",
-  };
-  if (rank <= 50) return {
-    background: "linear-gradient(135deg, #c0c0c0, #e8e8e8, #a8a8a8)",
-    boxShadow: "0 0 10px rgba(192,192,192,0.4)",
-    padding: "2px",
-  };
-  if (rank <= 100) return {
-    background: "linear-gradient(135deg, #4a9eff, #6ab4ff, #3a8ef0)",
-    boxShadow: "0 0 8px rgba(74,158,255,0.35)",
-    padding: "2px",
-  };
-  return { border: "2px solid rgba(34,214,138,0.2)" };
+// Portrait ring carries rank tier in programme materials:
+// top 10 gold, top 50 silver, everyone else a cream hairline
+function portraitRing(rank: number | null | undefined): string {
+  if (rank && rank <= 10) return "2px solid rgba(201,169,106,0.85)";
+  if (rank && rank <= 50) return "2px solid rgba(192,192,192,0.55)";
+  return "2px solid rgba(236,229,216,0.2)";
 }
 
 export default async function PlayerPage({ params, searchParams }: Props) {
@@ -179,104 +178,204 @@ export default async function PlayerPage({ params, searchParams }: Props) {
     }
   }
 
+  // Honours — slam titles from the API's verified slam_wins; Masters
+  // titles counted from finals won in our catalogue (scoped label)
+  const { data: finalsWon } = await supabase
+    .from("matches")
+    .select("tournament_tier")
+    .eq("winner_id", id)
+    .eq("round", "Final");
+  const mastersTitles = (finalsWon ?? []).filter((f) => f.tournament_tier === "masters_1000").length;
+
   const p = player as Player;
   const tour = p.career_stats?.tour as string | undefined;
+  const slamWins = (p.career_stats?.slam_wins ?? null) as Record<string, number> | null;
+  const slamEntries = slamWins
+    ? SLAM_DISPLAY_ORDER.filter((s) => (slamWins[s] ?? 0) > 0).map((s) => [s, slamWins[s]!] as const)
+    : [];
+  const countryFull = (p.career_stats?.country_full as { name?: string } | undefined)?.name ?? p.country;
+
+  // The community's verdict
+  const axisEntries = Object.entries(ratings);
+  const overallSkill = axisEntries.length ? avg(axisEntries.map(([, v]) => v)) : 0;
+  const strongest = [...axisEntries].sort((a, b) => b[1] - a[1]).slice(0, 2);
+  const hasVerdict = ratingCount > 0 || reviewCount > 0;
+  const lastName = p.name.split(" ").pop();
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
       {/* Back */}
       <Link
         href="/players"
-        className="font-sans text-sm text-text-dim hover:text-text-mid mb-8 inline-block transition-colors duration-150"
+        className="eyebrow mb-8 inline-block transition-colors duration-150"
+        style={{ fontSize: 10, color: "rgba(236,229,216,0.4)" }}
       >
         ← All Players
       </Link>
 
-      {/* Header */}
-      <div className="mb-10">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div className="flex items-start gap-5">
-            {/* Player photo or initials avatar with ranking frame */}
+      {/* ── The bill — portrait, name, honours ───────────────────── */}
+      <div className="mb-12 flex items-center gap-6 flex-wrap">
+        {/* Portrait with flag mounted on the frame */}
+        <div className="relative shrink-0">
+          <div
+            className="w-[104px] h-[104px] rounded-full overflow-hidden flex items-center justify-center"
+            style={{ border: portraitRing(p.current_rank), background: "rgba(236,229,216,0.05)" }}
+          >
             {(p.photo_url || p.image_url) ? (
-              <div
-                className="w-20 h-20 rounded-full shrink-0 p-0.5"
-                style={rankFrameStyle(p.current_rank)}
-              >
-                <Image
-                  src={p.photo_url ?? p.image_url ?? ""}
-                  alt={p.name}
-                  width={80}
-                  height={80}
-                  className="w-full h-full rounded-full object-cover object-top"
-                  unoptimized
-                />
-              </div>
+              <Image
+                src={p.photo_url ?? p.image_url ?? ""}
+                alt={p.name}
+                width={104}
+                height={104}
+                className="w-full h-full object-cover object-top"
+                unoptimized
+              />
             ) : (
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center font-mono text-2xl font-bold shrink-0"
-                style={{ background: "rgba(34,214,138,0.1)", color: "#22d68a", border: "2px solid rgba(34,214,138,0.2)" }}
-              >
+              <span className="bill-name" style={{ fontSize: 32, color: "rgba(236,229,216,0.45)" }}>
                 {p.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
-              </div>
+              </span>
             )}
-          <div>
-            <h1 className="font-mono text-4xl font-bold text-text-primary">
-              {p.name}
-            </h1>
-            <div className="flex items-center gap-3 mt-2">
-              {p.country && (
-                <span className="flex items-center gap-1.5">
-                  <CountryFlag code={p.country} size={20} />
-                  <span className="font-mono text-sm text-text-mid">{p.country}</span>
-                </span>
-              )}
-              {tour && (
-                <span className="font-mono text-xs text-text-dim uppercase tracking-widest">
-                  {tour}
-                </span>
-              )}
-              {p.age && (
-                <span className="font-sans text-sm text-text-dim">
-                  Age {p.age}
-                </span>
-              )}
+          </div>
+          {p.country && (
+            <div
+              className="absolute flex items-center gap-1 rounded px-1.5 py-0.5"
+              style={{
+                bottom: -2,
+                right: -8,
+                background: "var(--court-bg, #0d1a11)",
+                border: "1px solid rgba(236,229,216,0.25)",
+              }}
+            >
+              <CountryFlag code={p.country} size={20} />
+              <span className="font-mono" style={{ fontSize: 11, color: "#ece5d8", letterSpacing: "0.05em" }}>
+                {p.country}
+              </span>
             </div>
-          </div>
-          </div>
+          )}
+        </div>
 
-          {/* Rank + Rate button */}
-          <div className="flex flex-col items-start sm:items-end gap-3">
-            {p.current_rank && (
-              <div className="text-right">
-                <div className="font-mono text-4xl font-bold text-primary">
-                  #{p.current_rank}
-                </div>
-                <div className="font-sans text-xs text-text-dim mt-1">
-                  World Ranking
-                </div>
-              </div>
-            )}
-            <div className="flex gap-2">
-              <Link
-                href={`/h2h/${id}`}
-                className="font-mono text-xs px-4 py-2 rounded-lg font-semibold transition-all duration-150 border border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
-              >
-                H2H
-              </Link>
-              <Link
-                href={userId ? `/players/${id}/rate` : "/sign-in"}
-                className="font-mono text-xs px-4 py-2 rounded-lg font-semibold transition-all duration-150"
-                style={{ background: "#22d68a", color: "#0e1116" }}
-              >
-                Rate Player
-              </Link>
-            </div>
+        {/* Name + honours */}
+        <div className="flex-1 min-w-[230px]">
+          <div className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.5)" }}>
+            {p.current_rank && <>World No. {p.current_rank} · </>}
+            {countryFull}
+            {p.age && <> · Age {p.age}</>}
+            {tour && <> · {tour}</>}
           </div>
+          <h1 className="bill-name mt-1" style={{ fontSize: 34, fontWeight: 500, lineHeight: 1.15 }}>
+            {p.name}
+          </h1>
+
+          {/* Honours row — verified slam decals + scoped Masters count */}
+          {(slamEntries.length > 0 || mastersTitles > 0) && (
+            <div className="flex items-end gap-4 flex-wrap mt-3">
+              {slamEntries.map(([slam, count]) => {
+                const Trophy = SLAM_TROPHIES[slam];
+                if (!Trophy) return null;
+                return (
+                  <span key={slam} className="inline-flex items-end gap-1" style={{ color: "#c9a96a" }} title={`${slam} ×${count}`}>
+                    <Trophy size={22} title={`${slam} ×${count}`} />
+                    <span className="font-mono font-semibold" style={{ fontSize: 13 }}>×{count}</span>
+                  </span>
+                );
+              })}
+              {mastersTitles > 0 && (
+                <span
+                  className="inline-flex items-center gap-2"
+                  style={
+                    slamEntries.length > 0
+                      ? { borderLeft: "1px solid rgba(236,229,216,0.15)", paddingLeft: 16 }
+                      : undefined
+                  }
+                >
+                  <span className="inline-flex items-end gap-1" style={{ color: "rgba(201,169,106,0.8)" }}>
+                    <MastersTrophy size={17} title={`Masters 1000 titles ×${mastersTitles}`} />
+                    <span className="font-mono font-semibold" style={{ fontSize: 12 }}>×{mastersTitles}</span>
+                  </span>
+                  <span className="eyebrow" style={{ fontSize: 8, color: "rgba(236,229,216,0.4)" }}>
+                    Masters · since 2020
+                  </span>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2 shrink-0">
+          <Link
+            href={`/h2h/${id}`}
+            className="eyebrow rounded-md px-4 py-2.5 transition-colors duration-150"
+            style={{
+              fontSize: 10,
+              border: "1px solid var(--hairline)",
+              color: "rgba(236,229,216,0.55)",
+            }}
+          >
+            H2H
+          </Link>
+          <Link
+            href={userId ? `/players/${id}/rate` : "/sign-in"}
+            className="eyebrow rounded-md px-4 py-2.5 font-semibold transition-all duration-150"
+            style={{ fontSize: 10, background: "#22d68a", color: "#0d1a11" }}
+          >
+            Rate Player
+          </Link>
         </div>
       </div>
 
-      {/* Radar chart */}
-      <div className="mb-10 flex justify-center">
+      {/* ── The community's verdict ──────────────────────────────── */}
+      <div className="mb-12">
+        <div className="rule-divider mb-5">
+          <span className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.55)" }}>
+            The community&apos;s verdict
+            {hasVerdict && (
+              <>
+                {" — "}
+                {ratingCount > 0 && <>{ratingCount} {ratingCount === 1 ? "rater" : "raters"}</>}
+                {ratingCount > 0 && reviewCount > 0 && " · "}
+                {reviewCount > 0 && <>{reviewCount} {reviewCount === 1 ? "review" : "reviews"}</>}
+              </>
+            )}
+          </span>
+        </div>
+
+        {!hasVerdict ? (
+          <div className="text-center py-4">
+            <p className="bill-name italic text-sm mb-3" style={{ fontWeight: 300, color: "rgba(236,229,216,0.5)" }}>
+              No verdicts yet — be the first to rate {lastName}.
+            </p>
+            <Link
+              href={userId ? `/players/${id}/rate` : "/sign-in"}
+              className="eyebrow transition-colors duration-150"
+              style={{ fontSize: 10, color: "#c9a96a" }}
+            >
+              Rate {lastName} →
+            </Link>
+          </div>
+        ) : (
+          <div className="mx-auto" style={{ maxWidth: 420 }}>
+            {ratingCount > 0 && (
+              <VerdictRow label="Overall skill rating" value={`${overallSkill.toFixed(1)}`} suffix="/ 5" gold />
+            )}
+            {strongest[0] && (
+              <VerdictRow label={`Strongest — ${SKILL_LABELS[strongest[0][0]] ?? strongest[0][0]}`} value={strongest[0][1].toFixed(1)} />
+            )}
+            {strongest[1] && (
+              <VerdictRow label={`Then — ${SKILL_LABELS[strongest[1][0]] ?? strongest[1][0]}`} value={strongest[1][1].toFixed(1)} />
+            )}
+            {reviewCount > 0 && (
+              <>
+                <VerdictRow label="Avg. match performance" value={avgPerformance.toFixed(1)} suffix="/ 10" />
+                <VerdictRow label="Match quality when featured" value={avgMatchQuality.toFixed(1)} suffix="/ 10" />
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Radar chart ──────────────────────────────────────────── */}
+      <div className="mb-12 flex justify-center">
         <RadarChart
           ratings={ratings}
           playerColor="#22d68a"
@@ -285,68 +384,13 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         />
       </div>
 
-      {/* Trophy Case */}
-      {!!p.career_stats?.slam_wins && (
-        <PlayerTrophyCase slamWins={p.career_stats.slam_wins as Record<string, number>} />
-      )}
-
-      {/* Community Rating */}
-      {reviewCount === 0 && (
-        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-8 mb-10 text-center">
-          <p className="font-mono text-xs uppercase tracking-widest text-text-dim mb-2">Community Rating</p>
-          <p className="font-sans text-sm text-text-dim mb-4">No one has reviewed a match featuring {p.name} yet.</p>
-          <Link
-            href="/matches"
-            className="font-mono text-xs text-primary hover:text-primary/80 transition-colors duration-150"
-          >
-            Browse matches →
-          </Link>
-        </div>
-      )}
-      {reviewCount > 0 && (
-        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-6 mb-10">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-mono text-xs font-semibold uppercase tracking-widest text-text-dim">
-              Community Rating
-            </h2>
-            <span className="font-mono text-xs text-text-dim">
-              {reviewCount} {reviewCount === 1 ? "review" : "reviews"} · {reviewedMatchCount} {reviewedMatchCount === 1 ? "match" : "matches"}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {/* Performance */}
-            <div className="text-center">
-              <div
-                className="font-mono text-4xl font-bold mb-1"
-                style={{ color: "#22d68a" }}
-              >
-                {avgPerformance.toFixed(1)}
-              </div>
-              <div className="font-mono text-xs text-text-dim mb-3">Performance</div>
-              <RatingBar value={avgPerformance} color="#22d68a" />
-            </div>
-
-            {/* Match Quality */}
-            <div className="text-center">
-              <div
-                className="font-mono text-4xl font-bold mb-1"
-                style={{ color: "#f5c518" }}
-              >
-                {avgMatchQuality.toFixed(1)}
-              </div>
-              <div className="font-mono text-xs text-text-dim mb-3">Match Quality</div>
-              <RatingBar value={avgMatchQuality} color="#f5c518" />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Match history */}
+      {/* ── Recent form ──────────────────────────────────────────── */}
       <section>
-        <h2 className="font-mono text-lg font-semibold text-text-mid uppercase tracking-widest mb-4">
-          Match History
-        </h2>
+        <div className="rule-divider mb-5">
+          <span className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.55)" }}>
+            Recent form — Slams &amp; Masters since 2020
+          </span>
+        </div>
 
         <div className="mb-4">
           <MatchFilterBar
@@ -358,30 +402,58 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         </div>
 
         {!matches || matches.length === 0 ? (
-          <div className="rounded-lg border border-white/5 bg-white/[0.02] p-8 text-center">
-            <p className="font-mono text-text-dim text-sm mb-1">No matches found</p>
+          <div
+            className="rounded-lg p-8 text-center"
+            style={{ border: "1px solid var(--hairline-soft)", background: "rgba(236,229,216,0.02)" }}
+          >
+            <p className="bill-name italic text-sm" style={{ fontWeight: 300, color: "rgba(236,229,216,0.5)" }}>
+              Nothing on record.
+            </p>
             {(round || surface || year) && (
-              <p className="font-sans text-text-dim text-xs">Try adjusting your filters</p>
+              <p className="font-sans text-xs mt-2" style={{ color: "rgba(236,229,216,0.35)" }}>
+                Try adjusting your filters
+              </p>
             )}
           </div>
         ) : (
           <MatchHistoryList matches={matches as unknown as MatchWithPlayers[]} playerId={id} />
         )}
       </section>
+
+      {/* ── Colophon ─────────────────────────────────────────────── */}
+      <div className="text-center mt-16">
+        <span className="eyebrow" style={{ fontSize: 10, color: "rgba(201,169,106,0.6)" }}>
+          — Courtside · {p.name} —
+        </span>
+      </div>
     </main>
   );
 }
 
-function RatingBar({ value, color }: { value: number; color: string }) {
+function VerdictRow({
+  label,
+  value,
+  suffix,
+  gold = false,
+}: {
+  label: string;
+  value: string;
+  suffix?: string;
+  gold?: boolean;
+}) {
   return (
-    <div
-      className="w-full h-1 rounded-full overflow-hidden mx-auto"
-      style={{ background: "rgba(255,255,255,0.06)", maxWidth: 80 }}
-    >
-      <div
-        className="h-full rounded-full"
-        style={{ width: `${(value / 10) * 100}%`, background: color, opacity: 0.7 }}
-      />
+    <div className="dot-leader py-1.5">
+      <span className="bill-name" style={{ fontSize: 15 }}>{label}</span>
+      <span className="dot-leader-dots" />
+      <span
+        className="font-mono font-semibold"
+        style={{ fontSize: 15, color: gold ? "#c9a96a" : "#ece5d8" }}
+      >
+        {value}
+        {suffix && (
+          <span style={{ color: "rgba(236,229,216,0.4)", fontWeight: 400 }}> {suffix}</span>
+        )}
+      </span>
     </div>
   );
 }
