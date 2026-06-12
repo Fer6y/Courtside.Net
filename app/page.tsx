@@ -1,12 +1,15 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
 import Image from "next/image";
 import Link from "next/link";
 import CountryFlag from "@/components/CountryFlag";
 import GuideBanner from "@/components/GuideBanner";
 import TournamentBadge from "@/components/TournamentBadge";
 
-export const revalidate = 300;
+// NOTE: a page-level `revalidate` doesn't work here — auth() forces dynamic
+// rendering. Public data is cached via unstable_cache below instead; only
+// the per-user guide-banner query runs on every request.
 
 export const metadata = {
   title: "Courtside — Catalogue your tennis fandom",
@@ -57,55 +60,73 @@ function fmt(n: number) { return n.toFixed(1); }
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
+// Public home page data, cached 5 minutes — top players, recent reviews,
+// and site-wide counts change slowly and don't need 6 queries per visit.
+const getHomeData = unstable_cache(
+  async () => {
+    const db = adminDb();
+    const [
+      { data: topPlayers },
+      { data: rawReviews },
+      { count: playerCount },
+      { count: matchCount },
+      { count: reviewCount },
+      { count: ratingCount },
+    ] = await Promise.all([
+      db.from("players")
+        .select("id, name, country, current_rank, photo_url, image_url")
+        .not("current_rank", "is", null)
+        .order("current_rank", { ascending: true })
+        .limit(10),
+
+      db.from("reviews")
+        .select(`
+          id, match_rating, comment, created_at,
+          profile:user_id ( username, display_name ),
+          match:match_id (
+            id, tournament, tournament_tier, round, surface, match_date,
+            player1:player1_id ( id, name ),
+            player2:player2_id ( id, name )
+          )
+        `)
+        .order("created_at", { ascending: false })
+        .limit(4),
+
+      db.from("players").select("*", { count: "exact", head: true }),
+      db.from("matches").select("*", { count: "exact", head: true }),
+      db.from("reviews").select("*", { count: "exact", head: true }),
+      db.from("skill_ratings").select("*", { count: "exact", head: true }),
+    ]);
+    return {
+      topPlayers: topPlayers ?? [],
+      rawReviews: rawReviews ?? [],
+      playerCount, matchCount, reviewCount, ratingCount,
+    };
+  },
+  ["home-page-data"],
+  { revalidate: 300 }
+);
+
 export default async function HomePage() {
   const { userId: clerkId } = await auth();
   const db = adminDb();
 
-  // Resolve current user's profile ID (needed for their review count)
-  let currentProfileId: string | null = null;
+  const { topPlayers, rawReviews, playerCount, matchCount, reviewCount, ratingCount } =
+    await getHomeData();
+
+  // Current user's own review count — decides whether the guide banner shows.
+  // Per-user, so it stays outside the cache. 999 = not logged in → never show.
+  let userReviewCount: number | null = 999;
   if (clerkId) {
     const { data: me } = await db.from("profiles").select("id").eq("clerk_user_id", clerkId).single();
-    currentProfileId = me?.id ?? null;
+    if (me) {
+      const { count } = await db
+        .from("reviews")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", me.id);
+      userReviewCount = count;
+    }
   }
-
-  const [
-    { data: topPlayers },
-    { data: rawReviews },
-    { count: playerCount },
-    { count: matchCount },
-    { count: reviewCount },
-    { count: ratingCount },
-    { count: userReviewCount },
-  ] = await Promise.all([
-    db.from("players")
-      .select("id, name, country, current_rank, photo_url, image_url")
-      .not("current_rank", "is", null)
-      .order("current_rank", { ascending: true })
-      .limit(10),
-
-    db.from("reviews")
-      .select(`
-        id, match_rating, comment, created_at,
-        profile:user_id ( username, display_name ),
-        match:match_id (
-          id, tournament, tournament_tier, round, surface, match_date,
-          player1:player1_id ( id, name ),
-          player2:player2_id ( id, name )
-        )
-      `)
-      .order("created_at", { ascending: false })
-      .limit(4),
-
-    db.from("players").select("*", { count: "exact", head: true }),
-    db.from("matches").select("*", { count: "exact", head: true }),
-    db.from("reviews").select("*", { count: "exact", head: true }),
-    db.from("skill_ratings").select("*", { count: "exact", head: true }),
-
-    // Current user's own review count — used to decide whether to show the guide banner
-    currentProfileId
-      ? db.from("reviews").select("*", { count: "exact", head: true }).eq("user_id", currentProfileId)
-      : Promise.resolve({ count: 999 }), // not logged in → never show banner
-  ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reviews = (rawReviews ?? []) as any[];
