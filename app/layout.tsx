@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, DM_Sans } from "next/font/google";
+import { IBM_Plex_Mono, DM_Sans, Fraunces } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import Navbar from "@/components/nav/Navbar";
 import { ToastProvider } from "@/components/toast/ToastContext";
@@ -16,6 +16,15 @@ const dmSans = DM_Sans({
   subsets: ["latin"],
 });
 
+// Display serif — "The Programme" voice: player names, page titles,
+// match-ups. Italic carries the editorial flourishes ("v.", "d.").
+const fraunces = Fraunces({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  weight: ["300", "400", "500", "600"],
+});
+
 export const metadata: Metadata = {
   title: "Courtside — Catalogue your tennis fandom",
   description: "Rate players, review matches, and build your tennis catalogue.",
@@ -30,7 +39,8 @@ export default function RootLayout({
     <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
       <html
         lang="en"
-        className={`${ibmPlexMono.variable} ${dmSans.variable} dark h-full antialiased`}
+        data-court="grass"
+        className={`${ibmPlexMono.variable} ${dmSans.variable} ${fraunces.variable} dark h-full antialiased`}
         suppressHydrationWarning
       >
         <body className="min-h-full flex flex-col bg-background text-text-primary">

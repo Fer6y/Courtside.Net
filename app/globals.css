@@ -5,11 +5,12 @@
 /* ─── Courtside Design Tokens ─────────────────────────────────────────────── */
 @theme inline {
   /* Fonts */
-  --font-mono: var(--font-mono);   /* IBM Plex Mono — numbers, scores, brand */
+  --font-mono: var(--font-mono);   /* IBM Plex Mono — scores, data, eyebrow labels */
   --font-sans: var(--font-sans);   /* DM Sans — body, reviews, UI labels */
+  --font-serif: var(--font-serif); /* Fraunces — player names, titles, match-ups */
 
   /* Backgrounds & surfaces */
-  --color-background: #0e1116;
+  --color-background: var(--court-bg);  /* follows the user's court theme */
   --color-surface:    #1a1e26;
   --color-surface-2:  #22272f;
   --color-surface-3:  #2a303a;
@@ -17,7 +18,9 @@
   /* Brand & semantic */
   --color-primary: #22d68a;   /* Green — actions, wins, CTA */
   --color-accent:  #4a9eff;   /* Blue — comparisons, Movement category */
-  --color-amber:   #f5c518;   /* Highlights, Skill category */
+  --color-amber:   #f5c518;   /* Highlights, Skill category (legacy contexts) */
+  --color-gold:    #c9a96a;   /* Old gold — honours, slam styling, ornament */
+  --color-cream:   #ece5d8;   /* Programme paper — serif display text */
   --color-coral:   #d4734e;   /* Mental category */
   --color-loss:    #e74c3c;   /* Red — losses, errors, destructive */
 
@@ -58,10 +61,53 @@
   }
 }
 
+/* ─── Court themes ─────────────────────────────────────────────────────────
+   The page background is the court the user watches from. Selected via
+   data-court on <html> (default "grass"); preference will persist in
+   profiles.layout_config.court_theme once the picker ships.
+   Slam cover bands are content identity and never change with the theme. */
+
+html[data-court="grass"] {
+  --court-bg: #0d1a11;
+  --court-texture:
+    repeating-linear-gradient(
+      90deg,
+      rgba(140, 210, 140, 0.022) 0px,
+      rgba(140, 210, 140, 0.022) 52px,
+      rgba(0, 0, 0, 0) 52px,
+      rgba(0, 0, 0, 0) 104px
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.93 0 0 0 0 0.90 0 0 0 0 0.85 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  --court-texture-size: auto, 140px 140px;
+  --court-texture-position: 0 0, 0 0;
+}
+
+html[data-court="clay"] {
+  --court-bg: #1b110a;
+  --court-texture:
+    radial-gradient(rgba(216, 138, 92, 0.055) 1px, rgba(0, 0, 0, 0) 1px),
+    radial-gradient(rgba(160, 95, 58, 0.07) 1px, rgba(0, 0, 0, 0) 1px);
+  --court-texture-size: 8px 8px, 13px 13px;
+  --court-texture-position: 0 0, 5px 7px;
+}
+
+html[data-court="hard"] {
+  --court-bg: #0c1623;
+  --court-texture: radial-gradient(rgba(130, 180, 235, 0.035) 1px, rgba(0, 0, 0, 0) 1px);
+  --court-texture-size: 9px 9px;
+  --court-texture-position: 0 0;
+}
+
+/* Programme hairlines — cream-tinted rules replace white card borders */
+:root {
+  --hairline:      rgba(236, 229, 216, 0.14);
+  --hairline-soft: rgba(236, 229, 216, 0.09);
+}
+
 /* ─── shadcn CSS variable overrides (dark-only app) ──────────────────────── */
 :root,
 .dark {
-  --background: #0e1116;
+  --background: var(--court-bg, #0d1a11);
   --foreground: #e8eaed;
   --card:                #1a1e26;
   --card-foreground:     #e8eaed;
@@ -85,8 +131,61 @@
 /* ─── Base styles ─────────────────────────────────────────────────────────── */
 @layer base {
   body {
-    background-color: var(--color-background);
+    background-color: var(--court-bg, #0d1a11);
+    background-image: var(--court-texture);
+    background-size: var(--court-texture-size, auto);
+    background-position: var(--court-texture-position, 0 0);
     color: var(--color-text-primary);
     font-family: var(--font-sans), sans-serif;
+  }
+}
+
+/* ─── Programme utilities ──────────────────────────────────────────────────
+   The shared layout language of the redesign: eyebrow labels, hairline
+   rules, dot leaders, and serif bill names. See docs/ui-redesign-plan.md. */
+@layer components {
+  /* Small letterspaced mono label — "ROLAND GARROS · FINAL" */
+  .eyebrow {
+    font-family: var(--font-mono), monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  /* Single hairline rule */
+  .rule {
+    border: 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  /* Centered divider: ——— LABEL ——— (put an .eyebrow span inside) */
+  .rule-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .rule-divider::before,
+  .rule-divider::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--hairline);
+  }
+
+  /* Menu-style stat row: label ......... value */
+  .dot-leader {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .dot-leader-dots {
+    flex: 1;
+    border-bottom: 1px dotted rgba(236, 229, 216, 0.28);
+    transform: translateY(-4px);
+  }
+
+  /* Marquee serif name — players, match-ups, page titles */
+  .bill-name {
+    font-family: var(--font-serif), Georgia, serif;
+    color: var(--color-cream);
   }
 }
