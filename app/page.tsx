@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import CountryFlag from "@/components/CountryFlag";
 import GuideBanner from "@/components/GuideBanner";
-import TournamentBadge from "@/components/TournamentBadge";
 
 // NOTE: a page-level `revalidate` doesn't work here — auth() forces dynamic
 // rendering. Public data is cached via unstable_cache below instead; only
@@ -20,26 +19,6 @@ function adminDb() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-}
-
-function rankFrameStyle(rank: number | null | undefined): React.CSSProperties {
-  if (!rank) return { border: "2px solid rgba(34,214,138,0.2)" };
-  if (rank <= 10) return {
-    background: "linear-gradient(135deg, #f5c518, #e0a800, #f5c518)",
-    boxShadow: "0 0 12px rgba(245,197,24,0.5), 0 0 24px rgba(245,197,24,0.15)",
-    padding: "2px",
-  };
-  if (rank <= 50) return {
-    background: "linear-gradient(135deg, #c0c0c0, #e8e8e8, #a8a8a8)",
-    boxShadow: "0 0 8px rgba(192,192,192,0.35)",
-    padding: "2px",
-  };
-  if (rank <= 100) return {
-    background: "linear-gradient(135deg, #4a9eff, #6ab4ff, #3a8ef0)",
-    boxShadow: "0 0 6px rgba(74,158,255,0.3)",
-    padding: "2px",
-  };
-  return { border: "2px solid rgba(255,255,255,0.1)" };
 }
 
 const SURFACE_COLOR: Record<string, string> = {
@@ -60,18 +39,16 @@ function fmt(n: number) { return n.toFixed(1); }
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
-// Public home page data, cached 5 minutes — top players, recent reviews,
-// and site-wide counts change slowly and don't need 6 queries per visit.
+// Public home page data, cached 5 minutes. Site-wide vanity counts were
+// retired with the redesign (content rule: no boasting until there's a
+// real community) — the cover features an editorial match instead.
 const getHomeData = unstable_cache(
   async () => {
     const db = adminDb();
     const [
       { data: topPlayers },
       { data: rawReviews },
-      { count: playerCount },
-      { count: matchCount },
-      { count: reviewCount },
-      { count: ratingCount },
+      { data: featuredFinal },
     ] = await Promise.all([
       db.from("players")
         .select("id, name, country, current_rank, photo_url, image_url")
@@ -92,15 +69,23 @@ const getHomeData = unstable_cache(
         .order("created_at", { ascending: false })
         .limit(4),
 
-      db.from("players").select("*", { count: "exact", head: true }),
-      db.from("matches").select("*", { count: "exact", head: true }),
-      db.from("reviews").select("*", { count: "exact", head: true }),
-      db.from("skill_ratings").select("*", { count: "exact", head: true }),
+      // "This fortnight" — the most recent final in the catalogue
+      db.from("matches")
+        .select(`
+          id, tournament, round, surface, match_date, tournament_tier, winner_id,
+          player1:player1_id ( id, name ),
+          player2:player2_id ( id, name )
+        `)
+        .eq("round", "Final")
+        .not("match_date", "is", null)
+        .order("match_date", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
     return {
       topPlayers: topPlayers ?? [],
       rawReviews: rawReviews ?? [],
-      playerCount, matchCount, reviewCount, ratingCount,
+      featuredFinal: featuredFinal ?? null,
     };
   },
   ["home-page-data"],
@@ -111,8 +96,7 @@ export default async function HomePage() {
   const { userId: clerkId } = await auth();
   const db = adminDb();
 
-  const { topPlayers, rawReviews, playerCount, matchCount, reviewCount, ratingCount } =
-    await getHomeData();
+  const { topPlayers, rawReviews, featuredFinal } = await getHomeData();
 
   // Current user's own review count — decides whether the guide banner shows.
   // Per-user, so it stays outside the cache. 999 = not logged in → never show.
@@ -133,12 +117,6 @@ export default async function HomePage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const players = (topPlayers ?? []) as any[];
 
-  function formatCount(n: number | null) {
-    if (!n) return "0";
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-    return String(n);
-  }
-
   return (
     <div>
 
@@ -148,118 +126,130 @@ export default async function HomePage() {
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
       <section
         className="flex flex-col items-center justify-center text-center px-4"
-        style={{
-          minHeight: "calc(100vh - 60px)",
-          background: "radial-gradient(ellipse 70% 50% at 50% 38%, rgba(100,200,20,0.16) 0%, rgba(14,17,22,0) 65%), #0e1116",
-        }}
+        style={{ minHeight: "calc(82vh - 60px)" }}
       >
-        <Image
-          src="/Homepage_Ball.png"
-          alt="Tennis ball"
-          width={280}
-          height={280}
-          priority
-          style={{
-            marginBottom: 32,
-            filter: "drop-shadow(0 0 40px rgba(110,200,10,0.65)) drop-shadow(0 0 80px rgba(80,160,0,0.35))",
-          }}
-        />
-
-        <h1
-          className="font-mono font-bold text-white"
-          style={{ fontSize: 56, letterSpacing: "-0.01em", marginBottom: 12, lineHeight: 1 }}
-        >
+        <div className="eyebrow" style={{ fontSize: 11, color: "#c9a96a" }}>
+          Catalogue your tennis fandom
+        </div>
+        <h1 className="bill-name" style={{ fontSize: 52, fontWeight: 500, margin: "14px 0 6px", lineHeight: 1 }}>
           Courtside
         </h1>
-
         <p
-          className="font-sans mb-10 max-w-sm"
-          style={{ fontSize: 18, color: "#9ca3af", letterSpacing: "0.01em", lineHeight: 1.5 }}
+          className="bill-name italic"
+          style={{ fontWeight: 300, fontSize: 17, color: "rgba(236,229,216,0.6)" }}
         >
-          Rate players. Review matches.<br />Build your tennis catalogue.
+          The matches you watched, the players you rate.
         </p>
 
-        {/* CTAs */}
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/players"
-            className="font-mono text-sm font-semibold px-6 py-3 rounded-xl transition-all duration-150"
-            style={{ background: "#22d68a", color: "#0e1116" }}
-          >
-            Browse Players
-          </Link>
-          {clerkId ? (
-            <Link
-              href="/feed"
-              className="font-mono text-sm font-semibold px-6 py-3 rounded-xl transition-all duration-150 border border-white/15 text-text-primary hover:border-white/30"
-            >
-              View Activity
-            </Link>
-          ) : (
-            <Link
-              href="/sign-up"
-              className="font-mono text-sm font-semibold px-6 py-3 rounded-xl transition-all duration-150 border border-white/15 text-text-primary hover:border-white/30"
-            >
-              Join Free
-            </Link>
-          )}
+        {/* Double rule */}
+        <div className="w-full" style={{ maxWidth: 380, marginTop: 26 }}>
+          <hr className="rule" />
+          <hr className="rule" style={{ marginTop: 3 }} />
         </div>
 
-        {/* Stats bar */}
-        <div
-          className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mt-16 pt-10"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
-        >
-          {[
-            { value: formatCount(playerCount), label: "Players" },
-            { value: formatCount(matchCount),  label: "Matches"  },
-            { value: formatCount(reviewCount), label: "Reviews"  },
-            { value: formatCount(ratingCount), label: "Skill Ratings" },
-          ].map(({ value, label }) => (
-            <div key={label} className="text-center">
-              <div className="font-mono text-2xl font-bold text-text-primary">{value}</div>
-              <div className="font-mono text-[10px] uppercase tracking-widest text-text-dim mt-0.5">{label}</div>
-            </div>
-          ))}
+        {/* CTAs */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
+          <Link
+            href={clerkId ? "/matches" : "/sign-up"}
+            className="eyebrow rounded-md px-6 py-3 font-semibold transition-all duration-150"
+            style={{ fontSize: 11, background: "#22d68a", color: "#0d1a11" }}
+          >
+            {clerkId ? "Order of Play" : "Begin Your Catalogue"}
+          </Link>
+          <Link
+            href={clerkId ? "/feed" : "/guide"}
+            className="eyebrow rounded-md px-6 py-3 transition-colors duration-150"
+            style={{
+              fontSize: 11,
+              border: "1px solid rgba(201,169,106,0.45)",
+              color: "#c9a96a",
+            }}
+          >
+            {clerkId ? "Your Activity" : "The Guide"}
+          </Link>
         </div>
+
+        {/* This fortnight — editorial feature */}
+        {featuredFinal && (
+          <div className="w-full mt-14" style={{ maxWidth: 480 }}>
+            <div className="rule-divider mb-3">
+              <span className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.5)" }}>
+                This fortnight — {(featuredFinal.tournament as string).replace(/\s+\d{4}$/, "")}
+              </span>
+            </div>
+            <Link
+              href={`/matches/${featuredFinal.id}`}
+              className="flex items-baseline justify-between gap-3 flex-wrap transition-colors duration-150"
+            >
+              <span className="bill-name" style={{ fontSize: 16 }}>
+                <span style={{ fontWeight: 500, color: "#ece5d8" }}>
+                  {(featuredFinal.player1 as { name?: string } | null)?.name}
+                </span>
+                <span className="italic" style={{ fontWeight: 300, fontSize: 13, color: "rgba(236,229,216,0.4)" }}>
+                  {" "}v.{" "}
+                </span>
+                <span style={{ fontWeight: 500, color: "#ece5d8" }}>
+                  {(featuredFinal.player2 as { name?: string } | null)?.name}
+                </span>
+              </span>
+              <span className="font-mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "rgba(236,229,216,0.45)" }}>
+                FINAL
+                {featuredFinal.surface && (
+                  <> · <span style={{ color: SURFACE_COLOR[featuredFinal.surface as string] ?? "inherit" }}>
+                    {(featuredFinal.surface as string).toUpperCase()}
+                  </span></>
+                )}
+                {featuredFinal.match_date && <> · {(featuredFinal.match_date as string).slice(0, 4)}</>}
+              </span>
+            </Link>
+          </div>
+        )}
 
         {/* Scroll hint */}
-        <div className="mt-10 flex flex-col items-center gap-1.5 opacity-40">
-          <div className="w-px h-8" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.4))" }} />
-          <span className="font-mono text-[9px] uppercase tracking-widest text-text-dim">Scroll</span>
+        <div className="mt-12 flex flex-col items-center gap-1.5 opacity-40">
+          <div className="w-px h-8" style={{ background: "linear-gradient(to bottom, rgba(236,229,216,0), rgba(236,229,216,0.4))" }} />
+          <span className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.6)" }}>Scroll</span>
         </div>
       </section>
 
-      {/* ── Top Players ─────────────────────────────────────────────────────── */}
+      {/* ── Top of the Draw ─────────────────────────────────────────────────── */}
       {players.length > 0 && (
-        <section className="py-16 px-4" style={{ background: "#0e1116", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        <section className="py-16 px-4" style={{ borderTop: "1px solid var(--hairline-soft)" }}>
           <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="font-mono text-xl font-bold text-text-primary">Top Ranked</h2>
-                <p className="font-sans text-sm text-text-dim mt-0.5">The world&apos;s best players — rate their skills, explore their history</p>
-              </div>
+            <div className="flex items-baseline justify-between mb-2">
+              <h2 className="bill-name text-2xl" style={{ fontWeight: 500 }}>Top of the Draw</h2>
               <Link
                 href="/players"
-                className="font-mono text-xs text-text-dim hover:text-text-primary transition-colors duration-150 shrink-0"
+                className="eyebrow shrink-0 transition-colors duration-150"
+                style={{ fontSize: 10, color: "rgba(236,229,216,0.4)" }}
               >
-                All Players →
+                The Field →
               </Link>
             </div>
+            <p className="bill-name italic mb-7" style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.5)" }}>
+              The world&apos;s best — rate their skills, read their form
+            </p>
 
             {/* Horizontal scroll on mobile, wrap on desktop */}
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-5 lg:grid-cols-10">
+            <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-5 lg:grid-cols-10">
               {players.map((p) => (
                 <Link
                   key={p.id}
                   href={`/players/${p.id}`}
-                  className="group shrink-0 sm:shrink flex flex-col items-center gap-2 rounded-xl py-4 px-3 transition-all duration-150 border border-white/[0.05] hover:border-white/[0.12] bg-white/[0.02] hover:bg-white/[0.04]"
-                  style={{ minWidth: 100 }}
+                  className="group shrink-0 sm:shrink flex flex-col items-center gap-2 py-2 transition-all duration-150"
+                  style={{ minWidth: 88 }}
                 >
-                  {/* Photo / initials */}
+                  {/* Photo / initials with rank-tier ring */}
                   <div
-                    className="w-14 h-14 rounded-full shrink-0"
-                    style={rankFrameStyle(p.current_rank)}
+                    className="w-14 h-14 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
+                    style={{
+                      border: p.current_rank <= 10
+                        ? "2px solid rgba(201,169,106,0.85)"
+                        : p.current_rank <= 50
+                        ? "2px solid rgba(192,192,192,0.55)"
+                        : "2px solid rgba(236,229,216,0.2)",
+                      background: "rgba(236,229,216,0.04)",
+                    }}
                   >
                     {(p.photo_url || p.image_url) ? (
                       <Image
@@ -267,34 +257,34 @@ export default async function HomePage() {
                         alt={p.name}
                         width={56}
                         height={56}
-                        className="w-full h-full rounded-full object-cover object-top"
+                        className="w-full h-full object-cover object-top"
                         unoptimized
                       />
                     ) : (
-                      <div
-                        className="w-full h-full rounded-full flex items-center justify-center font-mono text-sm font-bold"
-                        style={{ background: "rgba(34,214,138,0.1)", color: "#22d68a" }}
-                      >
+                      <span className="bill-name" style={{ fontSize: 16, color: "rgba(236,229,216,0.45)" }}>
                         {p.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
-                      </div>
+                      </span>
                     )}
                   </div>
 
                   {/* Rank */}
                   <span
-                    className="font-mono text-xs font-bold"
+                    className="eyebrow"
                     style={{
-                      color: p.current_rank <= 10 ? "#f5c518"
-                           : p.current_rank <= 50 ? "#c0c0c0"
-                           : p.current_rank <= 100 ? "#4a9eff"
-                           : "#6b7280",
+                      fontSize: 9,
+                      color: p.current_rank <= 10 ? "#c9a96a"
+                           : p.current_rank <= 50 ? "rgba(192,192,192,0.7)"
+                           : "rgba(236,229,216,0.4)",
                     }}
                   >
-                    #{p.current_rank}
+                    No. {p.current_rank}
                   </span>
 
                   {/* Name */}
-                  <span className="font-sans text-xs font-medium text-text-primary group-hover:text-primary transition-colors text-center leading-tight line-clamp-2">
+                  <span
+                    className="bill-name text-center leading-tight line-clamp-2"
+                    style={{ fontSize: 14, color: "#ece5d8" }}
+                  >
                     {p.name.split(" ").pop()}
                   </span>
 
@@ -309,24 +299,17 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── Recent Reviews ──────────────────────────────────────────────────── */}
+      {/* ── Notes from the gallery ──────────────────────────────────────────── */}
       {reviews.length > 0 && (
-        <section className="py-16 px-4" style={{ background: "rgba(255,255,255,0.01)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="font-mono text-xl font-bold text-text-primary">Community Reviews</h2>
-                <p className="font-sans text-sm text-text-dim mt-0.5">What fans are watching and rating right now</p>
-              </div>
-              <Link
-                href="/matches"
-                className="font-mono text-xs text-text-dim hover:text-text-primary transition-colors duration-150 shrink-0"
-              >
-                All Matches →
-              </Link>
+        <section className="py-16 px-4" style={{ borderTop: "1px solid var(--hairline-soft)" }}>
+          <div className="max-w-3xl mx-auto">
+            <div className="rule-divider mb-7">
+              <span className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.55)" }}>
+                Notes from the gallery
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
               {reviews.map((r) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const m = r.match as any;
@@ -337,142 +320,109 @@ export default async function HomePage() {
                   <Link
                     key={r.id}
                     href={`/matches/${m.id}`}
-                    className="group rounded-xl p-4 flex flex-col gap-3 transition-all duration-150"
-                    style={{
-                      background:  "rgba(255,255,255,0.02)",
-                      border:      m.tournament_tier === "grand_slam"
-                                     ? "1px solid rgba(245,197,24,0.18)"
-                                     : m.tournament_tier === "masters_1000"
-                                     ? "1px solid rgba(192,192,192,0.12)"
-                                     : "1px solid rgba(255,255,255,0.05)",
-                    }}
+                    className="flex items-baseline justify-between gap-x-4 gap-y-1 flex-wrap py-3.5 px-1 transition-colors duration-150"
+                    style={{ borderBottom: "1px solid var(--hairline-soft)" }}
                   >
-                    {/* Match */}
-                    <div>
-                      <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                        <span className="font-sans text-sm font-medium text-text-primary group-hover:text-primary transition-colors truncate">
-                          {m.player1?.name?.split(" ").pop()}
-                        </span>
-                        <span className="font-mono text-[10px] text-text-dim">vs</span>
-                        <span className="font-sans text-sm font-medium text-text-primary group-hover:text-primary transition-colors truncate">
-                          {m.player2?.name?.split(" ").pop()}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-[10px] text-text-dim truncate">{m.tournament}</span>
+                    <span className="min-w-0">
+                      <span className="bill-name block" style={{ fontSize: 16 }}>
+                        <span style={{ color: "#ece5d8" }}>{m.player1?.name?.split(" ").pop()}</span>
+                        <span className="italic" style={{ fontWeight: 300, fontSize: 13, color: "rgba(236,229,216,0.4)" }}> v. </span>
+                        <span style={{ color: "#ece5d8" }}>{m.player2?.name?.split(" ").pop()}</span>
                         {m.surface && (
                           <span
-                            className="font-mono text-[10px] shrink-0"
-                            style={{ color: SURFACE_COLOR[m.surface] ?? "#6b7280" }}
+                            className="font-mono"
+                            style={{ fontSize: 10, letterSpacing: "0.1em", color: SURFACE_COLOR[m.surface] ?? "rgba(236,229,216,0.4)" }}
                           >
-                            {m.surface}
+                            {"  "}{m.surface.toUpperCase()}
                           </span>
                         )}
-                        <TournamentBadge tournamentName={m.tournament} tier={m.tournament_tier} />
-                      </div>
-                    </div>
-
-                    {/* Rating */}
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="font-mono text-xl font-bold"
-                        style={{
-                          color: r.match_rating >= 8 ? "#22d68a"
-                               : r.match_rating >= 6 ? "#f5c518"
-                               : "#9ca3af",
-                        }}
-                      >
+                      </span>
+                      {r.comment && (
+                        <span
+                          className="bill-name italic block truncate mt-0.5"
+                          style={{ fontWeight: 300, fontSize: 13, color: "rgba(236,229,216,0.5)", maxWidth: 440 }}
+                        >
+                          &ldquo;{r.comment}&rdquo;
+                        </span>
+                      )}
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="font-mono font-semibold block" style={{ fontSize: 17, color: "#c9a96a" }}>
                         {fmt(r.match_rating)}
                       </span>
-                      <div className="flex-1 rounded-full h-1 overflow-hidden bg-white/[0.06]">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${(r.match_rating / 10) * 100}%`,
-                            background: r.match_rating >= 8 ? "#22d68a"
-                                      : r.match_rating >= 6 ? "#f5c518"
-                                      : "#9ca3af",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Comment */}
-                    {r.comment && (
-                      <p className="font-sans text-xs text-text-dim leading-relaxed italic line-clamp-2 flex-1">
-                        &ldquo;{r.comment}&rdquo;
-                      </p>
-                    )}
-
-                    {/* Reviewer */}
-                    <div className="flex items-center justify-between pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                      <span className="font-sans text-[10px] text-text-dim">
-                        {prof?.display_name ?? prof?.username ?? "Community"}
+                      <span className="eyebrow block mt-0.5" style={{ fontSize: 8, color: "rgba(236,229,216,0.35)" }}>
+                        {prof?.display_name ?? prof?.username ?? "Community"} · {timeAgo(r.created_at)}
                       </span>
-                      <span className="font-mono text-[9px] text-text-dim">{timeAgo(r.created_at)}</span>
-                    </div>
+                    </span>
                   </Link>
                 );
               })}
+            </div>
+
+            <div className="text-center mt-6">
+              <Link
+                href="/matches"
+                className="eyebrow transition-colors duration-150"
+                style={{ fontSize: 10, color: "rgba(236,229,216,0.4)" }}
+              >
+                The Order of Play →
+              </Link>
             </div>
           </div>
         </section>
       )}
 
       {/* ── How it works ────────────────────────────────────────────────────── */}
-      <section className="py-16 px-4" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <section className="py-16 px-4" style={{ borderTop: "1px solid var(--hairline-soft)" }}>
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-mono text-xl font-bold text-text-primary mb-2">How it works</h2>
-          <p className="font-sans text-sm text-text-dim mb-3">Three ways to engage with the tennis you watch</p>
+          <h2 className="bill-name text-2xl mb-1" style={{ fontWeight: 500 }}>How it works</h2>
+          <p className="bill-name italic mb-3" style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.5)" }}>
+            Three ways to engage with the tennis you watch
+          </p>
           <Link
             href="/guide"
-            className="font-mono text-xs text-text-dim hover:text-primary transition-colors duration-150 inline-block mb-12"
+            className="eyebrow inline-block mb-12 transition-colors duration-150"
+            style={{ fontSize: 10, color: "#c9a96a" }}
           >
-            Full guide →
+            The Guide →
           </Link>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[
               {
-                num:   "01",
+                num:   "No. 01",
                 title: "Rate Skills",
                 body:  "Score any player across 17 attributes — serve, footspeed, clutch, and more. See how your view compares with the community radar.",
-                color: "#22d68a",
                 href:  "/players",
                 cta:   "Find a player",
               },
               {
-                num:   "02",
+                num:   "No. 02",
                 title: "Review Matches",
                 body:  "Rate match quality and both players' performances. Leave a comment, mark favourites, react to others' takes.",
-                color: "#f5c518",
                 href:  "/matches",
                 cta:   "Browse matches",
               },
               {
-                num:   "03",
+                num:   "No. 03",
                 title: "Compare & Debate",
                 body:  "Head-to-head pages overlay two players' community radars side by side. Who really has the better backhand?",
-                color: "#4a9eff",
                 href:  "/players",
                 cta:   "Start a comparison",
               },
-            ].map(({ num, title, body, color, href, cta }) => (
-              <div key={num} className="flex flex-col items-center text-center gap-4">
-                <span
-                  className="font-mono text-4xl font-bold"
-                  style={{ color, opacity: 0.25 }}
-                >
+            ].map(({ num, title, body, href, cta }) => (
+              <div key={num} className="flex flex-col items-center text-center gap-3">
+                <span className="eyebrow" style={{ fontSize: 10, color: "rgba(201,169,106,0.7)" }}>
                   {num}
                 </span>
                 <div>
-                  <h3 className="font-mono text-base font-semibold text-text-primary mb-2">{title}</h3>
-                  <p className="font-sans text-sm text-text-dim leading-relaxed">{body}</p>
+                  <h3 className="bill-name mb-2" style={{ fontSize: 18, fontWeight: 500 }}>{title}</h3>
+                  <p className="font-sans text-sm leading-relaxed" style={{ color: "rgba(236,229,216,0.45)" }}>{body}</p>
                 </div>
                 <Link
                   href={href}
-                  className="font-mono text-xs transition-colors duration-150 mt-auto"
-                  style={{ color }}
+                  className="eyebrow mt-auto transition-colors duration-150"
+                  style={{ fontSize: 9, color: "#c9a96a" }}
                 >
                   {cta} →
                 </Link>
@@ -484,34 +434,36 @@ export default async function HomePage() {
 
       {/* ── Bottom CTA (guests only) ─────────────────────────────────────────── */}
       {!clerkId && (
-        <section
-          className="py-16 px-4 text-center"
-          style={{
-            borderTop: "1px solid rgba(255,255,255,0.04)",
-            background: "radial-gradient(ellipse 60% 80% at 50% 100%, rgba(34,214,138,0.06) 0%, rgba(14,17,22,0) 70%), #0e1116",
-          }}
-        >
-          <h2 className="font-mono text-2xl font-bold text-text-primary mb-3">Start your catalogue</h2>
-          <p className="font-sans text-sm text-text-dim mb-8 max-w-sm mx-auto">
+        <section className="py-16 px-4 text-center" style={{ borderTop: "1px solid var(--hairline-soft)" }}>
+          <h2 className="bill-name text-2xl mb-2" style={{ fontWeight: 500 }}>Start your catalogue</h2>
+          <p className="bill-name italic mb-8 max-w-sm mx-auto" style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.5)" }}>
             Free to join. Rate players, review matches, follow other fans.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link
               href="/sign-up"
-              className="font-mono text-sm font-semibold px-6 py-3 rounded-xl transition-all duration-150"
-              style={{ background: "#22d68a", color: "#0e1116" }}
+              className="eyebrow rounded-md px-6 py-3 font-semibold transition-all duration-150"
+              style={{ fontSize: 11, background: "#22d68a", color: "#0d1a11" }}
             >
               Create Account
             </Link>
             <Link
               href="/sign-in"
-              className="font-mono text-sm px-6 py-3 rounded-xl transition-all duration-150 border border-white/15 text-text-dim hover:text-text-primary hover:border-white/25"
+              className="eyebrow rounded-md px-6 py-3 transition-colors duration-150"
+              style={{ fontSize: 11, border: "1px solid rgba(201,169,106,0.45)", color: "#c9a96a" }}
             >
               Sign In
             </Link>
           </div>
         </section>
       )}
+
+      {/* ── Colophon ─────────────────────────────────────────────────────────── */}
+      <div className="text-center pb-12" style={{ paddingTop: 8 }}>
+        <span className="eyebrow" style={{ fontSize: 10, color: "rgba(201,169,106,0.6)" }}>
+          — Courtside · Est. MMXXVI —
+        </span>
+      </div>
 
     </div>
   );
