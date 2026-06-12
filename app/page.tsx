@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import CountryFlag from "@/components/CountryFlag";
 import GuideBanner from "@/components/GuideBanner";
+import TournamentBadge from "@/components/TournamentBadge";
 
 export const revalidate = 300;
 
@@ -87,7 +88,7 @@ export default async function HomePage() {
         id, match_rating, comment, created_at,
         profile:user_id ( username, display_name ),
         match:match_id (
-          id, tournament, round, surface, match_date,
+          id, tournament, tournament_tier, round, surface, match_date,
           player1:player1_id ( id, name ),
           player2:player2_id ( id, name )
         )
@@ -315,7 +316,15 @@ export default async function HomePage() {
                   <Link
                     key={r.id}
                     href={`/matches/${m.id}`}
-                    className="group rounded-xl p-4 flex flex-col gap-3 border border-white/[0.05] hover:border-white/[0.1] bg-white/[0.02] hover:bg-white/[0.035] transition-all duration-150"
+                    className="group rounded-xl p-4 flex flex-col gap-3 transition-all duration-150"
+                    style={{
+                      background:  "rgba(255,255,255,0.02)",
+                      border:      m.tournament_tier === "grand_slam"
+                                     ? "1px solid rgba(245,197,24,0.18)"
+                                     : m.tournament_tier === "masters_1000"
+                                     ? "1px solid rgba(192,192,192,0.12)"
+                                     : "1px solid rgba(255,255,255,0.05)",
+                    }}
                   >
                     {/* Match */}
                     <div>
@@ -328,7 +337,7 @@ export default async function HomePage() {
                           {m.player2?.name?.split(" ").pop()}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-[10px] text-text-dim truncate">{m.tournament}</span>
                         {m.surface && (
                           <span
@@ -338,6 +347,7 @@ export default async function HomePage() {
                             {m.surface}
                           </span>
                         )}
+                        <TournamentBadge tournamentName={m.tournament} tier={m.tournament_tier} />
                       </div>
                     </div>
 

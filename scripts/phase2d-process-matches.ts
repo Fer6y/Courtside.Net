@@ -27,6 +27,8 @@ import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
+import { getTournamentTier, getMastersSurface } from "../lib/tournamentTiers";
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -162,12 +164,23 @@ async function main() {
     const season    = params.year ?? params.season ?? "?";
     const tourValue = params.tour ?? "ATP";
 
-    // Grand Slams have known surfaces — derive from slam name
+    // tournament_tier: prefer explicit value in staging params, otherwise derive
+    const storedTier = params.tournament_tier as string | undefined;
+    const resolvedTier =
+      storedTier === "grand_slam" || storedTier === "masters_1000" || storedTier === "other"
+        ? storedTier
+        : getTournamentTier(slamName);
+
+    // Surface: prefer explicit param (Masters), then name-based derivation (Grand Slams)
+    const explicitSurface = params.surface as string | undefined;
     const slamSurface: "Hard" | "Clay" | "Grass" | null =
-      slamName.includes("Roland Garros") ? "Clay" :
-      slamName.includes("Wimbledon")     ? "Grass" :
-      slamName.includes("Australian")    ? "Hard"  :
-      slamName.includes("US Open")       ? "Hard"  : null;
+      explicitSurface === "Hard" || explicitSurface === "Clay" || explicitSurface === "Grass"
+        ? explicitSurface
+        : slamName.includes("Roland Garros") ? "Clay"
+        : slamName.includes("Wimbledon")     ? "Grass"
+        : slamName.includes("Australian")    ? "Hard"
+        : slamName.includes("US Open")       ? "Hard"
+        : getMastersSurface(slamName);
 
     for (const f of fixtures) {
       if (!firstLogged) {
@@ -202,6 +215,7 @@ async function main() {
         match_date:        normaliseDate(f[FIELD_MAP.date]),
         api_event_key:     eventKey,
         tournament_season: parseInt(yr) || null,
+        tournament_tier:   resolvedTier,
         source:            "api_tennis",
         tour:              tourValue,
       });

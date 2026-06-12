@@ -20,7 +20,10 @@
     "migrate:phase2f": "tsx scripts/phase2f-fetch-photos.ts",
     "migrate:phase3": "tsx scripts/phase3-build-crosswalk.ts",
     "migrate:phase4": "tsx scripts/phase4-cutover.ts",
-    "migrate:phase5": "tsx scripts/phase5-cleanup.ts"
+    "migrate:phase5": "tsx scripts/phase5-cleanup.ts",
+    "fetch:masters":  "tsx scripts/fetch-masters.ts",
+    "probe:masters-calendar": "tsx scripts/probe-masters-calendar.ts",
+    "fetch:masters-gaps": "tsx scripts/fetch-masters-gaps.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
