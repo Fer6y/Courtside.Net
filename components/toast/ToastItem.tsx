@@ -14,8 +14,9 @@ const EXPLODE_DURATION = 700;
 const ERROR_DURATION = 2200;
 
 export default function ToastItem({ toast, onDismiss }: Props) {
-  const [exploding, setExploding] = useState(false);
-  const [visible, setVisible]     = useState(false);
+  // Derived directly from the prop — no state mirror needed
+  const exploding = toast.state === "success";
+  const [visible, setVisible] = useState(false);
 
   // Slide in on mount
   useEffect(() => {
@@ -23,10 +24,9 @@ export default function ToastItem({ toast, onDismiss }: Props) {
     return () => cancelAnimationFrame(t);
   }, []);
 
-  // When state changes to success — run explosion then remove
+  // Schedule auto-dismiss when the toast resolves
   useEffect(() => {
     if (toast.state === "success") {
-      setExploding(true);
       const t = setTimeout(() => onDismiss(toast.id), EXPLODE_DURATION);
       return () => clearTimeout(t);
     }

@@ -131,7 +131,7 @@ async function main() {
 
   // ── 4. Count how many DB entries are wrong-tour ──────────────────────────
   let atpDisplacedByWta = 0;
-  let wtaDisplacedByAtp = 0;
+  const wtaDisplacedByAtp = 0;
   let correctAtp = 0;
   let correctWta = 0;
   let unknown = 0;

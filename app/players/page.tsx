@@ -158,7 +158,7 @@ export default async function PlayersPage({
   const players = (rawPlayers ?? []) as Player[];
 
   // ── Compute stats if needed ───────────────────────────────────
-  let statsMap = new Map<string, PlayerStats>();
+  const statsMap = new Map<string, PlayerStats>();
 
   if (STAT_SORTS.has(activeSort) && players.length > 0) {
     const matchRows = await getTourMatchRows(activeTour);
@@ -169,7 +169,7 @@ export default async function PlayersPage({
   }
 
   // ── Sort by stat if needed ────────────────────────────────────
-  let sorted = [...players];
+  const sorted = [...players];
 
   if (activeSort === "matches") {
     sorted.sort(

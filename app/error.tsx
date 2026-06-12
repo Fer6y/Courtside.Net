@@ -6,6 +6,7 @@
 // instead of Next.js's unstyled crash screen.
 
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function Error({
   error,
@@ -38,12 +39,12 @@ export default function Error({
           >
             Try Again
           </button>
-          <a
+          <Link
             href="/"
             className="font-mono text-xs px-5 py-2.5 rounded-lg border border-white/10 text-text-mid hover:text-text-primary hover:border-white/20 transition-colors duration-150"
           >
             Back Home
-          </a>
+          </Link>
         </div>
       </div>
     </main>
