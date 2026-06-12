@@ -11,6 +11,8 @@ import CommentThread, { type Comment } from "@/components/CommentThread";
 import ReactionBar, { type ReactionSummary, EMPTY_REACTIONS } from "@/components/ReactionBar";
 import type { EmojiKey } from "@/components/ReactionBar";
 import { getTournamentTier, getCoverBand } from "@/lib/tournamentTiers";
+import CourtOverride from "@/components/CourtOverride";
+import { surfaceToCourt, courtOverrideScript } from "@/lib/courts";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -204,8 +206,18 @@ export default async function MatchPage({ params }: Props) {
   const p1Last = p1.name.split(" ").pop()!;
   const p2Last = p2.name.split(" ").pop()!;
 
+  // The whole page is read on the court this match was played on —
+  // clay matches on clay, grass on grass — overriding the user's theme
+  const matchCourt = surfaceToCourt(surface);
+
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
+      {matchCourt && (
+        <>
+          <script dangerouslySetInnerHTML={{ __html: courtOverrideScript(matchCourt) }} />
+          <CourtOverride court={matchCourt} />
+        </>
+      )}
 
       {/* Back */}
       <Link
