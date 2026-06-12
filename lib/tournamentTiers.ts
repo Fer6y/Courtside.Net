@@ -117,6 +117,55 @@ export interface TierStyle {
   glow:        string;
 }
 
+/**
+ * Programme "cover band" treatments — the tinted header strip on match
+ * pages. Each Grand Slam has its own identity (content, not user theme:
+ * these render identically on every court background). Masters get a
+ * quiet silver band; everything else a plain hairline.
+ */
+export interface CoverBand {
+  background:  string;
+  borderColor: string;
+}
+
+const SLAM_COVERS: { match: string[]; cover: CoverBand }[] = [
+  {
+    match: ["australian open"],
+    cover: { background: "rgba(42,123,212,0.14)",  borderColor: "rgba(42,123,212,0.6)" },
+  },
+  {
+    match: ["roland garros", "french open"],
+    cover: { background: "rgba(184,89,58,0.14)",   borderColor: "rgba(184,89,58,0.6)" },
+  },
+  {
+    match: ["wimbledon"],
+    cover: { background: "rgba(46,90,52,0.2)",     borderColor: "rgba(120,81,169,0.6)" },
+  },
+  {
+    match: ["us open"],
+    cover: { background: "rgba(27,58,107,0.22)",   borderColor: "rgba(74,144,217,0.5)" },
+  },
+];
+
+const MASTERS_COVER: CoverBand = {
+  background:  "rgba(192,192,192,0.06)",
+  borderColor: "rgba(192,192,192,0.22)",
+};
+
+const PLAIN_COVER: CoverBand = {
+  background:  "rgba(236,229,216,0.03)",
+  borderColor: "rgba(236,229,216,0.14)",
+};
+
+export function getCoverBand(tournamentName: string, tier?: TournamentTier | null): CoverBand {
+  const n = tournamentName.toLowerCase();
+  for (const { match, cover } of SLAM_COVERS) {
+    if (match.some((m) => n.includes(m))) return cover;
+  }
+  const resolvedTier = tier ?? getTournamentTier(tournamentName);
+  return resolvedTier === "masters_1000" ? MASTERS_COVER : PLAIN_COVER;
+}
+
 export const TIER_STYLES: Record<TournamentTier, TierStyle | null> = {
   grand_slam: {
     label:      "Grand Slam",

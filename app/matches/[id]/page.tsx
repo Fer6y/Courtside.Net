@@ -4,16 +4,13 @@ import { getSupabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import type { Surface } from "@/types";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import PlayerNameWithBubble from "@/components/PlayerNameWithBubble";
 import DeleteReviewButton from "@/components/DeleteReviewButton";
 import CommentThread, { type Comment } from "@/components/CommentThread";
 import ReactionBar, { type ReactionSummary, EMPTY_REACTIONS } from "@/components/ReactionBar";
-import CountryFlag from "@/components/CountryFlag";
 import type { EmojiKey } from "@/components/ReactionBar";
-import TournamentBadge from "@/components/TournamentBadge";
-import { getTournamentTier } from "@/lib/tournamentTiers";
+import { getTournamentTier, getCoverBand } from "@/lib/tournamentTiers";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -43,10 +40,10 @@ export async function generateMetadata({ params }: Props) {
 }
 
 const SURFACE_COLORS: Record<Surface, string> = {
-  Hard:   "text-court-hard border-court-hard/30",
-  Clay:   "text-court-clay border-court-clay/30",
-  Grass:  "text-court-grass border-court-grass/30",
-  Carpet: "text-text-dim border-white/10",
+  Hard:   "#4a90d9",
+  Clay:   "#d4734e",
+  Grass:  "#5cb85c",
+  Carpet: "#9ca3af",
 };
 
 interface ReviewRow {
@@ -81,6 +78,13 @@ function timeAgo(iso: string): string {
   const months = Math.floor(days / 30);
   if (months < 12) return `${months}mo ago`;
   return `${Math.floor(months / 12)}y ago`;
+}
+
+function formatLongDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(`${iso}T00:00:00`);
+  if (isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 }
 
 export default async function MatchPage({ params }: Props) {
@@ -190,8 +194,15 @@ export default async function MatchPage({ params }: Props) {
   const p2 = match.player2 as { id: string; name: string; country: string | null; current_rank: number | null; photo_url: string | null };
   const surface = match.surface as Surface | null;
   const won1 = match.winner_id === p1.id;
-  const tier = (match.tournament_tier as string | null) ?? getTournamentTier(match.tournament);
-  const isSlam = tier === "grand_slam";
+  const tier = ((match.tournament_tier as string | null) ?? getTournamentTier(match.tournament)) as
+    | "grand_slam" | "masters_1000" | "other";
+  const cover = getCoverBand(match.tournament, tier);
+
+  const singlesLabel =
+    match.tour === "WTA" ? "Women's Singles" : match.tour === "ATP" ? "Men's Singles" : null;
+  const dateLabel = formatLongDate(match.match_date);
+  const p1Last = p1.name.split(" ").pop()!;
+  const p2Last = p2.name.split(" ").pop()!;
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
@@ -199,170 +210,116 @@ export default async function MatchPage({ params }: Props) {
       {/* Back */}
       <Link
         href="/matches"
-        className="font-sans text-sm text-text-dim hover:text-text-mid mb-8 inline-block transition-colors duration-150"
+        className="eyebrow mb-8 inline-block transition-colors duration-150"
+        style={{ fontSize: 10, color: "rgba(236,229,216,0.4)" }}
       >
-        ← All Matches
+        ← Order of Play
       </Link>
 
-      {/* Tournament header */}
-      <div className="flex items-center gap-3 mb-8 flex-wrap">
-        <span className="font-mono text-sm text-text-mid">{match.tournament}</span>
-        <TournamentBadge tournamentName={match.tournament} tier={tier as "grand_slam" | "masters_1000" | "other"} size="md" />
-        <span className="text-text-dim">·</span>
-        <span className="font-mono text-sm text-text-dim">{match.round}</span>
-        {surface && (
-          <>
-            <span className="text-text-dim">·</span>
-            <span className={`font-mono text-xs border px-2 py-0.5 rounded ${SURFACE_COLORS[surface]}`}>
-              {surface}
-            </span>
-          </>
-        )}
-        {match.match_date && (
-          <>
-            <span className="text-text-dim">·</span>
-            <span className="font-mono text-xs text-text-dim">{match.match_date}</span>
-          </>
-        )}
-      </div>
-
-      {/* Players vs score — hero */}
+      {/* ── The bill — cover band hero ───────────────────────────── */}
       <div
-        className="rounded-lg p-6 mb-10"
-        style={{
-          border:     isSlam ? "1px solid rgba(245,197,24,0.3)" : "1px solid rgba(255,255,255,0.05)",
-          background: isSlam ? "rgba(245,197,24,0.03)"          : "rgba(255,255,255,0.02)",
-          boxShadow:  isSlam ? "0 0 24px rgba(245,197,24,0.08)" : "none",
-        }}
+        className="rounded-lg overflow-hidden mb-12"
+        style={{ border: `1px solid ${cover.borderColor}` }}
       >
-        <div className="flex items-center gap-4">
-
-          {/* Player 1 */}
-          <Link href={`/players/${p1.id}`} className="flex-1 group min-w-0">
-            <div className="flex flex-col items-center text-center gap-3">
-              <div
-                className="w-20 h-20 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
-                style={{
-                  border: won1 ? "2px solid rgba(34,214,138,0.5)" : "2px solid rgba(255,255,255,0.08)",
-                  background: "rgba(255,255,255,0.04)",
-                }}
-              >
-                {p1.photo_url ? (
-                  <Image src={p1.photo_url} alt={p1.name} width={80} height={80}
-                    className="w-full h-full object-cover object-top" unoptimized />
-                ) : (
-                  <span className="font-mono text-xl font-bold text-text-dim">{p1.name.charAt(0)}</span>
-                )}
-              </div>
-              <div>
-                <div className={`font-mono text-base font-bold leading-tight transition-colors duration-150 group-hover:text-primary ${won1 ? "text-primary" : "text-text-primary"}`}>
-                  <PlayerNameWithBubble playerId={p1.id} playerName={p1.name} />
-                </div>
-                <div className="flex items-center justify-center gap-1.5 mt-1">
-                  <CountryFlag code={p1.country} size={20} />
-                  {p1.current_rank && <span className="font-mono text-xs text-text-dim">#{p1.current_rank}</span>}
-                </div>
-                {won1 && <span className="font-mono text-xs text-primary mt-1 block">Winner</span>}
-              </div>
-            </div>
-          </Link>
-
-          {/* Score */}
-          <div className="flex flex-col items-center gap-2 shrink-0 px-2">
-            {match.score ? (
-              <div className="font-mono text-sm sm:text-base text-text-primary whitespace-nowrap text-center leading-relaxed">
-                {match.score.split(" ").map((set: string, i: number) => (
-                  <div key={i}>{set}</div>
-                ))}
-              </div>
-            ) : (
-              <div className="font-mono text-2xl text-text-dim">vs</div>
-            )}
+        <div className="px-6 py-9 text-center" style={{ background: cover.background }}>
+          <div className="eyebrow" style={{ color: "#c9a96a" }}>
+            {match.tournament}
+            {singlesLabel && <> · {singlesLabel}</>}
+            {match.round && <> · {match.round}</>}
           </div>
 
-          {/* Player 2 */}
-          <Link href={`/players/${p2.id}`} className="flex-1 group min-w-0">
-            <div className="flex flex-col items-center text-center gap-3">
-              <div
-                className="w-20 h-20 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
-                style={{
-                  border: !won1 ? "2px solid rgba(34,214,138,0.5)" : "2px solid rgba(255,255,255,0.08)",
-                  background: "rgba(255,255,255,0.04)",
-                }}
-              >
-                {p2.photo_url ? (
-                  <Image src={p2.photo_url} alt={p2.name} width={80} height={80}
-                    className="w-full h-full object-cover object-top" unoptimized />
-                ) : (
-                  <span className="font-mono text-xl font-bold text-text-dim">{p2.name.charAt(0)}</span>
-                )}
-              </div>
-              <div>
-                <div className={`font-mono text-base font-bold leading-tight transition-colors duration-150 group-hover:text-primary ${!won1 ? "text-primary" : "text-text-primary"}`}>
-                  <PlayerNameWithBubble playerId={p2.id} playerName={p2.name} />
-                </div>
-                <div className="flex items-center justify-center gap-1.5 mt-1">
-                  <CountryFlag code={p2.country} size={20} />
-                  {p2.current_rank && <span className="font-mono text-xs text-text-dim">#{p2.current_rank}</span>}
-                </div>
-                {!won1 && <span className="font-mono text-xs text-primary mt-1 block">Winner</span>}
-              </div>
-            </div>
-          </Link>
+          {/* Match-up */}
+          <div className="flex items-baseline justify-center gap-x-4 gap-y-1 flex-wrap mt-5">
+            <span
+              className="bill-name text-2xl sm:text-3xl"
+              style={{
+                fontWeight: won1 ? 500 : 300,
+                color: won1 ? "#ece5d8" : "rgba(236,229,216,0.72)",
+              }}
+            >
+              <PlayerNameWithBubble playerId={p1.id} playerName={p1.name} />
+              {won1 && <span style={{ color: "#c9a96a" }} title="Winner"> ✦</span>}
+            </span>
+            <span
+              className="bill-name italic text-base sm:text-lg"
+              style={{ fontWeight: 300, color: "rgba(236,229,216,0.45)" }}
+            >
+              v.
+            </span>
+            <span
+              className="bill-name text-2xl sm:text-3xl"
+              style={{
+                fontWeight: !won1 ? 500 : 300,
+                color: !won1 ? "#ece5d8" : "rgba(236,229,216,0.72)",
+              }}
+            >
+              <PlayerNameWithBubble playerId={p2.id} playerName={p2.name} />
+              {!won1 && <span style={{ color: "#c9a96a" }} title="Winner"> ✦</span>}
+            </span>
+          </div>
 
+          {/* Score between gold rules */}
+          {match.score && (
+            <div className="flex items-center justify-center gap-4 mt-5">
+              <span className="inline-block w-11" style={{ borderTop: "1px solid rgba(201,169,106,0.5)" }} />
+              <span
+                className="font-mono text-sm sm:text-base"
+                style={{ color: "#ece5d8", letterSpacing: "0.12em" }}
+              >
+                {match.score.split(" ").map((set: string) => set.replace("-", "–")).join("  ")}
+              </span>
+              <span className="inline-block w-11" style={{ borderTop: "1px solid rgba(201,169,106,0.5)" }} />
+            </div>
+          )}
+
+          {/* Venue line */}
+          <div className="eyebrow mt-4" style={{ fontSize: 10, color: "rgba(236,229,216,0.5)" }}>
+            {surface && (
+              <span style={{ color: SURFACE_COLORS[surface] }}>{surface}</span>
+            )}
+            {surface && dateLabel && " · "}
+            {dateLabel}
+          </div>
         </div>
       </div>
 
-      {/* ── Community Rating Summary ─────────────────────────────── */}
+      {/* ── Notes from the gallery — community averages ──────────── */}
       {count > 0 && (
-        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-6 mb-10">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-mono text-xs font-semibold uppercase tracking-widest text-text-dim">
-              Community Rating
-            </h2>
-            <span className="font-mono text-xs text-text-dim">
-              {count} {count === 1 ? "review" : "reviews"}
+        <div className="mb-12">
+          <div className="rule-divider mb-5">
+            <span className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.55)" }}>
+              Notes from the gallery — {count} {count === 1 ? "review" : "reviews"}
             </span>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="font-mono text-4xl font-bold mb-1" style={{ color: "#f5c518" }}>{fmt(avgMatch)}</div>
-              <div className="font-mono text-xs text-text-dim mb-3">Match Quality</div>
-              <RatingBar value={avgMatch} color="#f5c518" />
-            </div>
-            <div className="text-center">
-              <div className="font-mono text-4xl font-bold mb-1" style={{ color: "#22d68a" }}>{fmt(avgP1)}</div>
-              <div className="font-mono text-xs text-text-dim mb-3 truncate px-1" title={p1.name}>{p1.name.split(" ").pop()}</div>
-              <RatingBar value={avgP1} color="#22d68a" />
-            </div>
-            <div className="text-center">
-              <div className="font-mono text-4xl font-bold mb-1" style={{ color: "#4a9eff" }}>{fmt(avgP2)}</div>
-              <div className="font-mono text-xs text-text-dim mb-3 truncate px-1" title={p2.name}>{p2.name.split(" ").pop()}</div>
-              <RatingBar value={avgP2} color="#4a9eff" />
-            </div>
+          <div className="mx-auto" style={{ maxWidth: 420 }}>
+            <GalleryRow label="Match quality" value={fmt(avgMatch)} gold />
+            <GalleryRow label={p1Last} value={fmt(avgP1)} winner={won1} />
+            <GalleryRow label={p2Last} value={fmt(avgP2)} winner={!won1} />
           </div>
         </div>
       )}
 
-      {/* ── Reviews section ──────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-mono text-lg font-semibold text-text-mid uppercase tracking-widest">
-          {count > 0 ? `Reviews (${count})` : "Reviews"}
+      {/* ── Reviews ──────────────────────────────────────────────── */}
+      <div className="flex items-baseline justify-between mb-6">
+        <h2 className="bill-name text-xl" style={{ fontWeight: 500 }}>
+          Reviews
         </h2>
         <Link
           href={userId ? `/matches/${id}/review` : "/sign-in"}
-          className="font-mono text-xs px-4 py-2 rounded-lg font-semibold transition-all duration-150"
-          style={{ background: "#22d68a", color: "#0e1116" }}
+          className="eyebrow rounded-md px-4 py-2.5 font-semibold transition-all duration-150"
+          style={{ fontSize: 10, background: "#22d68a", color: "#0d1a11" }}
         >
           {userHasReviewed ? "Edit Review" : "Review Match"}
         </Link>
       </div>
 
       {count === 0 ? (
-        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-8 text-center">
-          <p className="font-sans text-text-dim text-sm">
-            No reviews yet. Be the first to review this match.
+        <div
+          className="rounded-lg p-10 text-center"
+          style={{ border: "1px solid var(--hairline-soft)", background: "rgba(236,229,216,0.02)" }}
+        >
+          <p className="bill-name italic text-sm" style={{ fontWeight: 300, color: "rgba(236,229,216,0.5)" }}>
+            No notes yet — be the first in the gallery.
           </p>
         </div>
       ) : (
@@ -371,8 +328,8 @@ export default async function MatchPage({ params }: Props) {
             <ReviewCard
               key={review.id}
               review={review}
-              p1Name={p1.name}
-              p2Name={p2.name}
+              p1Name={p1Last}
+              p2Name={p2Last}
               isOwn={review.profile?.clerk_user_id === userId}
               matchId={id}
               comments={commentsByReview[review.id] ?? []}
@@ -384,16 +341,45 @@ export default async function MatchPage({ params }: Props) {
           ))}
         </div>
       )}
+
+      {/* ── Colophon ─────────────────────────────────────────────── */}
+      <div className="text-center mt-16">
+        <span className="eyebrow" style={{ fontSize: 10, color: "rgba(201,169,106,0.6)" }}>
+          — Courtside · {match.tournament} —
+        </span>
+      </div>
     </main>
   );
 }
 
 // ── Sub-components ──────────────────────────────────────────────
 
-function RatingBar({ value, color }: { value: number; color: string }) {
+function GalleryRow({
+  label,
+  value,
+  gold = false,
+  winner = false,
+}: {
+  label: string;
+  value: string;
+  gold?: boolean;
+  winner?: boolean;
+}) {
   return (
-    <div className="w-full h-1 rounded-full overflow-hidden mx-auto" style={{ background: "rgba(255,255,255,0.06)", maxWidth: 80 }}>
-      <div className="h-full rounded-full" style={{ width: `${(value / 10) * 100}%`, background: color, opacity: 0.7 }} />
+    <div className="dot-leader py-1.5">
+      <span className="bill-name" style={{ fontSize: 15 }}>
+        {label}
+        {winner && (
+          <span className="italic" style={{ fontSize: 12, color: "#22d68a" }}> — winner</span>
+        )}
+      </span>
+      <span className="dot-leader-dots" />
+      <span
+        className="font-mono font-semibold"
+        style={{ fontSize: 15, color: gold ? "#c9a96a" : "#ece5d8" }}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -424,51 +410,65 @@ function ReviewCard({
   const name = review.profile?.display_name ?? review.profile?.username ?? "Anonymous";
 
   return (
-    <div className="rounded-lg border border-white/5 bg-white/[0.02] p-5">
+    <div
+      className="rounded-lg p-5"
+      style={{ border: "1px solid var(--hairline-soft)", background: "rgba(236,229,216,0.02)" }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs font-bold shrink-0"
-            style={{ background: "rgba(34,214,138,0.15)", color: "#22d68a" }}
-          >
-            {name[0]?.toUpperCase()}
-          </div>
-          <div>
-            <span className="font-sans text-sm font-medium text-text-primary">{name}</span>
-            {review.profile?.username && (
-              <span className="font-mono text-xs text-text-dim ml-2">@{review.profile.username}</span>
-            )}
-          </div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-baseline gap-2 min-w-0">
+          <span className="bill-name truncate" style={{ fontSize: 15 }}>{name}</span>
+          {review.profile?.username && (
+            <span className="font-mono text-xs" style={{ color: "rgba(236,229,216,0.4)" }}>
+              @{review.profile.username}
+            </span>
+          )}
           {review.is_favorited && (
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="#f5c518" className="shrink-0">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#c9a96a" className="shrink-0 self-center" aria-label="Favorite match">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {isOwn && (
             <>
-              <Link href={`/matches/${matchId}/review`} className="font-mono text-xs text-text-dim hover:text-primary transition-colors duration-150">
+              <Link
+                href={`/matches/${matchId}/review`}
+                className="font-mono text-xs transition-colors duration-150 hover:text-primary"
+                style={{ color: "rgba(236,229,216,0.4)" }}
+              >
                 Edit
               </Link>
               <DeleteReviewButton reviewId={review.id} />
             </>
           )}
-          <span className="font-mono text-xs text-text-dim">{timeAgo(review.created_at)}</span>
+          <span className="font-mono text-xs" style={{ color: "rgba(236,229,216,0.4)" }}>
+            {timeAgo(review.created_at)}
+          </span>
         </div>
       </div>
 
-      {/* Ratings */}
-      <div className="flex items-center gap-4 mb-4 flex-wrap">
-        <RatingBadge label="Match"                               value={review.match_rating}   color="#f5c518" />
-        <RatingBadge label={p1Name.split(" ").pop()!}            value={review.player1_rating} color="#22d68a" />
-        <RatingBadge label={p2Name.split(" ").pop()!}            value={review.player2_rating} color="#4a9eff" />
+      {/* Ratings line */}
+      <div className="font-mono flex items-center gap-4 mb-3 flex-wrap" style={{ fontSize: 11, letterSpacing: "0.06em" }}>
+        <span>
+          <span style={{ color: "rgba(236,229,216,0.5)" }}>MATCH </span>
+          <span className="font-semibold" style={{ color: "#c9a96a" }}>{review.match_rating.toFixed(1)}</span>
+        </span>
+        <span>
+          <span style={{ color: "rgba(236,229,216,0.5)" }}>{p1Name.toUpperCase()} </span>
+          <span className="font-semibold" style={{ color: "#ece5d8" }}>{review.player1_rating.toFixed(1)}</span>
+        </span>
+        <span>
+          <span style={{ color: "rgba(236,229,216,0.5)" }}>{p2Name.toUpperCase()} </span>
+          <span className="font-semibold" style={{ color: "#ece5d8" }}>{review.player2_rating.toFixed(1)}</span>
+        </span>
       </div>
 
       {/* Comment */}
       {review.comment && (
-        <p className="font-sans text-sm text-text-mid leading-relaxed mb-3">{review.comment}</p>
+        <p className="font-sans text-sm leading-relaxed mb-3" style={{ color: "#b5bcb2" }}>
+          {review.comment}
+        </p>
       )}
 
       {/* Reactions on the review */}
@@ -487,15 +487,6 @@ function ReviewCard({
         initialReactions={commentReactions}
         isLoggedIn={isLoggedIn}
       />
-    </div>
-  );
-}
-
-function RatingBadge({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className="font-mono text-xs text-text-dim">{label}</span>
-      <span className="font-mono text-sm font-bold" style={{ color }}>{value.toFixed(1)}</span>
     </div>
   );
 }

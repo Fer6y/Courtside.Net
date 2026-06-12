@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useTransition, useCallback } from "react";
+import { Flame, Zap, ThumbsDown } from "lucide-react";
 import { toggleReaction } from "@/app/actions/reactions";
 
+// Thin line icons in the programme's cream/gold palette — replaced the
+// emoji set (🔥😲👎) in the redesign. Keys are unchanged so stored
+// reactions keep working.
 export const REACTION_EMOJIS = [
-  { key: "fire",    emoji: "🔥", label: "Fire"    },
-  { key: "shocked", emoji: "😲", label: "Shocked" },
-  { key: "dislike", emoji: "👎", label: "Dislike" },
+  { key: "fire",    Icon: Flame,     label: "Fire"    },
+  { key: "shocked", Icon: Zap,       label: "Shocked" },
+  { key: "dislike", Icon: ThumbsDown, label: "Dislike" },
 ] as const;
 
 export type EmojiKey = "fire" | "shocked" | "dislike";
@@ -71,7 +75,7 @@ export default function ReactionBar({
 
   return (
     <div className="flex items-center gap-1.5">
-      {REACTION_EMOJIS.map(({ key, emoji, label }) => {
+      {REACTION_EMOJIS.map(({ key, Icon, label }) => {
         const r       = reactions[key];
         const isAnim  = animating === key;
 
@@ -84,30 +88,29 @@ export default function ReactionBar({
             className={`flex items-center gap-1 rounded-full transition-colors duration-150 select-none ${padding}`}
             style={{
               background:  r.mine
-                ? "rgba(34,214,138,0.14)"
-                : "rgba(255,255,255,0.05)",
+                ? "rgba(201,169,106,0.12)"
+                : "rgba(236,229,216,0.04)",
               border: r.mine
-                ? "1px solid rgba(34,214,138,0.3)"
-                : "1px solid rgba(255,255,255,0.08)",
+                ? "1px solid rgba(201,169,106,0.4)"
+                : "1px solid rgba(236,229,216,0.12)",
               cursor:  isLoggedIn ? "pointer" : "default",
               opacity: isLoggedIn ? 1 : 0.45,
               animation: isAnim ? "reactionPop 420ms cubic-bezier(0.36,0.07,0.19,0.97) forwards" : "none",
             }}
           >
-            <span
+            <Icon
+              size={emojiSize + 1}
+              strokeWidth={1.6}
               style={{
-                fontSize:   emojiSize,
-                lineHeight: 1,
-                display:    "block",
+                display: "block",
+                color: r.mine ? "#c9a96a" : "rgba(236,229,216,0.5)",
               }}
-            >
-              {emoji}
-            </span>
+            />
             <span
               className="font-mono leading-none tabular-nums"
               style={{
                 fontSize:    countSize,
-                color:       r.mine ? "#22d68a" : "#6b7280",
+                color:       r.mine ? "#c9a96a" : "rgba(236,229,216,0.45)",
                 minWidth:    countSize + 2,
                 textAlign:   "center",
                 fontVariantNumeric: "tabular-nums",
