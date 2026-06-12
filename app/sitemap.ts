@@ -1,7 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 import type { MetadataRoute } from "next";
 
 const BASE_URL = "https://courtside-net.vercel.app";
+
+type IdRow = { id: string; created_at: string | null };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const admin = createClient(
@@ -9,9 +12,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const [{ data: players }, { data: matches }] = await Promise.all([
-    admin.from("players").select("id, created_at").order("created_at"),
-    admin.from("matches").select("id, created_at").order("created_at"),
+  // Paged — unbounded selects silently cap at 1,000 rows, which left
+  // ~8,000 match pages out of the sitemap
+  const [players, matches] = await Promise.all([
+    fetchAllRows<IdRow>((from, to) =>
+      admin.from("players").select("id, created_at").order("created_at").range(from, to)
+    ),
+    fetchAllRows<IdRow>((from, to) =>
+      admin.from("matches").select("id, created_at").order("created_at").range(from, to)
+    ),
   ]);
 
   const playerUrls: MetadataRoute.Sitemap = (players ?? []).map((p) => ({

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { getSupabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
@@ -16,17 +17,28 @@ import { getTournamentTier } from "@/lib/tournamentTiers";
 
 type Props = { params: Promise<{ id: string }> };
 
-export async function generateMetadata({ params }: Props) {
-  const { id } = await params;
+// React cache() dedupes this across generateMetadata and the page body —
+// one DB query per request instead of two
+const getMatch = cache(async (id: string) => {
   const supabase = getSupabase();
   const { data } = await supabase
     .from("matches")
-    .select(`tournament, round, player1:player1_id(name), player2:player2_id(name)`)
+    .select(`
+      *,
+      player1:player1_id ( id, name, country, current_rank, photo_url ),
+      player2:player2_id ( id, name, country, current_rank, photo_url )
+    `)
     .eq("id", id)
     .single();
-  if (!data) return { title: "Match — Courtside" };
-  const p1 = (data.player1 as unknown as { name: string } | null)?.name ?? "Player 1";
-  const p2 = (data.player2 as unknown as { name: string } | null)?.name ?? "Player 2";
+  return data;
+});
+
+export async function generateMetadata({ params }: Props) {
+  const { id } = await params;
+  const match = await getMatch(id);
+  if (!match) return { title: "Match — Courtside" };
+  const p1 = (match.player1 as unknown as { name: string } | null)?.name ?? "Player 1";
+  const p2 = (match.player2 as unknown as { name: string } | null)?.name ?? "Player 2";
   return { title: `${p1} vs ${p2} — Courtside` };
 }
 
@@ -75,24 +87,14 @@ export default async function MatchPage({ params }: Props) {
   const { userId } = await auth();
   const { id } = await params;
 
-  const supabase = getSupabase();
   const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Fetch match
-  const { data: match, error } = await supabase
-    .from("matches")
-    .select(`
-      *,
-      player1:player1_id ( id, name, country, current_rank, photo_url ),
-      player2:player2_id ( id, name, country, current_rank, photo_url )
-    `)
-    .eq("id", id)
-    .single();
-
-  if (error || !match) notFound();
+  // Fetch match (deduped with generateMetadata via React cache)
+  const match = await getMatch(id);
+  if (!match) notFound();
 
   // Fetch reviews with profile info
   const { data: rawReviews } = await admin
@@ -103,7 +105,8 @@ export default async function MatchPage({ params }: Props) {
       profile:user_id ( username, display_name, clerk_user_id )
     `)
     .eq("match_id", id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(200);
 
   const reviews = (rawReviews ?? []) as unknown as ReviewRow[];
   const reviewIds = reviews.map((r) => r.id);
