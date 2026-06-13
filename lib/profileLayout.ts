@@ -18,6 +18,9 @@ export interface LayoutConfig {
   // The owner's chosen court background. Mirrored to the `court` cookie,
   // which is what the root layout actually reads (durable backup here).
   court_theme?: "grass" | "clay" | "hard";
+  // Which tours to surface in tour-agnostic spots (e.g. home "Top of the
+  // Draw"). Mirrored to the `tour_pref` cookie (durable backup here).
+  tour_pref?: "atp" | "all";
 }
 
 export const DEFAULT_ORDER: SectionId[] = [

@@ -23,9 +23,9 @@ export default function GuideBanner({ reviewCount }: { reviewCount: number }) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 pt-6">
+    <div className="max-w-6xl mx-auto px-4 pt-4 sm:pt-6">
       <div
-        className="flex items-center justify-between gap-4 rounded-lg px-5 py-4"
+        className="flex flex-col gap-3 rounded-lg px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:py-4"
         style={{
           background: "rgba(201,169,106,0.05)",
           border: "1px solid var(--hairline)",
@@ -35,22 +35,22 @@ export default function GuideBanner({ reviewCount }: { reviewCount: number }) {
           <span className="eyebrow block mb-1" style={{ fontSize: 9, color: "#c9a96a" }}>
             New to Courtside
           </span>
-          <p className="bill-name italic" style={{ fontWeight: 300, fontSize: 15, color: "rgba(236,229,216,0.7)" }}>
+          <p className="bill-name italic" style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.7)" }}>
             The guide walks you through every feature — ratings, radars, reviews, and more.
           </p>
         </div>
 
-        <div className="flex items-center gap-4 shrink-0">
+        <div className="flex items-center justify-between gap-4 shrink-0">
           <Link
             href="/guide"
-            className="eyebrow btn-paper rounded-md px-4 py-2"
+            className="eyebrow btn-paper rounded-md px-4 py-2.5 text-center flex-1 sm:flex-none sm:py-2"
             style={{ fontSize: 10 }}
           >
             Take the tour
           </Link>
           <button
             onClick={dismiss}
-            className="font-mono text-xs transition-colors duration-150"
+            className="font-mono text-xs transition-colors duration-150 shrink-0"
             style={{ color: "rgba(236,229,216,0.4)" }}
             aria-label="Dismiss"
           >

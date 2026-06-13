@@ -5,7 +5,9 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import ProfileLayoutEditor from "@/components/ProfileLayoutEditor";
 import CourtPicker from "@/components/CourtPicker";
+import TourPicker from "@/components/TourPicker";
 import { COURT_COOKIE, asCourt } from "@/lib/courts";
+import { TOUR_PREF_COOKIE, asTourPreference } from "@/lib/tourPreference";
 import type { LayoutConfig } from "@/lib/profileLayout";
 
 type Props = { params: Promise<{ username: string }> };
@@ -38,8 +40,13 @@ export default async function CustomizeProfilePage({ params }: Props) {
   const displayName = profile.display_name ?? profile.username;
   const layoutConfig = profile.layout_config as LayoutConfig | null;
   // Cookie drives rendering; fall back to the stored profile preference
+  const jar = await cookies();
   const court = asCourt(
-    (await cookies()).get(COURT_COOKIE)?.value ?? layoutConfig?.court_theme
+    jar.get(COURT_COOKIE)?.value ?? layoutConfig?.court_theme
+  );
+  // Cookie drives rendering; fall back to the stored profile preference
+  const tourPref = asTourPreference(
+    jar.get(TOUR_PREF_COOKIE)?.value ?? layoutConfig?.tour_pref
   );
 
   return (
@@ -74,6 +81,19 @@ export default async function CustomizeProfilePage({ params }: Props) {
           The surface the whole app is read on — Grand Slam pages keep their own colours.
         </p>
         <CourtPicker initial={court} />
+      </section>
+
+      {/* ── Your tours ───────────────────────────────────────────── */}
+      <section className="mb-12">
+        <div className="rule-divider mb-2">
+          <span className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.55)" }}>
+            Your tours
+          </span>
+        </div>
+        <p className="bill-name italic mb-4" style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.5)" }}>
+          Which tours lead the home page &ldquo;Top of the Draw.&rdquo; ATP only by default — add the WTA to see both.
+        </p>
+        <TourPicker initial={tourPref} />
       </section>
 
       {/* ── Sections ─────────────────────────────────────────────── */}

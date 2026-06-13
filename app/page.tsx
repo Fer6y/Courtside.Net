@@ -1,8 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
+import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
+import { TOUR_PREF_COOKIE, asTourPreference } from "@/lib/tourPreference";
 import CountryFlag from "@/components/CountryFlag";
 import CourtsideMark from "@/components/CourtsideMark";
 import GuideBanner from "@/components/GuideBanner";
@@ -46,16 +48,22 @@ function fmt(n: number) { return n.toFixed(1); }
 const getHomeData = unstable_cache(
   async () => {
     const db = adminDb();
-    const [
-      { data: topPlayers },
-      { data: rawReviews },
-      { data: featuredFinal },
-    ] = await Promise.all([
+    const topQuery = (tour: "ATP" | "WTA") =>
       db.from("players")
         .select("id, name, country, current_rank, photo_url, image_url")
         .not("current_rank", "is", null)
+        .filter("career_stats->>tour", "eq", tour)
         .order("current_rank", { ascending: true })
-        .limit(10),
+        .limit(10);
+
+    const [
+      { data: topAtp },
+      { data: topWta },
+      { data: rawReviews },
+      { data: featuredFinal },
+    ] = await Promise.all([
+      topQuery("ATP"),
+      topQuery("WTA"),
 
       db.from("reviews")
         .select(`
@@ -84,7 +92,8 @@ const getHomeData = unstable_cache(
         .maybeSingle(),
     ]);
     return {
-      topPlayers: topPlayers ?? [],
+      topAtp: topAtp ?? [],
+      topWta: topWta ?? [],
       rawReviews: rawReviews ?? [],
       featuredFinal: featuredFinal ?? null,
     };
@@ -97,7 +106,19 @@ export default async function HomePage() {
   const { userId: clerkId } = await auth();
   const db = adminDb();
 
-  const { topPlayers, rawReviews, featuredFinal } = await getHomeData();
+  const { topAtp, topWta, rawReviews, featuredFinal } = await getHomeData();
+
+  // "Top of the Draw" is ATP-focused by default; the WTA is folded in only when
+  // the viewer has opted into both tours on their customize page (cookie is the
+  // source of truth — read here rather than in the shared cache).
+  const tourPref = asTourPreference((await cookies()).get(TOUR_PREF_COOKIE)?.value);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const topPlayers =
+    tourPref === "all"
+      ? [...(topAtp as any[]), ...(topWta as any[])]
+          .sort((a, b) => (a.current_rank ?? 999) - (b.current_rank ?? 999))
+          .slice(0, 10)
+      : topAtp;
 
   // Current user's own review count — decides whether the guide banner shows.
   // Per-user, so it stays outside the cache. 999 = not logged in → never show.
