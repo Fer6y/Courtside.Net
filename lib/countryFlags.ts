@@ -1,4 +1,37 @@
 /**
+ * Normalizes whatever the `players.country` column hands us into a clean
+ * 3-letter code. Some rows were imported with the raw MatchStat shape —
+ * either an object `{ name, acronym }` or its stringified JSON form — instead
+ * of a plain code like "ITA". This unwraps all three so flags/names resolve
+ * regardless of how the row was stored.
+ */
+export function normalizeCountryCode(code: unknown): string | null {
+  if (!code) return null;
+
+  // Object shape: { name: "Italy", acronym: "ITA" }
+  if (typeof code === "object") {
+    const acronym = (code as Record<string, unknown>).acronym;
+    return typeof acronym === "string" ? acronym.trim().toUpperCase() : null;
+  }
+
+  if (typeof code !== "string") return null;
+  const trimmed = code.trim();
+  if (!trimmed) return null;
+
+  // Stringified JSON: '{"name":"Italy","acronym":"ITA"}'
+  if (trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      return typeof parsed.acronym === "string" ? parsed.acronym.trim().toUpperCase() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  return trimmed.toUpperCase();
+}
+
+/**
  * Maps 3-letter tennis country codes (ISO alpha-3 / ITF) to
  * 2-letter ISO alpha-2 codes used by flagcdn.com.
  */
@@ -36,9 +69,10 @@ const CODE_MAP: Record<string, string> = {
  * @param code  3-letter country code as stored in players.country (e.g. "ITA")
  * @param size  Width in pixels — flagcdn supports 20, 24, 40, 48, 64, 160, 240, 320, 480, 640
  */
-export function flagUrl(code: string | null | undefined, size: 20 | 24 | 40 = 20): string | null {
-  if (!code) return null;
-  const alpha2 = CODE_MAP[code.trim().toUpperCase()];
+export function flagUrl(code: unknown, size: 20 | 24 | 40 = 20): string | null {
+  const normalized = normalizeCountryCode(code);
+  if (!normalized) return null;
+  const alpha2 = CODE_MAP[normalized];
   if (!alpha2) return null;
   return `https://flagcdn.com/w${size}/${alpha2}.png`;
 }
@@ -64,7 +98,8 @@ const NAMES: Record<string, string> = {
   UZB: "Uzbekistan",  VEN: "Venezuela",
 };
 
-export function countryName(code: string | null | undefined): string {
-  if (!code) return "";
-  return NAMES[code.trim().toUpperCase()] ?? code;
+export function countryName(code: unknown): string {
+  const normalized = normalizeCountryCode(code);
+  if (!normalized) return "";
+  return NAMES[normalized] ?? normalized;
 }

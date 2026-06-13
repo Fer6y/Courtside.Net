@@ -1,7 +1,7 @@
-import { flagUrl } from "@/lib/countryFlags";
+import { flagUrl, normalizeCountryCode } from "@/lib/countryFlags";
 
 interface CountryFlagProps {
-  code: string | null | undefined;
+  code: unknown;
   size?: 20 | 24 | 40;
   className?: string;
 }
@@ -20,7 +20,7 @@ export default function CountryFlag({ code, size = 20, className }: CountryFlagP
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={url}
-      alt={code ?? ""}
+      alt={normalizeCountryCode(code) ?? ""}
       width={size}
       height={height}
       className={className}
