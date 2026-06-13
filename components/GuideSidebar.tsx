@@ -43,11 +43,11 @@ export default function GuideSidebar() {
           <a
             key={id}
             href={`#${id}`}
-            className="font-mono text-xs px-3 py-2 rounded-lg transition-all duration-150 block"
+            className="eyebrow px-3 py-2 transition-all duration-150 block"
             style={{
-              color:      active ? "#22d68a"                    : "#6b7280",
-              background: active ? "rgba(34,214,138,0.08)"      : "transparent",
-              borderLeft: active ? "2px solid #22d68a"          : "2px solid transparent",
+              fontSize: 9,
+              color:      active ? "#c9a96a"                  : "rgba(236,229,216,0.4)",
+              borderLeft: active ? "2px solid rgba(201,169,106,0.6)" : "2px solid transparent",
             }}
           >
             {label}

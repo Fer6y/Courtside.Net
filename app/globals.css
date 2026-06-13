@@ -189,6 +189,30 @@ html[data-court="hard"] {
     color: var(--color-cream);
   }
 
+  /* Programme buttons — skin only (pair with padding/rounded + .eyebrow at the
+     call site). .btn-paper is the primary "embossed menu card"; .btn-ghost is
+     the gold-hairline secondary. These replace the bright neon-green fills. */
+  .btn-paper {
+    background: var(--color-cream);
+    color: #14110b;
+    border: 1px solid var(--color-cream);
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-paper:hover {
+    background: #f6f1e7;
+    border-color: #f6f1e7;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: #c9a96a;
+    border: 1px solid rgba(201, 169, 106, 0.45);
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-ghost:hover {
+    border-color: rgba(201, 169, 106, 0.8);
+    background: rgba(201, 169, 106, 0.07);
+  }
+
   /* Programme slider — a ruled hairline track with a hollow gold thumb,
      replacing the fat neon range bars. Set --fill (0–100) for the filled
      portion and --accent for its colour; the track base stays a hairline. */

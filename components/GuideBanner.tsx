@@ -23,47 +23,35 @@ export default function GuideBanner({ reviewCount }: { reviewCount: number }) {
   }
 
   return (
-    <div
-      className="max-w-6xl mx-auto px-4 pt-6"
-    >
+    <div className="max-w-6xl mx-auto px-4 pt-6">
       <div
-        className="flex items-center justify-between gap-4 rounded-xl px-5 py-4"
+        className="flex items-center justify-between gap-4 rounded-lg px-5 py-4"
         style={{
-          background: "rgba(34,214,138,0.06)",
-          border: "1px solid rgba(34,214,138,0.18)",
+          background: "rgba(201,169,106,0.05)",
+          border: "1px solid var(--hairline)",
         }}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          {/* Pulse dot */}
-          <span className="relative flex h-2 w-2 shrink-0">
-            <span
-              className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-              style={{ background: "#22d68a" }}
-            />
-            <span
-              className="relative inline-flex rounded-full h-2 w-2"
-              style={{ background: "#22d68a" }}
-            />
+        <div className="min-w-0">
+          <span className="eyebrow block mb-1" style={{ fontSize: 9, color: "#c9a96a" }}>
+            New to Courtside
           </span>
-          <p className="font-sans text-sm text-text-primary">
-            New to Courtside?{" "}
-            <span className="text-text-mid">
-              The guide explains every feature — ratings, radars, reviews, and more.
-            </span>
+          <p className="bill-name italic" style={{ fontWeight: 300, fontSize: 15, color: "rgba(236,229,216,0.7)" }}>
+            The guide walks you through every feature — ratings, radars, reviews, and more.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-4 shrink-0">
           <Link
             href="/guide"
-            className="font-mono text-xs font-semibold px-4 py-1.5 rounded-lg transition-all duration-150"
-            style={{ background: "#22d68a", color: "#0e1116" }}
+            className="eyebrow btn-paper rounded-md px-4 py-2"
+            style={{ fontSize: 10 }}
           >
             Take the tour
           </Link>
           <button
             onClick={dismiss}
-            className="font-mono text-xs text-text-dim hover:text-text-primary transition-colors duration-150"
+            className="font-mono text-xs transition-colors duration-150"
+            style={{ color: "rgba(236,229,216,0.4)" }}
             aria-label="Dismiss"
           >
             ✕

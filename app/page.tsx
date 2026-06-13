@@ -153,19 +153,24 @@ export default async function HomePage() {
         <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
           <Link
             href={clerkId ? "/matches" : "/sign-up"}
-            className="eyebrow rounded-md px-6 py-3 font-semibold transition-all duration-150"
-            style={{ fontSize: 11, background: "#22d68a", color: "#0d1a11" }}
+            className="eyebrow btn-paper rounded-md px-6 py-3 font-semibold"
+            style={{ fontSize: 11 }}
           >
             {clerkId ? "Order of Play" : "Begin Your Catalogue"}
           </Link>
+          {clerkId && (
+            <Link
+              href="/players"
+              className="eyebrow btn-ghost rounded-md px-6 py-3"
+              style={{ fontSize: 11 }}
+            >
+              The Field
+            </Link>
+          )}
           <Link
             href={clerkId ? "/feed" : "/guide"}
-            className="eyebrow rounded-md px-6 py-3 transition-colors duration-150"
-            style={{
-              fontSize: 11,
-              border: "1px solid rgba(201,169,106,0.45)",
-              color: "#c9a96a",
-            }}
+            className="eyebrow btn-ghost rounded-md px-6 py-3"
+            style={{ fontSize: 11 }}
           >
             {clerkId ? "Your Activity" : "The Guide"}
           </Link>
@@ -444,15 +449,15 @@ export default async function HomePage() {
           <div className="flex flex-wrap gap-3 justify-center">
             <Link
               href="/sign-up"
-              className="eyebrow rounded-md px-6 py-3 font-semibold transition-all duration-150"
-              style={{ fontSize: 11, background: "#22d68a", color: "#0d1a11" }}
+              className="eyebrow btn-paper rounded-md px-6 py-3 font-semibold"
+              style={{ fontSize: 11 }}
             >
               Create Account
             </Link>
             <Link
               href="/sign-in"
-              className="eyebrow rounded-md px-6 py-3 transition-colors duration-150"
-              style={{ fontSize: 11, border: "1px solid rgba(201,169,106,0.45)", color: "#c9a96a" }}
+              className="eyebrow btn-ghost rounded-md px-6 py-3"
+              style={{ fontSize: 11 }}
             >
               Sign In
             </Link>
