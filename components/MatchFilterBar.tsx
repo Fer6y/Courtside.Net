@@ -41,7 +41,7 @@ const SURFACE_COLOR: Record<string, string> = {
   Hard: "#4a90d9", Clay: "#d4734e", Grass: "#5cb85c", Carpet: "#9ca3af",
 };
 
-const MULTI_KEYS = ["level", "round", "surface", "sets"] as const;
+const MULTI_KEYS = ["level", "round", "surface", "sets", "tournament"] as const;
 type MultiKey = typeof MULTI_KEYS[number];
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ export interface MatchFilters {
   sets?:       string; // multi — comma-separated
   year?:       string; // single — "2020-2024"
   minRating?:  string; // single
-  tournament?: string; // single
+  tournament?: string; // multi — comma-separated
   player?:     string; // single UUID
   playerName?: string;
   scope?:      string; // single — "marquee" (default) | "all"
@@ -205,6 +205,7 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
     else setOpenChip(null);
     setPending({});
     setOpenChip(null);
+    setTSearch("");
   }
 
   // ── Multi-select toggle — updates pending only, NO navigation ────────────────
@@ -287,7 +288,7 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
     { key: "scope",      label: singleLabel("scope", "Marquee", SCOPE_OPTIONS) },
     { key: "level",      label: multiLabel("level",   "Level",   LEVEL_OPTIONS) },
     { key: "round",      label: multiLabel("round", "Round", ROUND_ORDER.map((r) => ({ label: ROUND_SHORT[r] ?? r, value: r })))  },
-    { key: "tournament", label: singleLabel("tournament", "Tournament") },
+    { key: "tournament", label: multiLabel("tournament", "Tournament", options.tournaments.map((t) => ({ label: t, value: t }))) },
     { key: "surface",    label: multiLabel("surface", "Surface", options.surfaces.map((s) => ({ label: s, value: s }))) },
     { key: "year",       label: singleLabel("year",   "Year",    yearRanges) },
     { key: "sets",       label: multiLabel("sets",    "Sets",    SETS_OPTIONS) },
@@ -405,8 +406,8 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
                 {filteredTourns.length === 0
                   ? <span className="font-mono text-xs text-text-dim px-2 py-1">No results</span>
                   : filteredTourns.map((t) => (
-                    <RadioRow key={t} label={t} active={eff.tournament === t}
-                      onClick={() => selectSingle({ tournament: eff.tournament === t ? undefined : t })}
+                    <CheckRow key={t} label={t} checked={isOn(eff.tournament, t)}
+                      onClick={() => toggle("tournament", t)}
                     />
                   ))}
               </div>

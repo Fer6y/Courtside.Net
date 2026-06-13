@@ -13,6 +13,7 @@ import {
   Search,
 } from "lucide-react";
 import GlobalSearch from "@/components/GlobalSearch";
+import CourtsideMark from "@/components/CourtsideMark";
 
 const DESKTOP_LINKS = [
   { label: "Players", href: "/players" },
@@ -28,6 +29,14 @@ const MOBILE_TABS = [
   { label: "Activity", href: "/feed",    icon: GitCompare },
   { label: "Profile",  href: "/profile", icon: User },
 ];
+
+// A slightly lifted "paper" band over the court-textured page background.
+const MASTHEAD_BG =
+  "linear-gradient(rgba(236,229,216,0.025), rgba(236,229,216,0.025)), var(--court-bg, #0d1a11)";
+
+const GOLD = "#c9a96a";
+const CREAM = "#ece5d8";
+const CREAM_DIM = "rgba(236,229,216,0.45)";
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -51,52 +60,57 @@ export default function Navbar() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Small-caps programme tab — gold underline when active.
+  function NavTab({ label, href }: { label: string; href: string }) {
+    const active = isActive(pathname, href);
+    return (
+      <Link
+        key={href}
+        href={href}
+        className="eyebrow relative transition-colors duration-150 pb-[7px]"
+        style={{ fontSize: 11, letterSpacing: "0.18em", color: active ? CREAM : CREAM_DIM }}
+        onMouseEnter={(e) => {
+          if (!active) (e.currentTarget as HTMLAnchorElement).style.color = "rgba(236,229,216,0.7)";
+        }}
+        onMouseLeave={(e) => {
+          if (!active) (e.currentTarget as HTMLAnchorElement).style.color = CREAM_DIM;
+        }}
+      >
+        {label}
+        {active && (
+          <span
+            className="absolute bottom-0 left-0 right-0"
+            style={{ height: 2, background: GOLD }}
+          />
+        )}
+      </Link>
+    );
+  }
+
   return (
     <>
       {/* ── Desktop top nav ─────────────────────────────────────────── */}
       <header
         className="hidden md:flex fixed top-0 left-0 right-0 z-50 items-center h-[60px]"
-        style={{
-          background: "#0e1116",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-        }}
+        style={{ background: MASTHEAD_BG, borderBottom: "1px solid var(--hairline)" }}
       >
-        <div className="w-full max-w-[1280px] mx-auto px-6 flex items-center gap-8">
-          {/* Wordmark */}
+        <div className="w-full max-w-[1280px] mx-auto px-6 flex items-center gap-9">
+          {/* Wordmark — ball mark + serif name */}
           <Link
             href="/"
-            className="font-mono font-semibold text-xl text-primary shrink-0 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-2.5 shrink-0 hover:opacity-80 transition-opacity"
           >
-            Courtside
+            <CourtsideMark size={26} gradientId="csmark-nav" />
+            <span className="bill-name" style={{ fontSize: 20, fontWeight: 500, color: CREAM }}>
+              Courtside
+            </span>
           </Link>
 
           {/* Nav links */}
-          <nav className="flex items-center gap-8 ml-2">
-            {DESKTOP_LINKS.map(({ label, href }) => {
-              const active = isActive(pathname, href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className="relative font-sans font-medium text-[15px] transition-colors duration-150 pb-[6px]"
-                  style={{ color: active ? "#e8eaed" : "#6b7280" }}
-                  onMouseEnter={(e) => {
-                    if (!active) (e.currentTarget as HTMLAnchorElement).style.color = "#9ca3af";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) (e.currentTarget as HTMLAnchorElement).style.color = "#6b7280";
-                  }}
-                >
-                  {label}
-                  {active && (
-                    <span
-                      className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full"
-                      style={{ background: "#22d68a" }}
-                    />
-                  )}
-                </Link>
-              );
-            })}
+          <nav className="flex items-center gap-7 ml-1">
+            {DESKTOP_LINKS.map((l) => (
+              <NavTab key={l.href} {...l} />
+            ))}
           </nav>
 
           {/* Right side */}
@@ -104,59 +118,46 @@ export default function Navbar() {
             {/* Search icon + Cmd+K hint */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-2 text-[#6b7280] hover:text-[#9ca3af] transition-colors duration-150"
+              className="flex items-center gap-2 transition-colors duration-150"
+              style={{ color: CREAM_DIM }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "rgba(236,229,216,0.7)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = CREAM_DIM)}
               aria-label="Search (⌘K)"
             >
-              <Search size={18} />
+              <Search size={17} />
               <kbd
-                className="font-mono text-[9px] px-1.5 py-0.5 rounded border hidden lg:inline"
-                style={{ color: "#6b7280", borderColor: "rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)" }}
+                className="font-mono text-[9px] px-1.5 py-0.5 rounded hidden lg:inline"
+                style={{ color: CREAM_DIM, border: "1px solid var(--hairline)", background: "rgba(236,229,216,0.04)" }}
               >
                 ⌘K
               </kbd>
             </button>
 
             {/* Divider */}
-            <span
-              className="w-px h-5"
-              style={{ background: "rgba(255,255,255,0.1)" }}
-            />
+            <span className="w-px h-5" style={{ background: "var(--hairline)" }} />
 
             {isSignedIn ? (
               <>
-                <Link
-                  href="/profile"
-                  className="font-sans font-medium text-[15px] transition-colors duration-150 pb-[6px]"
-                  style={{ color: isActive(pathname, "/profile") ? "#e8eaed" : "#6b7280" }}
-                >
-                  Profile
-                </Link>
+                <NavTab label="Profile" href="/profile" />
                 <UserButton afterSignOutUrl="/" />
               </>
             ) : (
-              <>
-                {/* Guest avatar circle */}
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center"
-                  style={{ border: "1px solid rgba(255,255,255,0.15)" }}
+              <SignInButton mode="modal">
+                <button
+                  className="eyebrow rounded-md transition-colors duration-150"
+                  style={{
+                    fontSize: 11,
+                    height: 34,
+                    padding: "0 18px",
+                    border: `1px solid rgba(201,169,106,0.45)`,
+                    color: GOLD,
+                  }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "rgba(201,169,106,0.1)")}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "transparent")}
                 >
-                  <User size={13} color="#6b7280" />
-                </div>
-
-                {/* Sign In button */}
-                <SignInButton mode="modal">
-                  <button
-                    className="font-sans font-medium text-sm px-4 rounded-full transition-colors duration-150 hover:bg-primary/10"
-                    style={{
-                      height: 36,
-                      border: "1px solid #22d68a",
-                      color: "#22d68a",
-                    }}
-                  >
-                    Sign In
-                  </button>
-                </SignInButton>
-              </>
+                  Sign In
+                </button>
+              </SignInButton>
             )}
           </div>
         </div>
@@ -165,21 +166,19 @@ export default function Navbar() {
       {/* ── Mobile top header ────────────────────────────────────────── */}
       <header
         className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-[44px]"
-        style={{
-          background: "#0e1116",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-        }}
+        style={{ background: MASTHEAD_BG, borderBottom: "1px solid var(--hairline)" }}
       >
         <div className="w-8" />
-        <Link
-          href="/"
-          className="font-mono font-semibold text-lg text-primary"
-        >
-          Courtside
+        <Link href="/" className="flex items-center gap-2">
+          <CourtsideMark size={20} gradientId="csmark-mobile" />
+          <span className="bill-name" style={{ fontSize: 17, fontWeight: 500, color: CREAM }}>
+            Courtside
+          </span>
         </Link>
         <button
           onClick={() => setSearchOpen(true)}
-          className="w-8 flex justify-end text-[#6b7280] hover:text-[#9ca3af] transition-colors"
+          className="w-8 flex justify-end transition-colors"
+          style={{ color: CREAM_DIM }}
           aria-label="Search"
         >
           <Search size={18} />
@@ -191,28 +190,32 @@ export default function Navbar() {
 
       {/* ── Mobile bottom tab bar ─────────────────────────────────────── */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-start justify-around pt-2"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-stretch justify-around"
         style={{
           height: 56,
-          background: "#1a1e26",
-          borderTop: "1px solid rgba(255,255,255,0.05)",
+          background: MASTHEAD_BG,
+          borderTop: "1px solid var(--hairline)",
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         {MOBILE_TABS.map(({ label, href, icon: Icon }) => {
           const active = isActive(pathname, href);
-          const color = active ? "#22d68a" : "#6b7280";
+          const color = active ? GOLD : "rgba(236,229,216,0.4)";
           return (
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center gap-0.5 min-w-[44px]"
+              className="relative flex flex-col items-center justify-center gap-0.5 min-w-[44px] flex-1"
             >
+              {/* Active indicator — gold rule at the top edge, echoing desktop */}
+              {active && (
+                <span
+                  className="absolute top-0 left-1/2 -translate-x-1/2"
+                  style={{ width: 26, height: 2, background: GOLD }}
+                />
+              )}
               <Icon size={20} color={color} strokeWidth={active ? 2 : 1.5} />
-              <span
-                className="font-sans"
-                style={{ fontSize: 10, color }}
-              >
+              <span className="eyebrow" style={{ fontSize: 8.5, letterSpacing: "0.12em", color }}>
                 {label}
               </span>
             </Link>

@@ -8,9 +8,12 @@
 export default function CourtsideMark({
   size = 72,
   className,
+  gradientId = "csmark-fill",
 }: {
   size?: number;
   className?: string;
+  /** Unique per instance — two marks on one page can't share a gradient id. */
+  gradientId?: string;
 }) {
   return (
     <svg
@@ -24,7 +27,7 @@ export default function CourtsideMark({
     >
       <defs>
         {/* Muted sage fill — reads as a tennis ball without the neon. */}
-        <radialGradient id="csmark-fill" cx="38%" cy="34%" r="72%">
+        <radialGradient id={gradientId} cx="38%" cy="34%" r="72%">
           <stop offset="0%" stopColor="rgba(170,205,150,0.16)" />
           <stop offset="100%" stopColor="rgba(150,185,140,0.03)" />
         </radialGradient>
@@ -35,7 +38,7 @@ export default function CourtsideMark({
         cx="32"
         cy="32"
         r="27.5"
-        fill="url(#csmark-fill)"
+        fill={`url(#${gradientId})`}
         stroke="rgba(236,229,216,0.55)"
         strokeWidth="1"
       />

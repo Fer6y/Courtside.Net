@@ -163,6 +163,7 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
   const surfaces_ = getArr(surface);
   const levels   = getArr(level);
   const setsArr  = getArr(sets);
+  const tourns   = getArr(tournament);
 
   // When sets filter is active, fetch more records (JS filtering happens below)
   const fetchLimit = setsArr.length > 0 ? 500 : 40;
@@ -181,8 +182,9 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
   if (rounds.length === 1)      query = query.eq("round", rounds[0]);
   else if (rounds.length > 1)   query = query.in("round", rounds);
 
-  // Tournament (single)
-  if (tournament) query = query.eq("tournament", tournament);
+  // Tournament (multi)
+  if (tourns.length === 1)      query = query.eq("tournament", tourns[0]);
+  else if (tourns.length > 1)   query = query.in("tournament", tourns);
 
   // Surface (multi)
   if (surfaces_.length === 1)     query = query.eq("surface", surfaces_[0]);
