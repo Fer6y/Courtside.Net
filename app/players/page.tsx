@@ -23,7 +23,6 @@ const SORT_OPTIONS = [
   { label: "Rank",        value: "rank" },
   { label: "Name",        value: "name" },
   { label: "Age",         value: "age" },
-  { label: "Country",     value: "country" },
   { label: "Matches",     value: "matches" },
   { label: "Hard %",      value: "hard" },
   { label: "Clay %",      value: "clay" },
@@ -161,8 +160,6 @@ export default async function PlayersPage({
       query = query.order("name", { ascending: true });
     } else if (activeSort === "age") {
       query = query.order("age", { ascending: true, nullsFirst: false });
-    } else if (activeSort === "country") {
-      query = query.order("country", { ascending: true, nullsFirst: false });
     }
   }
 
@@ -332,13 +329,18 @@ export default async function PlayersPage({
       </div>
 
       {/* Filter chips — country + rank */}
-      <div className="mb-6">
-        <PlayerFilterBar
-          filters={{ country, rankMax: effRankMax }}
-          countries={countries}
-          basePath="/players"
-          extraParams={extraParams}
-        />
+      <div className="flex items-baseline gap-x-3 mb-6">
+        <span className="eyebrow shrink-0" style={{ fontSize: 9, color: "rgba(236,229,216,0.35)" }}>
+          Filter —
+        </span>
+        <div className="min-w-0 flex-1">
+          <PlayerFilterBar
+            filters={{ country, rankMax: effRankMax }}
+            countries={countries}
+            basePath="/players"
+            extraParams={extraParams}
+          />
+        </div>
       </div>
 
       {error ? (
