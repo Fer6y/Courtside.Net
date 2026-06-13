@@ -112,11 +112,13 @@ export default async function HomePage() {
   // the viewer has opted into both tours on their customize page (cookie is the
   // source of truth — read here rather than in the shared cache).
   const tourPref = asTourPreference((await cookies()).get(TOUR_PREF_COOKIE)?.value);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const topPlayers =
     tourPref === "all"
-      ? [...(topAtp as any[]), ...(topWta as any[])]
-          .sort((a, b) => (a.current_rank ?? 999) - (b.current_rank ?? 999))
+      ? [...topAtp, ...topWta]
+          .sort(
+            (a, b) =>
+              ((a.current_rank as number) ?? 999) - ((b.current_rank as number) ?? 999)
+          )
           .slice(0, 10)
       : topAtp;
 
