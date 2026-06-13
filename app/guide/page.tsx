@@ -79,7 +79,7 @@ function SliderMockup({ label, value, color }: { label: string; value: number; c
         <span className="font-sans text-sm text-text-primary">{label}</span>
         <span className="font-mono text-sm font-bold" style={{ color }}>{value.toFixed(1)}</span>
       </div>
-      <div className="relative h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+      <div className="relative h-2 rounded-full overflow-hidden" style={{ background: "rgba(236,229,216,0.08)" }}>
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
       </div>
       <div className="flex justify-between mt-1">
@@ -97,7 +97,7 @@ function ReviewMockup() {
   return (
     <div
       className="rounded-xl p-5"
-      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+      style={{ background: "rgba(236,229,216,0.03)", border: "1px solid rgba(236,229,216,0.08)" }}
     >
       {/* Match header */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -116,7 +116,7 @@ function ReviewMockup() {
       {/* Comment */}
       <div
         className="rounded-lg px-4 py-3 mt-4"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ background: "rgba(236,229,216,0.03)", border: "1px solid rgba(236,229,216,0.06)" }}
       >
         <p className="font-sans text-sm text-text-mid italic leading-relaxed">
           &ldquo;Incredible match from both. Sinner&apos;s serve in the fifth was untouchable.&rdquo;
@@ -124,7 +124,7 @@ function ReviewMockup() {
       </div>
 
       {/* Reactions row */}
-      <div className="flex items-center gap-2 mt-4 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="flex items-center gap-2 mt-4 pt-3" style={{ borderTop: "1px solid rgba(236,229,216,0.05)" }}>
         {[
           { emoji: "🔥", count: 14, active: true },
           { emoji: "😲", count: 6,  active: false },
@@ -165,7 +165,7 @@ function CommentMockup() {
         <div
           key={name}
           className="rounded-lg p-3"
-          style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ background: "rgba(236,229,216,0.02)", border: "1px solid rgba(236,229,216,0.06)" }}
         >
           <div className="flex items-center gap-2 mb-1.5">
             <div
@@ -265,13 +265,13 @@ function FeedMockup() {
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+      style={{ border: "1px solid rgba(236,229,216,0.08)" }}
     >
       {items.map(({ name, action, subject, time, extra }, i) => (
         <div
           key={name}
           className="flex items-start gap-3 px-4 py-3"
-          style={{ borderBottom: i < items.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}
+          style={{ borderBottom: i < items.length - 1 ? "1px solid rgba(236,229,216,0.05)" : "none" }}
         >
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center font-mono text-[10px] font-bold shrink-0 mt-0.5"
@@ -288,7 +288,7 @@ function FeedMockup() {
             </div>
             <span
               className="font-mono text-[10px] px-2 py-0.5 rounded-full mt-1 inline-block"
-              style={{ background: "rgba(255,255,255,0.06)", color: "#9ca3af", border: "1px solid rgba(255,255,255,0.08)" }}
+              style={{ background: "rgba(236,229,216,0.06)", color: "#9ca3af", border: "1px solid rgba(236,229,216,0.08)" }}
             >
               {extra}
             </span>
@@ -305,17 +305,17 @@ function SearchMockup() {
   return (
     <div
       className="rounded-2xl overflow-hidden"
-      style={{ border: "1px solid rgba(255,255,255,0.1)", background: "#1a1e26" }}
+      style={{ border: "1px solid rgba(236,229,216,0.1)", background: "#1a1e26" }}
     >
       {/* Input */}
-      <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+      <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: "1px solid rgba(236,229,216,0.07)" }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <span className="font-sans text-sm text-text-dim">Search players or profiles…</span>
-        <kbd className="ml-auto font-mono text-[9px] px-1.5 py-0.5 rounded border" style={{ color: "#6b7280", borderColor: "rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)" }}>esc</kbd>
+        <kbd className="ml-auto font-mono text-[9px] px-1.5 py-0.5 rounded border" style={{ color: "#6b7280", borderColor: "rgba(236,229,216,0.12)", background: "rgba(236,229,216,0.04)" }}>esc</kbd>
       </div>
       {/* Players */}
       <div className="px-4 pt-2 pb-1">
-        <p className="font-mono text-[9px] uppercase tracking-widest text-text-dim mb-1.5">Players</p>
+        <p className="eyebrow mb-1.5 text-[9px] text-text-dim">Players</p>
         {[
           { name: "Jannik Sinner",   rank: "#1",  country: "ITA" },
           { name: "Carlos Alcaraz",  rank: "#2",  country: "ESP" },
@@ -324,7 +324,7 @@ function SearchMockup() {
           <div
             key={name}
             className="flex items-center gap-3 px-2 py-2 rounded-lg"
-            style={{ background: i === 0 ? "rgba(255,255,255,0.06)" : "transparent" }}
+            style={{ background: i === 0 ? "rgba(236,229,216,0.06)" : "transparent" }}
           >
             <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(34,214,138,0.12)" }}>
               <svg width="12" height="12" viewBox="0 0 100 100" fill="none">
@@ -342,12 +342,12 @@ function SearchMockup() {
       </div>
       {/* Members */}
       <div className="px-4 pt-1 pb-3">
-        <p className="font-mono text-[9px] uppercase tracking-widest text-text-dim mb-1.5">Members</p>
+        <p className="eyebrow mb-1.5 text-[9px] text-text-dim">Members</p>
         {[
           { name: "CourtKing",     username: "@courtking"     },
           { name: "TennisNerd92",  username: "@tennisnerd92"  },
         ].map(({ name, username }, i) => (
-          <div key={name} className="flex items-center gap-3 px-2 py-2 rounded-lg" style={{ background: i === 0 ? "rgba(255,255,255,0.04)" : "transparent" }}>
+          <div key={name} className="flex items-center gap-3 px-2 py-2 rounded-lg" style={{ background: i === 0 ? "rgba(236,229,216,0.04)" : "transparent" }}>
             <div className="w-6 h-6 rounded-full flex items-center justify-center font-mono text-[9px] font-bold shrink-0" style={{ background: "rgba(34,214,138,0.12)", color: "#22d68a" }}>
               {name[0]}
             </div>
@@ -474,7 +474,7 @@ export default function GuidePage() {
                   on your profile), and track how many sets you watched. One review per user per match — you
                   can edit it any time.
                 </p>
-                <Link href="/matches" className="font-mono text-sm text-primary hover:underline">
+                <Link href="/matches" className="eyebrow transition-colors duration-150" style={{ fontSize: 10, color: "#c9a96a" }}>
                   Browse Matches →
                 </Link>
               </div>
@@ -518,7 +518,7 @@ export default function GuidePage() {
                     { title: "Customize Layout",  desc: "Reorder the sections on your profile, hide ones you don't want, and pick display variants (carousel vs grid, cards vs compact list)."                   },
                     { title: "Collections",       desc: "When logging a watched match you can assign it to a named collection. Collections appear as folders on your profile."                                   },
                   ].map(({ title, desc }) => (
-                    <div key={title} className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div key={title} className="rounded-lg p-3" style={{ background: "rgba(236,229,216,0.02)", border: "1px solid rgba(236,229,216,0.06)" }}>
                       <p className="font-mono text-xs font-semibold text-text-primary mb-1">{title}</p>
                       <p className="font-sans text-xs text-text-dim leading-relaxed">{desc}</p>
                     </div>
@@ -527,19 +527,19 @@ export default function GuidePage() {
               </div>
               <div className="space-y-6">
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-text-dim mb-3">Avatar Templates</p>
+                  <p className="eyebrow mb-3 text-[10px] text-text-dim">Avatar Templates</p>
                   <AvatarGridMockup />
                 </div>
                 <div
                   className="rounded-xl p-4"
-                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}
+                  style={{ background: "rgba(236,229,216,0.02)", border: "1px solid rgba(236,229,216,0.07)" }}
                 >
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-text-dim mb-3">Profile Sections</p>
+                  <p className="eyebrow mb-3 text-[10px] text-text-dim">Profile Sections</p>
                   {["Favorites", "Trophy Case", "Featured Comments", "Collections", "Recent Activity", "All Reviews"].map((s, i) => (
-                    <div key={s} className="flex items-center gap-2 py-1.5" style={{ borderBottom: i < 5 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                    <div key={s} className="flex items-center gap-2 py-1.5" style={{ borderBottom: i < 5 ? "1px solid rgba(236,229,216,0.04)" : "none" }}>
                       <div className="w-3.5 h-3.5 rounded flex flex-col justify-center gap-0.5 shrink-0">
-                        <div className="h-0.5 rounded-full bg-white/20" />
-                        <div className="h-0.5 rounded-full bg-white/20" />
+                        <div className="h-0.5 rounded-full bg-[rgba(236,229,216,0.18)]" />
+                        <div className="h-0.5 rounded-full bg-[rgba(236,229,216,0.18)]" />
                       </div>
                       <span className="font-sans text-xs text-text-mid">{s}</span>
                       <span className="ml-auto font-mono text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(34,214,138,0.1)", color: "#22d68a" }}>Visible</span>
@@ -617,7 +617,7 @@ export default function GuidePage() {
                     </div>
                   ))}
                 </div>
-                <Link href="/feed" className="font-mono text-sm text-primary hover:underline">
+                <Link href="/feed" className="eyebrow transition-colors duration-150" style={{ fontSize: 10, color: "#c9a96a" }}>
                   Go to Activity Feed →
                 </Link>
               </div>
@@ -630,8 +630,8 @@ export default function GuidePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
               <div>
                 <p className="font-sans text-sm text-text-mid leading-relaxed mb-4">
-                  Press <kbd className="font-mono text-xs px-1.5 py-0.5 rounded border" style={{ borderColor: "rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "#9ca3af" }}>⌘K</kbd>{" "}
-                  (or <kbd className="font-mono text-xs px-1.5 py-0.5 rounded border" style={{ borderColor: "rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "#9ca3af" }}>Ctrl+K</kbd> on Windows)
+                  Press <kbd className="font-mono text-xs px-1.5 py-0.5 rounded border" style={{ borderColor: "rgba(236,229,216,0.15)", background: "rgba(236,229,216,0.06)", color: "#9ca3af" }}>⌘K</kbd>{" "}
+                  (or <kbd className="font-mono text-xs px-1.5 py-0.5 rounded border" style={{ borderColor: "rgba(236,229,216,0.15)", background: "rgba(236,229,216,0.06)", color: "#9ca3af" }}>Ctrl+K</kbd> on Windows)
                   from anywhere to open the global search. The search icon in the nav also opens it.
                 </p>
                 <div className="space-y-2 mb-5">
@@ -640,7 +640,7 @@ export default function GuidePage() {
                     { label: "Members",  desc: "Search by display name or username to find other Courtside fans."          },
                   ].map(({ label, desc }) => (
                     <div key={label} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-2 bg-white/30" />
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-2 bg-[rgba(236,229,216,0.3)]" />
                       <div>
                         <span className="font-mono text-xs font-semibold text-text-primary">{label} — </span>
                         <span className="font-sans text-xs text-text-dim">{desc}</span>
@@ -676,9 +676,9 @@ export default function GuidePage() {
               </div>
               <div
                 className="rounded-xl p-6"
-                style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}
+                style={{ background: "rgba(236,229,216,0.02)", border: "1px solid rgba(236,229,216,0.07)" }}
               >
-                <p className="font-mono text-[10px] uppercase tracking-widest text-text-dim mb-5">Trophy Case Preview</p>
+                <p className="eyebrow mb-5 text-[10px] text-text-dim">Trophy Case Preview</p>
                 <div className="grid grid-cols-3 gap-4">
                   {[
                     { label: "First Rating",    color: "#9ca3af", tier: "Common"   },
@@ -711,15 +711,15 @@ export default function GuidePage() {
 
           {/* ── Bottom CTA ──────────────────────────────────────────────── */}
           <div className="py-12 text-center">
-            <p className="font-sans text-sm text-text-dim mb-6">Ready to build your catalogue?</p>
+            <p className="bill-name italic mb-6" style={{ fontWeight: 300, fontSize: 16, color: "rgba(236,229,216,0.6)" }}>Ready to build your catalogue?</p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <Link href="/players" className="font-mono text-sm font-semibold px-6 py-3 rounded-xl transition-all duration-150" style={{ background: "#22d68a", color: "#0e1116" }}>
+              <Link href="/players" className="eyebrow btn-paper rounded-md px-6 py-3" style={{ fontSize: 11 }}>
                 Rate a Player
               </Link>
-              <Link href="/matches" className="font-mono text-sm px-6 py-3 rounded-xl transition-all duration-150 border border-white/15 text-text-dim hover:text-text-primary hover:border-white/25">
+              <Link href="/matches" className="eyebrow btn-ghost rounded-md px-6 py-3" style={{ fontSize: 11 }}>
                 Review a Match
               </Link>
-              <Link href="/sign-up" className="font-mono text-sm px-6 py-3 rounded-xl transition-all duration-150 border border-white/15 text-text-dim hover:text-text-primary hover:border-white/25">
+              <Link href="/sign-up" className="eyebrow btn-ghost rounded-md px-6 py-3" style={{ fontSize: 11 }}>
                 Create Account
               </Link>
             </div>
