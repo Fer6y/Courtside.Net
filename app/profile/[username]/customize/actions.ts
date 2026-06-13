@@ -19,16 +19,23 @@ export async function saveLayoutConfig(username: string, config: LayoutConfig) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, clerk_user_id")
+    .select("id, clerk_user_id, layout_config")
     .eq("username", username)
     .single();
 
   if (!profile) throw new Error("Profile not found");
   if (profile.clerk_user_id !== clerkId) throw new Error("Unauthorized");
 
+  // Preserve fields owned elsewhere (e.g. court_theme, set by the court picker)
+  const existing = (profile.layout_config ?? {}) as Partial<LayoutConfig>;
+  const merged: LayoutConfig = {
+    ...config,
+    court_theme: config.court_theme ?? existing.court_theme,
+  };
+
   const { error } = await supabase
     .from("profiles")
-    .update({ layout_config: config })
+    .update({ layout_config: merged })
     .eq("id", profile.id);
 
   if (error) throw new Error(error.message);

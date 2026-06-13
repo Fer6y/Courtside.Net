@@ -7,6 +7,21 @@
 
 export type CourtName = "grass" | "clay" | "hard";
 
+/** Cookie that drives the server-rendered court theme (no flash, no DB hit). */
+export const COURT_COOKIE = "court";
+export const DEFAULT_COURT: CourtName = "grass";
+
+export const COURT_OPTIONS: { value: CourtName; label: string; note: string }[] = [
+  { value: "grass", label: "Grass", note: "The lawn" },
+  { value: "clay",  label: "Clay",  note: "Terre battue" },
+  { value: "hard",  label: "Hard",  note: "Acrylic blue" },
+];
+
+/** Narrow an arbitrary string to a valid court, falling back to the default. */
+export function asCourt(value: string | null | undefined): CourtName {
+  return value === "grass" || value === "clay" || value === "hard" ? value : DEFAULT_COURT;
+}
+
 /** Map a match surface to a court theme; null = leave the user's court */
 export function surfaceToCourt(surface: string | null | undefined): CourtName | null {
   switch (surface?.toLowerCase()) {

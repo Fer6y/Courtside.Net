@@ -184,11 +184,14 @@ old and new styles coexist per-page.
    (and at most 1–2 ambient tints) change per theme — cream/gold/serif
    programme language is constant on all courts.
 
-   **Persistence**: `profiles.layout_config.court_theme` (JSONB column
-   already exists) for logged-in users, read server-side in the root
-   layout so there's no theme flash; cookie fallback for guests
-   (default grass). Picker lives in `/profile/[username]/customize` as
-   "Your court" — three swatch cards (see mockup).
+   **Persistence** (built phase 6): a `court` cookie is the source of
+   truth for rendering — read server-side in the root layout (no flash,
+   no per-request DB hit) and safe for guests. `setCourtTheme()` server
+   action writes the cookie and, for signed-in users, also mirrors the
+   value to `profiles.layout_config.court_theme` as a durable backup.
+   This deviates from the original "read DB in layout" idea to avoid a
+   DB query on every page load. Picker lives in
+   `/profile/[username]/customize` as "Your court" — three swatch cards.
 
    **Slam cover bands are content identity, not preference** — AO blue,
    RG terracotta, Wimbledon green/purple, USO navy render identically on

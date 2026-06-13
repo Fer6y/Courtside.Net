@@ -12,6 +12,9 @@ export interface LayoutConfig {
   order:    SectionId[];
   hidden:   SectionId[];
   variants: Partial<Record<SectionId, string>>;
+  // The owner's chosen court background. Mirrored to the `court` cookie,
+  // which is what the root layout actually reads (durable backup here).
+  court_theme?: "grass" | "clay" | "hard";
 }
 
 export const DEFAULT_ORDER: SectionId[] = [

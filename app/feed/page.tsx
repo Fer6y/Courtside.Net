@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import { Flame } from "lucide-react";
 import FeedTabs from "@/components/FeedTabs";
 import type {
   ActivityItem,
@@ -269,21 +270,24 @@ export default async function FeedPage() {
     <main className="max-w-6xl mx-auto px-4 py-10">
 
       {/* ── Page header ───────────────────────────────────────── */}
-      <div className="mb-8">
-        <h1 className="font-mono text-3xl font-bold text-text-primary mb-1">Activity</h1>
-        <p className="font-sans text-sm text-text-dim">What the community is watching, reviewing, and rating.</p>
+      <div className="mb-6">
+        <div className="eyebrow" style={{ fontSize: 10, color: "#c9a96a" }}>The Daily</div>
+        <h1 className="bill-name mt-1" style={{ fontSize: 32, fontWeight: 500 }}>Activity</h1>
+        <p className="bill-name italic mt-0.5" style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.5)" }}>
+          What the community is watching, reviewing, and rating.
+        </p>
       </div>
 
       {/* ── Weekly pulse ──────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-6 mb-10 pb-8" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="flex flex-wrap gap-8 mb-10 pb-7" style={{ borderBottom: "1px solid var(--hairline)" }}>
         {[
           { value: totalReviewsThisWeek, label: "Reviews this week" },
           { value: totalRatingsThisWeek, label: "Ratings this week"  },
           { value: uniquePlayersRated,   label: "Players rated"      },
         ].map(({ value, label }) => (
           <div key={label}>
-            <div className="font-mono text-2xl font-bold text-text-primary">{value}</div>
-            <div className="font-mono text-[10px] uppercase tracking-widest text-text-dim mt-0.5">{label}</div>
+            <div className="font-mono font-bold" style={{ fontSize: 26, color: "#ece5d8" }}>{value}</div>
+            <div className="eyebrow mt-0.5" style={{ fontSize: 9, color: "rgba(236,229,216,0.4)" }}>{label}</div>
           </div>
         ))}
       </div>
@@ -292,7 +296,9 @@ export default async function FeedPage() {
 
         {/* ── Left: Activity feed ───────────────────────────────── */}
         <div>
-          <h2 className="font-mono text-[10px] uppercase tracking-widest text-text-dim mb-5">Recent Activity</h2>
+          <div className="rule-divider mb-5">
+            <span className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.55)" }}>Recent activity</span>
+          </div>
           <FeedTabs
             communityItems={communityItems}
             followingItems={followingItems}
@@ -307,36 +313,34 @@ export default async function FeedPage() {
           {/* Trending players */}
           {trendingPlayers.length > 0 && (
             <div>
-              <h2 className="font-mono text-[10px] uppercase tracking-widest text-text-dim mb-4">
-                Trending Players · 14 days
-              </h2>
-              <div className="flex flex-col gap-2">
+              <div className="rule-divider mb-4">
+                <span className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.5)" }}>Trending · 14 days</span>
+              </div>
+              <div>
                 {trendingPlayers.map(({ player, ratingCount, topSkill }, i) => (
                   <Link
                     key={player.id}
                     href={`/players/${player.id}`}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-150 group bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12]"
+                    className="flex items-baseline gap-3 py-2.5 px-1 transition-colors duration-150"
+                    style={{ borderBottom: "1px solid var(--hairline-soft)" }}
                   >
-                    <span className="font-mono text-xs text-text-dim w-4 shrink-0">{i + 1}</span>
+                    <span className="font-mono shrink-0" style={{ fontSize: 11, color: "rgba(236,229,216,0.35)" }}>{i + 1}</span>
                     <div className="flex-1 min-w-0">
-                      <span className="font-sans text-sm font-medium text-text-primary group-hover:text-primary transition-colors truncate block">
+                      <span className="bill-name truncate block" style={{ fontSize: 15, color: "#ece5d8" }}>
                         {player.name}
                       </span>
-                      <span className="font-mono text-[10px] text-text-dim">
+                      <span className="eyebrow" style={{ fontSize: 8, color: "rgba(236,229,216,0.4)" }}>
                         {player.country ?? ""}
-                        {player.current_rank ? ` · #${player.current_rank}` : ""}
+                        {player.current_rank ? ` · No. ${player.current_rank}` : ""}
                       </span>
                     </div>
                     <div className="text-right shrink-0">
                       {topSkill && (
-                        <span
-                          className="font-mono text-[10px] px-2 py-0.5 rounded-full block mb-0.5"
-                          style={{ background: "rgba(255,255,255,0.06)", color: "#9ca3af", border: "1px solid rgba(255,255,255,0.08)" }}
-                        >
+                        <span className="eyebrow block" style={{ fontSize: 8, color: "#c9a96a" }}>
                           {topSkill.label}
                         </span>
                       )}
-                      <span className="font-mono text-[10px] text-text-dim">{ratingCount} rating{ratingCount !== 1 ? "s" : ""}</span>
+                      <span className="font-mono" style={{ fontSize: 10, color: "rgba(236,229,216,0.4)" }}>{ratingCount} rating{ratingCount !== 1 ? "s" : ""}</span>
                     </div>
                   </Link>
                 ))}
@@ -347,67 +351,32 @@ export default async function FeedPage() {
           {/* Top 25 clashes */}
           {top25Clashes.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <h2 className="font-mono text-[10px] uppercase tracking-widest text-text-dim">
-                  Top 25 Clashes
-                </h2>
-                <span
-                  className="font-mono text-[9px] px-1.5 py-0.5 rounded"
-                  style={{ background: "rgba(74,158,255,0.15)", color: "#4a9eff" }}
-                >
-                  Last 30 days
-                </span>
+              <div className="rule-divider mb-4">
+                <span className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.5)" }}>Top-25 clashes · 30 days</span>
               </div>
-              <div className="flex flex-col gap-2">
+              <div>
                 {top25Clashes.map(({ match: m, reviewCount }) => (
                   <Link
                     key={m.id}
                     href={`/matches/${m.id}`}
-                    className="rounded-xl px-3 py-2.5 transition-colors duration-150 group block bg-white/[0.02] border border-accent/[0.15] hover:border-accent/[0.35]"
+                    className="block py-2.5 px-1 transition-colors duration-150"
+                    style={{ borderBottom: "1px solid var(--hairline-soft)" }}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-sans text-sm font-medium text-text-primary group-hover:text-primary transition-colors truncate">
-                            {m.player1?.name?.split(" ").pop()}
-                          </span>
-                          <span className="font-mono text-[10px] text-text-dim">vs</span>
-                          <span className="font-sans text-sm font-medium text-text-primary group-hover:text-primary transition-colors truncate">
-                            {m.player2?.name?.split(" ").pop()}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="font-mono text-[10px] text-text-dim truncate">{m.tournament}</span>
-                          {m.surface && (
-                            <span className="font-mono text-[10px] shrink-0" style={{ color: SURFACE_COLOR[m.surface] ?? "#6b7280" }}>
-                              {m.surface}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="flex items-center gap-1 justify-end">
-                          {m.player1?.current_rank && (
-                            <span className="font-mono text-[9px] px-1 py-0.5 rounded" style={{ background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>
-                              #{m.player1.current_rank}
-                            </span>
-                          )}
-                          {m.player2?.current_rank && (
-                            <span className="font-mono text-[9px] px-1 py-0.5 rounded" style={{ background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>
-                              #{m.player2.current_rank}
-                            </span>
-                          )}
-                        </div>
-                        {m.match_date && (
-                          <span className="font-mono text-[9px] text-text-dim block mt-1">{timeAgo(m.match_date)}</span>
-                        )}
-                      </div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="bill-name truncate" style={{ fontSize: 15 }}>
+                        <span style={{ color: "#ece5d8" }}>{m.player1?.name?.split(" ").pop()}</span>
+                        <span className="italic" style={{ fontWeight: 300, fontSize: 12, color: "rgba(236,229,216,0.4)" }}> v. </span>
+                        <span style={{ color: "#ece5d8" }}>{m.player2?.name?.split(" ").pop()}</span>
+                      </span>
+                      {m.match_date && (
+                        <span className="font-mono shrink-0" style={{ fontSize: 9, color: "rgba(236,229,216,0.4)" }}>{timeAgo(m.match_date)}</span>
+                      )}
                     </div>
-                    {reviewCount > 0 && (
-                      <div className="mt-1.5">
-                        <span className="font-mono text-[9px] text-text-dim">{reviewCount} review{reviewCount !== 1 ? "s" : ""}</span>
-                      </div>
-                    )}
+                    <div className="eyebrow mt-0.5" style={{ fontSize: 8, color: "rgba(236,229,216,0.4)" }}>
+                      {m.tournament}
+                      {m.surface && <span style={{ color: SURFACE_COLOR[m.surface] ?? "inherit" }}> · {m.surface}</span>}
+                      {reviewCount > 0 && <> · {reviewCount} review{reviewCount !== 1 ? "s" : ""}</>}
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -417,43 +386,34 @@ export default async function FeedPage() {
           {/* Hot matches */}
           {hotMatches.length > 0 && (
             <div>
-              <h2 className="font-mono text-[10px] uppercase tracking-widest text-text-dim mb-4">
-                Hot Matches · 14 days
-              </h2>
-              <div className="flex flex-col gap-2">
+              <div className="rule-divider mb-4">
+                <span className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.5)" }}>Hot matches · 14 days</span>
+              </div>
+              <div>
                 {hotMatches.map(({ match: m, reviewCount, avgRating }) => (
                   <Link
                     key={m.id}
                     href={`/matches/${m.id}`}
-                    className="rounded-xl px-3 py-2.5 transition-colors duration-150 group block bg-white/[0.02] border border-amber/[0.12] hover:border-amber/[0.30]"
+                    className="block py-2.5 px-1 transition-colors duration-150"
+                    style={{ borderBottom: "1px solid var(--hairline-soft)" }}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-sans text-sm font-medium text-text-primary group-hover:text-primary transition-colors truncate">
-                            {m.player1?.name?.split(" ").pop()}
-                          </span>
-                          <span className="font-mono text-[10px] text-text-dim">vs</span>
-                          <span className="font-sans text-sm font-medium text-text-primary group-hover:text-primary transition-colors truncate">
-                            {m.player2?.name?.split(" ").pop()}
-                          </span>
-                        </div>
-                        <span className="font-mono text-[10px] text-text-dim truncate block">{m.tournament}</span>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="flex items-center justify-end gap-1 mb-0.5">
-                          <span className="text-[11px] leading-none tracking-tighter">
-                            {"🔥".repeat(heatEmojis(reviewCount, avgRating))}
-                          </span>
-                          <span
-                            className="font-mono text-sm font-bold"
-                            style={{ color: "#f5c518" }}
-                          >
-                            {avgRating.toFixed(1)}
-                          </span>
-                        </div>
-                        <span className="font-mono text-[9px] text-text-dim">{reviewCount} review{reviewCount !== 1 ? "s" : ""}</span>
-                      </div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="bill-name truncate" style={{ fontSize: 15 }}>
+                        <span style={{ color: "#ece5d8" }}>{m.player1?.name?.split(" ").pop()}</span>
+                        <span className="italic" style={{ fontWeight: 300, fontSize: 12, color: "rgba(236,229,216,0.4)" }}> v. </span>
+                        <span style={{ color: "#ece5d8" }}>{m.player2?.name?.split(" ").pop()}</span>
+                      </span>
+                      <span className="flex items-center gap-1 shrink-0">
+                        {Array.from({ length: heatEmojis(reviewCount, avgRating) }).map((_, i) => (
+                          <Flame key={i} size={11} strokeWidth={1.7} style={{ color: "#c9a96a" }} />
+                        ))}
+                        <span className="font-mono font-bold ml-0.5" style={{ fontSize: 14, color: "#c9a96a" }}>
+                          {avgRating.toFixed(1)}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="eyebrow mt-0.5" style={{ fontSize: 8, color: "rgba(236,229,216,0.4)" }}>
+                      {m.tournament} · {reviewCount} review{reviewCount !== 1 ? "s" : ""}
                     </div>
                   </Link>
                 ))}
@@ -464,11 +424,12 @@ export default async function FeedPage() {
           {/* Empty sidebar state */}
           {trendingPlayers.length === 0 && top25Clashes.length === 0 && hotMatches.length === 0 && (
             <div
-              className="rounded-xl p-6 text-center"
-              style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
+              className="rounded-lg p-6 text-center"
+              style={{ background: "rgba(236,229,216,0.02)", border: "1px solid var(--hairline-soft)" }}
             >
-              <p className="font-mono text-xs uppercase tracking-widest text-text-dim mb-2">No data yet</p>
-              <p className="font-sans text-xs text-text-dim">Trending players and hot matches will appear here as the community grows.</p>
+              <p className="bill-name italic" style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.5)" }}>
+                Trending players and hot matches will appear here as the community grows.
+              </p>
             </div>
           )}
 

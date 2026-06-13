@@ -1,8 +1,11 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import ProfileLayoutEditor from "@/components/ProfileLayoutEditor";
+import CourtPicker from "@/components/CourtPicker";
+import { COURT_COOKIE, asCourt } from "@/lib/courts";
 import type { LayoutConfig } from "@/lib/profileLayout";
 
 type Props = { params: Promise<{ username: string }> };
@@ -33,6 +36,11 @@ export default async function CustomizeProfilePage({ params }: Props) {
   if (profile.clerk_user_id !== clerkId) redirect(`/profile/${username}`);
 
   const displayName = profile.display_name ?? profile.username;
+  const layoutConfig = profile.layout_config as LayoutConfig | null;
+  // Cookie drives rendering; fall back to the stored profile preference
+  const court = asCourt(
+    (await cookies()).get(COURT_COOKIE)?.value ?? layoutConfig?.court_theme
+  );
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-12">
@@ -40,21 +48,43 @@ export default async function CustomizeProfilePage({ params }: Props) {
       {/* Back */}
       <Link
         href={`/profile/${username}`}
-        className="font-sans text-sm text-text-dim hover:text-text-mid mb-8 inline-block transition-colors duration-150"
+        className="eyebrow mb-8 inline-block transition-colors duration-150"
+        style={{ fontSize: 10, color: "rgba(236,229,216,0.4)" }}
       >
         ← {displayName}
       </Link>
 
-      <div className="mb-8">
-        <h1 className="font-mono text-3xl font-bold text-text-primary mb-1">
+      <div className="mb-10">
+        <div className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.5)" }}>
+          @{username}
+        </div>
+        <h1 className="bill-name mt-1" style={{ fontSize: 32, fontWeight: 500 }}>
           Customize Profile
         </h1>
-        <p className="font-mono text-sm text-text-dim">@{username}</p>
       </div>
 
+      {/* ── Your court ───────────────────────────────────────────── */}
+      <section className="mb-12">
+        <div className="rule-divider mb-2">
+          <span className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.55)" }}>
+            Your court
+          </span>
+        </div>
+        <p className="bill-name italic mb-4" style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.5)" }}>
+          The surface the whole app is read on — Grand Slam pages keep their own colours.
+        </p>
+        <CourtPicker initial={court} />
+      </section>
+
+      {/* ── Sections ─────────────────────────────────────────────── */}
+      <div className="rule-divider mb-5">
+        <span className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.55)" }}>
+          Your sections
+        </span>
+      </div>
       <ProfileLayoutEditor
         username={username}
-        initialConfig={profile.layout_config as LayoutConfig | null}
+        initialConfig={layoutConfig}
       />
     </main>
   );

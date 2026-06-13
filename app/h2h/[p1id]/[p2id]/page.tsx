@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import type { Player } from "@/types";
 import Link from "next/link";
 import Image from "next/image";
-import CountryFlag from "@/components/CountryFlag";
 import CompareView from "@/components/CompareView";
 
 type Props = { params: Promise<{ p1id: string; p2id: string }> };
@@ -129,7 +128,6 @@ export default async function H2HPage({ params }: Props) {
   }
 
   const total = p1Wins + p2Wins;
-  const p1LeadsPct = total > 0 ? Math.round((p1Wins / total) * 100) : 50;
 
   const leader =
     p1Wins > p2Wins ? player1.name
@@ -141,133 +139,108 @@ export default async function H2HPage({ params }: Props) {
 
       {/* Back */}
       <div className="flex gap-4 mb-8">
-        <Link href={`/players/${p1id}`} className="font-sans text-sm text-text-dim hover:text-text-mid transition-colors duration-150">
+        <Link href={`/players/${p1id}`} className="eyebrow transition-colors duration-150" style={{ fontSize: 10, color: "rgba(236,229,216,0.4)" }}>
           ← {player1.name}
         </Link>
-        <Link href={`/h2h/${p1id}`} className="font-sans text-sm text-text-dim hover:text-text-mid transition-colors duration-150">
+        <Link href={`/h2h/${p1id}`} className="eyebrow transition-colors duration-150" style={{ fontSize: 10, color: "rgba(236,229,216,0.4)" }}>
           Change opponent
         </Link>
       </div>
 
-      {/* ── Hero ────────────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-white/5 bg-white/[0.02] p-6 mb-8">
-        <div className="flex items-center justify-between gap-4">
+      {/* ── The Rivalry — bill ──────────────────────────────────────────────── */}
+      <div className="text-center mb-12">
+        <div className="eyebrow" style={{ fontSize: 10, color: "#c9a96a" }}>The Rivalry</div>
 
-          {/* Player 1 */}
-          <div className="flex flex-col items-center gap-3 flex-1 min-w-0">
+        <div className="flex items-center justify-center gap-6 mt-5 flex-wrap">
+          <div className="flex flex-col items-center gap-2">
             <PlayerAvatar player={player1} isLeader={p1Wins > p2Wins} />
-            <div className="text-center">
-              <p className="font-mono font-bold text-text-primary text-base sm:text-lg leading-tight">{player1.name}</p>
-              <div className="flex items-center justify-center gap-1.5 mt-1">
-                <CountryFlag code={player1.country} size={20} />
-                {player1.current_rank && (
-                  <span className="font-mono text-xs text-primary">#{player1.current_rank}</span>
-                )}
-              </div>
-            </div>
           </div>
-
-          {/* Score */}
-          <div className="flex flex-col items-center gap-1 shrink-0">
-            <div className="flex items-center gap-3">
-              <span className={`font-mono text-5xl font-bold ${p1Wins > p2Wins ? "text-primary" : "text-text-dim"}`}>
-                {p1Wins}
-              </span>
-              <span className="font-mono text-2xl text-text-dim">–</span>
-              <span className={`font-mono text-5xl font-bold ${p2Wins > p1Wins ? "text-primary" : "text-text-dim"}`}>
-                {p2Wins}
-              </span>
+          <div className="flex flex-col items-center shrink-0">
+            <div className="flex items-baseline gap-2.5">
+              <span className="font-mono font-bold" style={{ fontSize: 44, color: p1Wins > p2Wins ? "#c9a96a" : "rgba(236,229,216,0.45)" }}>{p1Wins}</span>
+              <span className="font-mono" style={{ fontSize: 20, color: "rgba(236,229,216,0.35)" }}>–</span>
+              <span className="font-mono font-bold" style={{ fontSize: 44, color: p2Wins > p1Wins ? "#c9a96a" : "rgba(236,229,216,0.45)" }}>{p2Wins}</span>
             </div>
-            <span className="font-mono text-xs text-text-dim uppercase tracking-widest">
-              {total} {total === 1 ? "match" : "matches"}
+            <span className="eyebrow mt-1" style={{ fontSize: 9, color: "rgba(236,229,216,0.45)" }}>
+              {total} {total === 1 ? "meeting" : "meetings"}
             </span>
-            {leader && (
-              <span className="font-sans text-xs text-text-dim mt-1">
-                {leader} leads
-              </span>
-            )}
-            {!leader && total > 0 && (
-              <span className="font-sans text-xs text-text-dim mt-1">All square</span>
-            )}
           </div>
-
-          {/* Player 2 */}
-          <div className="flex flex-col items-center gap-3 flex-1 min-w-0">
+          <div className="flex flex-col items-center gap-2">
             <PlayerAvatar player={player2} isLeader={p2Wins > p1Wins} />
-            <div className="text-center">
-              <p className="font-mono font-bold text-text-primary text-base sm:text-lg leading-tight">{player2.name}</p>
-              <div className="flex items-center justify-center gap-1.5 mt-1">
-                <CountryFlag code={player2.country} size={20} />
-                {player2.current_rank && (
-                  <span className="font-mono text-xs text-primary">#{player2.current_rank}</span>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Win % bar */}
-        {total > 0 && (
-          <div className="mt-6">
-            <div className="h-1.5 rounded-full overflow-hidden bg-white/5">
-              <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${p1LeadsPct}%`,
-                  background: "linear-gradient(to right, #22d68a, #22d68a99)",
-                }}
-              />
-            </div>
-            <div className="flex justify-between mt-1">
-              <span className="font-mono text-xs text-primary">{p1LeadsPct}%</span>
-              <span className="font-mono text-xs text-text-dim">{100 - p1LeadsPct}%</span>
-            </div>
+        {/* Names with italic v. */}
+        <div className="flex items-baseline justify-center gap-3 flex-wrap mt-5">
+          <span className="bill-name" style={{ fontSize: 24, fontWeight: p1Wins > p2Wins ? 500 : 300, color: p1Wins >= p2Wins ? "#ece5d8" : "rgba(236,229,216,0.7)" }}>
+            {player1.name}
+          </span>
+          <span className="bill-name italic" style={{ fontSize: 15, fontWeight: 300, color: "rgba(236,229,216,0.45)" }}>v.</span>
+          <span className="bill-name" style={{ fontSize: 24, fontWeight: p2Wins > p1Wins ? 500 : 300, color: p2Wins >= p1Wins ? "#ece5d8" : "rgba(236,229,216,0.7)" }}>
+            {player2.name}
+          </span>
+        </div>
+        <div className="eyebrow mt-2" style={{ fontSize: 9, color: "rgba(236,229,216,0.5)" }}>
+          {player1.country}
+          {player1.current_rank ? ` · No. ${player1.current_rank}` : ""}
+          {"  —  "}
+          {player2.country}
+          {player2.current_rank ? ` · No. ${player2.current_rank}` : ""}
+        </div>
+        {leader && (
+          <div className="bill-name italic mt-3" style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.55)" }}>
+            {leader} leads the rivalry
+          </div>
+        )}
+        {!leader && total > 0 && (
+          <div className="bill-name italic mt-3" style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.55)" }}>
+            All square
           </div>
         )}
       </div>
 
-      {/* ── Surface breakdown ───────────────────────────────────────────────── */}
-      {Object.keys(surfaceMap).filter(s => s !== "Unknown").length > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          {["Hard", "Clay", "Grass"].map((surface) => {
-            const s = surfaceMap[surface];
-            if (!s) return null;
-            const tot = s.p1 + s.p2;
-            return (
-              <div key={surface} className="rounded-lg border border-white/5 bg-white/[0.02] p-4 text-center">
-                <p className="font-mono text-xs font-semibold mb-3" style={{ color: SURFACE_COLORS[surface] }}>
-                  {surface}
-                </p>
-                <div className="flex items-center justify-center gap-2">
-                  <span className={`font-mono text-2xl font-bold ${s.p1 > s.p2 ? "text-primary" : "text-text-dim"}`}>{s.p1}</span>
-                  <span className="font-mono text-sm text-text-dim">–</span>
-                  <span className={`font-mono text-2xl font-bold ${s.p2 > s.p1 ? "text-primary" : "text-text-dim"}`}>{s.p2}</span>
+      {/* ── The record — dot leaders ────────────────────────────────────────── */}
+      {(Object.keys(surfaceMap).filter(s => s !== "Unknown").length > 0 || (slamWins.p1 + slamWins.p2) > 0) && (
+        <div className="mb-12">
+          <div className="rule-divider mb-5">
+            <span className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.55)" }}>The record</span>
+          </div>
+          <div className="mx-auto" style={{ maxWidth: 420 }}>
+            {["Hard", "Clay", "Grass"].map((surface) => {
+              const s = surfaceMap[surface];
+              if (!s) return null;
+              return (
+                <div key={surface} className="dot-leader py-1.5">
+                  <span className="bill-name" style={{ fontSize: 15 }}>
+                    On <span style={{ color: SURFACE_COLORS[surface] }}>{surface.toLowerCase()}</span>
+                  </span>
+                  <span className="dot-leader-dots" />
+                  <span className="font-mono font-semibold" style={{ fontSize: 15, color: "#ece5d8" }}>
+                    {s.p1}<span style={{ color: "rgba(236,229,216,0.35)" }}>–</span>{s.p2}
+                  </span>
                 </div>
-                <p className="font-mono text-xs text-text-dim mt-1">{tot} {tot === 1 ? "match" : "matches"}</p>
+              );
+            })}
+            {(slamWins.p1 + slamWins.p2) > 0 && (
+              <div className="dot-leader py-1.5">
+                <span className="bill-name" style={{ fontSize: 15 }}>
+                  In <span style={{ color: "#c9a96a" }}>Grand Slam finals</span>
+                </span>
+                <span className="dot-leader-dots" />
+                <span className="font-mono font-semibold" style={{ fontSize: 15, color: "#c9a96a" }}>
+                  {slamWins.p1}<span style={{ color: "rgba(236,229,216,0.35)" }}>–</span>{slamWins.p2}
+                </span>
               </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ── Slam Finals ─────────────────────────────────────────────────────── */}
-      {(slamWins.p1 + slamWins.p2) > 0 && (
-        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-5 mb-8">
-          <p className="font-mono text-xs uppercase tracking-widest text-text-dim mb-4">Grand Slam Finals</p>
-          <div className="flex items-center gap-4">
-            <span className={`font-mono text-3xl font-bold ${slamWins.p1 > slamWins.p2 ? "text-primary" : "text-text-dim"}`}>{slamWins.p1}</span>
-            <span className="font-mono text-text-dim">–</span>
-            <span className={`font-mono text-3xl font-bold ${slamWins.p2 > slamWins.p1 ? "text-primary" : "text-text-dim"}`}>{slamWins.p2}</span>
-            <span className="font-sans text-xs text-text-dim ml-2">in Slam Finals</span>
+            )}
           </div>
         </div>
       )}
 
       {/* ── Skill Comparison ────────────────────────────────────────────────── */}
-      <div className="mb-8">
-        <h2 className="font-mono text-xs uppercase tracking-widest text-text-dim mb-6">
-          Skill Comparison
-        </h2>
+      <div className="mb-12">
+        <div className="rule-divider mb-6">
+          <span className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.55)" }}>Skill comparison</span>
+        </div>
         <CompareView
           p1={{
             id: p1id,
@@ -292,90 +265,87 @@ export default async function H2HPage({ params }: Props) {
 
       {/* ── Match history ───────────────────────────────────────────────────── */}
       <section>
-        <h2 className="font-mono text-xs uppercase tracking-widest text-text-dim mb-4">
-          Match History
-        </h2>
+        <div className="rule-divider mb-5">
+          <span className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.55)" }}>Every meeting</span>
+        </div>
 
         {matches.length === 0 ? (
-          <div className="rounded-lg border border-white/5 bg-white/[0.02] p-10 text-center">
-            <p className="font-mono text-text-dim text-sm">No matches found between these players.</p>
+          <div className="rounded-lg p-10 text-center" style={{ border: "1px solid var(--hairline-soft)", background: "rgba(236,229,216,0.02)" }}>
+            <p className="bill-name italic text-sm" style={{ fontWeight: 300, color: "rgba(236,229,216,0.5)" }}>
+              These two have never met in the catalogue.
+            </p>
           </div>
         ) : (
-          <div className="divide-y divide-white/5">
+          <div>
             {matches.map((match) => {
               const p1Won = match.winner_id === p1id;
               const p2Won = match.winner_id === p2id;
               const surface = match.surface as string | null;
+              const winnerName = p1Won ? player1.name : p2Won ? player2.name : null;
 
               return (
                 <Link
                   key={match.id}
                   href={`/matches/${match.id}`}
-                  className="flex items-center justify-between py-3 px-2 hover:bg-white/[0.03] rounded transition-colors duration-150 group"
+                  className="flex items-baseline justify-between gap-x-4 gap-y-0.5 flex-wrap py-3 px-1 transition-colors duration-150"
+                  style={{ borderBottom: "1px solid var(--hairline-soft)" }}
                 >
-                  {/* Left: result + tournament */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    {/* Winner indicator */}
-                    <div className="flex gap-1 shrink-0">
-                      <span className={`font-mono text-xs font-bold w-4 text-center ${p1Won ? "text-primary" : p2Won ? "text-loss" : "text-text-dim"}`}>
-                        {p1Won ? "W" : p2Won ? "L" : "—"}
-                      </span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-sans text-sm text-text-primary truncate group-hover:text-primary transition-colors duration-150">
-                        {match.tournament}
-                      </p>
-                      <p className="font-mono text-xs text-text-dim">{match.round}</p>
-                    </div>
-                  </div>
-
-                  {/* Right: score + surface + year */}
-                  <div className="flex items-center gap-4 shrink-0 ml-4">
-                    {match.score && (
-                      <span className="font-mono text-sm text-text-mid hidden sm:block">{match.score}</span>
+                  <span className="bill-name min-w-0 truncate" style={{ fontSize: 15 }}>
+                    {winnerName ? (
+                      <>
+                        <span style={{ color: "#ece5d8" }}>{winnerName.split(" ").pop()}</span>
+                        <span className="italic" style={{ fontWeight: 300, fontSize: 13, color: "rgba(236,229,216,0.4)" }}> won </span>
+                        <span style={{ color: "rgba(236,229,216,0.55)" }}>{match.tournament}</span>
+                      </>
+                    ) : (
+                      <span style={{ color: "#ece5d8" }}>{match.tournament}</span>
                     )}
-                    {surface && (
-                      <span className="font-mono text-xs" style={{ color: SURFACE_COLORS[surface] ?? "#6b7280" }}>
-                        {surface}
-                      </span>
-                    )}
-                    {match.match_date && (
-                      <span className="font-mono text-xs text-text-dim">{match.match_date.slice(0, 4)}</span>
-                    )}
-                  </div>
+                  </span>
+                  <span className="font-mono shrink-0" style={{ fontSize: 11, letterSpacing: "0.08em", color: "rgba(236,229,216,0.45)" }}>
+                    {match.score && <span className="hidden sm:inline">{match.score} · </span>}
+                    {match.round}
+                    {surface && <> · <span style={{ color: SURFACE_COLORS[surface] ?? "rgba(236,229,216,0.45)" }}>{surface.toUpperCase()}</span></>}
+                    {match.match_date && <> · {match.match_date.slice(0, 4)}</>}
+                  </span>
                 </Link>
               );
             })}
           </div>
         )}
       </section>
+
+      {/* ── Colophon ─────────────────────────────────────────────────────────── */}
+      <div className="text-center mt-16">
+        <span className="eyebrow" style={{ fontSize: 10, color: "rgba(201,169,106,0.6)" }}>
+          — Courtside · {player1.name.split(" ").pop()} v. {player2.name.split(" ").pop()} —
+        </span>
+      </div>
     </main>
   );
 }
 
 function PlayerAvatar({ player, isLeader }: { player: Player; isLeader: boolean }) {
-  const frameStyle: React.CSSProperties = isLeader
-    ? { background: "linear-gradient(135deg, #22d68a, #16a863)", padding: "2px", boxShadow: "0 0 12px rgba(34,214,138,0.4)" }
-    : { border: "2px solid rgba(255,255,255,0.08)" };
-
   return (
-    <div className="w-16 h-16 rounded-full shrink-0" style={frameStyle}>
+    <div
+      className="w-16 h-16 rounded-full shrink-0 overflow-hidden flex items-center justify-center"
+      style={{
+        border: isLeader ? "2px solid rgba(201,169,106,0.85)" : "2px solid rgba(236,229,216,0.2)",
+        background: "rgba(236,229,216,0.04)",
+      }}
+    >
       {(player.photo_url || player.image_url) ? (
         <Image
           src={player.photo_url ?? player.image_url ?? ""}
           alt={player.name}
           width={64}
           height={64}
-          className="w-full h-full rounded-full object-cover object-top"
+          className="w-full h-full object-cover object-top"
           unoptimized
         />
       ) : (
-        <div
-          className="w-full h-full rounded-full flex items-center justify-center font-mono text-lg font-bold"
-          style={{ background: "rgba(34,214,138,0.1)", color: "#22d68a" }}
-        >
+        <span className="bill-name" style={{ fontSize: 18, color: "rgba(236,229,216,0.45)" }}>
           {player.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
-        </div>
+        </span>
       )}
     </div>
   );

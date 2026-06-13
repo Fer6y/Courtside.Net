@@ -236,7 +236,7 @@ export default async function ProfilePage({ params }: Props) {
                       className="rounded-lg border border-white/5 bg-white/[0.02] p-3 hover:border-yellow-500/20 hover:bg-white/[0.04] transition-all duration-150">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-mono text-[10px] text-text-dim">{m.match_date?.slice(0, 4)}</span>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="#f5c518"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="#c9a96a"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                       </div>
                       <div className={`font-sans text-xs font-medium truncate ${p1Won ? "text-primary" : "text-text-primary"}`}>{m.player1?.name ?? "?"}</div>
                       <div className="font-mono text-[9px] text-text-dim my-0.5">vs</div>
@@ -263,7 +263,7 @@ export default async function ProfilePage({ params }: Props) {
                     style={{ minWidth: 220, maxWidth: 240 }}>
                     <div className="flex items-center justify-between mb-3">
                       <span className="font-mono text-xs text-text-dim">{m.match_date?.slice(0, 4)}</span>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="#f5c518"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="#c9a96a"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     </div>
                     <div className={`font-sans text-sm font-medium truncate ${p1Won ? "text-primary" : "text-text-primary"}`}>{m.player1?.name ?? "?"}</div>
                     <div className="font-mono text-[10px] text-text-dim my-0.5">vs</div>
@@ -273,7 +273,7 @@ export default async function ProfilePage({ params }: Props) {
                       {m.surface && <span className="font-mono text-[10px] shrink-0" style={{ color: SURFACE_COLOR[m.surface] ?? "#6b7280" }}>{m.surface}</span>}
                     </div>
                     <div className="flex items-center gap-3">
-                      <MiniRating label="Match" value={r.match_rating} color="#f5c518" />
+                      <MiniRating label="Match" value={r.match_rating} color="#c9a96a" />
                       <MiniRating label={m.player1?.name?.split(" ").pop() ?? "P1"} value={r.player1_rating} color="#22d68a" />
                       <MiniRating label={m.player2?.name?.split(" ").pop() ?? "P2"} value={r.player2_rating} color="#4a9eff" />
                     </div>
@@ -288,7 +288,7 @@ export default async function ProfilePage({ params }: Props) {
       case "trophy_case": {
         return (
           <section key="trophy_case" className="mb-12">
-            <SectionHeader title="Trophy Case" count={achievements.length} />
+            <SectionHeader title="Honours" count={achievements.length} />
             <TrophyCase achievements={achievements} isOwnProfile={isOwnProfile} />
           </section>
         );
@@ -310,7 +310,7 @@ export default async function ProfilePage({ params }: Props) {
                         <p className="font-sans text-sm text-text-mid leading-relaxed line-clamp-2 italic">&ldquo;{r.comment}&rdquo;</p>
                         <p className="font-mono text-[10px] text-text-dim mt-1">{m.player1?.name?.split(" ").pop()} vs {m.player2?.name?.split(" ").pop()} · {m.tournament} {m.match_date?.slice(0, 4)}</p>
                       </div>
-                      <MiniRating label="Match" value={r.match_rating} color="#f5c518" />
+                      <MiniRating label="Match" value={r.match_rating} color="#c9a96a" />
                     </Link>
                   );
                 })}
@@ -336,7 +336,7 @@ export default async function ProfilePage({ params }: Props) {
                     </div>
                     <p className="font-sans text-sm text-text-mid leading-relaxed italic flex-1">&ldquo;{r.comment}&rdquo;</p>
                     <div className="flex items-center gap-3">
-                      <MiniRating label="Match" value={r.match_rating} color="#f5c518" />
+                      <MiniRating label="Match" value={r.match_rating} color="#c9a96a" />
                       <span className="font-mono text-[10px] text-text-dim ml-auto">{timeAgo(r.created_at)}</span>
                     </div>
                   </Link>
@@ -505,8 +505,8 @@ export default async function ProfilePage({ params }: Props) {
                         <span className="font-mono text-[10px] text-text-dim">{m.tournament} · {m.match_date?.slice(0, 4)}</span>
                       </div>
                       <div className="flex items-center gap-3 shrink-0 ml-3">
-                        <MiniRating label="M" value={r.match_rating} color="#f5c518" />
-                        {r.is_favorited && <svg width="10" height="10" viewBox="0 0 24 24" fill="#f5c518"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>}
+                        <MiniRating label="M" value={r.match_rating} color="#c9a96a" />
+                        {r.is_favorited && <svg width="10" height="10" viewBox="0 0 24 24" fill="#c9a96a"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>}
                         <span className="font-mono text-[10px] text-text-dim">{timeAgo(r.created_at)}</span>
                       </div>
                     </Link>
@@ -533,10 +533,10 @@ export default async function ProfilePage({ params }: Props) {
                       <span className={`font-sans text-sm font-medium ${!p1Won ? "text-primary" : "text-text-primary"}`}>{m.player2?.name ?? "?"}</span>
                       {m.surface && <span className="font-mono text-xs" style={{ color: SURFACE_COLOR[m.surface] ?? "#6b7280" }}>{m.surface}</span>}
                       <span className="font-mono text-xs text-text-dim">{m.tournament} · {m.match_date?.slice(0, 4)}</span>
-                      {r.is_favorited && <svg width="11" height="11" viewBox="0 0 24 24" fill="#f5c518"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>}
+                      {r.is_favorited && <svg width="11" height="11" viewBox="0 0 24 24" fill="#c9a96a"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>}
                     </div>
                     <div className="flex items-center gap-4 mb-1.5">
-                      <MiniRating label="Match" value={r.match_rating} color="#f5c518" />
+                      <MiniRating label="Match" value={r.match_rating} color="#c9a96a" />
                       <MiniRating label={m.player1?.name?.split(" ").pop() ?? "P1"} value={r.player1_rating} color="#22d68a" />
                       <MiniRating label={m.player2?.name?.split(" ").pop() ?? "P2"} value={r.player2_rating} color="#4a9eff" />
                       <span className="font-mono text-[10px] text-text-dim ml-auto">{timeAgo(r.created_at)}</span>
@@ -566,27 +566,30 @@ export default async function ProfilePage({ params }: Props) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <h1 className="font-mono text-3xl font-bold text-text-primary leading-none mb-1">{displayName}</h1>
-              <p className="font-mono text-sm text-text-dim mb-2">@{profile.username}</p>
+              <h1 className="bill-name leading-none mb-1" style={{ fontSize: 32, fontWeight: 500 }}>{displayName}</h1>
+              <p className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.5)" }}>@{profile.username}</p>
             </div>
             <div className="flex items-center gap-2">
               {isOwnProfile && (
                 <>
                   <Link
                     href={`/profile/${profile.username}/edit`}
-                    className="font-mono text-xs px-3 py-1.5 rounded-lg transition-all duration-150 border border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
+                    className="eyebrow px-3 py-1.5 rounded-md transition-all duration-150"
+                    style={{ fontSize: 9, border: "1px solid var(--hairline)", color: "rgba(236,229,216,0.55)" }}
                   >
-                    Edit Profile
+                    Edit
                   </Link>
                   <Link
                     href={`/profile/${profile.username}/customize`}
-                    className="font-mono text-xs px-3 py-1.5 rounded-lg transition-all duration-150 border border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
+                    className="eyebrow px-3 py-1.5 rounded-md transition-all duration-150"
+                    style={{ fontSize: 9, border: "1px solid var(--hairline)", color: "rgba(236,229,216,0.55)" }}
                   >
                     Customize
                   </Link>
                   <Link
                     href="/guide"
-                    className="font-mono text-xs px-3 py-1.5 rounded-lg transition-all duration-150 border border-white/10 text-text-dim hover:text-text-primary hover:border-white/20"
+                    className="eyebrow px-3 py-1.5 rounded-md transition-all duration-150"
+                    style={{ fontSize: 9, border: "1px solid var(--hairline)", color: "rgba(236,229,216,0.55)" }}
                     title="How Courtside works"
                   >
                     ?
@@ -598,27 +601,27 @@ export default async function ProfilePage({ params }: Props) {
               )}
             </div>
           </div>
-          {profile.bio && <p className="font-sans text-sm text-text-mid mb-2 max-w-md">{profile.bio}</p>}
-          <p className="font-mono text-xs text-text-dim">Member since {memberSince(profile.created_at)}</p>
+          {profile.bio && <p className="font-sans text-sm mt-2 max-w-md" style={{ color: "rgba(236,229,216,0.7)" }}>{profile.bio}</p>}
+          <p className="eyebrow mt-2" style={{ fontSize: 9, color: "rgba(236,229,216,0.4)" }}>Member since {memberSince(profile.created_at)}</p>
         </div>
       </div>
 
       {/* ── Stats bar ─────────────────────────────────────────── */}
-      <div className="flex items-center flex-wrap gap-y-4 mb-10 pb-8" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="flex items-center flex-wrap gap-y-4 mb-10 pb-8" style={{ borderBottom: "1px solid var(--hairline)" }}>
         {[
           { value: reviews.length,          label: "Reviews",       tab: "reviews"     },
           { value: favorites.length,        label: "Favorites",     tab: "favorites"   },
           { value: ratings.length,          label: "Players Rated", tab: "ratings"     },
           { value: namedCollections.length, label: "Collections",   tab: "collections" },
-          { value: achievements.length,     label: "Trophies",      tab: "trophies"    },
+          { value: achievements.length,     label: "Honours",       tab: "trophies"    },
           { value: followers,               label: "Followers",     tab: "followers"   },
           { value: following,               label: "Following",     tab: "following"   },
         ].map(({ value, label, tab }, i) => (
           <div key={label} className="flex items-center">
-            {i > 0 && <div className="w-px h-8 mx-6" style={{ background: "rgba(255,255,255,0.08)" }} />}
+            {i > 0 && <div className="w-px h-8 mx-6" style={{ background: "var(--hairline)" }} />}
             <Link href={`/profile/${profile.username}/${tab}`} className="group">
-              <div className="font-mono text-2xl font-bold text-text-primary group-hover:text-primary transition-colors duration-150">{value}</div>
-              <div className="font-mono text-[10px] text-text-dim uppercase tracking-widest mt-0.5 group-hover:text-text-mid transition-colors duration-150">{label}</div>
+              <div className="font-mono font-bold transition-colors duration-150" style={{ fontSize: 24, color: "#ece5d8" }}>{value}</div>
+              <div className="eyebrow mt-0.5 transition-colors duration-150" style={{ fontSize: 9, color: "rgba(236,229,216,0.4)" }}>{label}</div>
             </Link>
           </div>
         ))}
@@ -626,12 +629,11 @@ export default async function ProfilePage({ params }: Props) {
 
       {/* ── Empty state ────────────────────────────────────────── */}
       {isEmpty && (
-        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-10 text-center">
-          <p className="font-mono text-xs uppercase tracking-widest text-text-dim mb-3">No activity yet</p>
-          <p className="font-sans text-sm text-text-dim mb-5">Rate a player&apos;s skills or review a match to start building your catalogue.</p>
+        <div className="rounded-lg p-10 text-center" style={{ border: "1px solid var(--hairline-soft)", background: "rgba(236,229,216,0.02)" }}>
+          <p className="bill-name italic mb-5" style={{ fontWeight: 300, fontSize: 15, color: "rgba(236,229,216,0.5)" }}>Rate a player&apos;s skills or review a match to start building your catalogue.</p>
           <div className="flex gap-3 justify-center">
-            <Link href="/players" className="font-mono text-xs px-4 py-2 rounded-lg transition-colors duration-150" style={{ background: "#22d68a", color: "#0e1116" }}>Rate a player</Link>
-            <Link href="/matches" className="font-mono text-xs px-4 py-2 rounded-lg border border-white/10 text-text-dim hover:text-text-primary transition-colors duration-150">Browse matches</Link>
+            <Link href="/players" className="eyebrow px-4 py-2 rounded-md transition-colors duration-150" style={{ fontSize: 10, background: "#22d68a", color: "#0d1a11" }}>Rate a player</Link>
+            <Link href="/matches" className="eyebrow px-4 py-2 rounded-md transition-colors duration-150" style={{ fontSize: 10, border: "1px solid var(--hairline)", color: "rgba(236,229,216,0.55)" }}>Browse matches</Link>
           </div>
         </div>
       )}
@@ -647,9 +649,10 @@ export default async function ProfilePage({ params }: Props) {
 
 function SectionHeader({ title, count }: { title: string; count?: number }) {
   return (
-    <div className="flex items-center gap-3 mb-4">
-      <h2 className="font-mono text-xs font-semibold uppercase tracking-widest text-text-dim">{title}</h2>
-      {count !== undefined && <span className="font-mono text-[10px] text-text-dim">({count})</span>}
+    <div className="rule-divider mb-4">
+      <span className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.55)" }}>
+        {title}{count !== undefined ? ` · ${count}` : ""}
+      </span>
     </div>
   );
 }
