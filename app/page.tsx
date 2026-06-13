@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import Image from "next/image";
 import Link from "next/link";
 import CountryFlag from "@/components/CountryFlag";
+import CourtsideMark from "@/components/CourtsideMark";
 import GuideBanner from "@/components/GuideBanner";
 
 // NOTE: a page-level `revalidate` doesn't work here — auth() forces dynamic
@@ -128,6 +129,7 @@ export default async function HomePage() {
         className="flex flex-col items-center justify-center text-center px-4"
         style={{ minHeight: "calc(82vh - 60px)" }}
       >
+        <CourtsideMark size={76} className="mb-5" />
         <div className="eyebrow" style={{ fontSize: 11, color: "#c9a96a" }}>
           Catalogue your tennis fandom
         </div>

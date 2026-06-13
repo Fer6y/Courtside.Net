@@ -132,22 +132,21 @@ export default function RatePlayerForm({
       <div className="flex flex-col gap-8">
         {CATEGORIES.map((cat) => (
           <section key={cat.name}>
-            {/* Category header */}
-            <div
-              className="font-mono text-xs font-semibold uppercase tracking-widest mb-4 pb-2 border-b"
-              style={{ color: cat.color, borderColor: `${cat.color}22` }}
-            >
+            {/* Category header — eyebrow in the quadrant colour over a hairline */}
+            <div className="eyebrow mb-2" style={{ fontSize: 10, color: cat.color }}>
               {cat.name}
             </div>
+            <hr className="rule mb-5" />
 
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-6">
               {cat.skills.map((skill) => {
                 const val = values[skill.key as SkillKey];
+                const pct = ((val - 1) / 4) * 100;
                 return (
                   <div key={skill.key}>
-                    <div className="flex items-baseline justify-between mb-2">
+                    <div className="flex items-baseline justify-between mb-3 gap-3">
                       <div>
-                        <span className="font-sans text-sm font-medium text-text-primary">
+                        <span className="font-sans text-sm text-text-primary">
                           {skill.label}
                         </span>
                         <span className="font-sans text-xs text-text-dim ml-2 hidden sm:inline">
@@ -155,15 +154,15 @@ export default function RatePlayerForm({
                         </span>
                       </div>
                       <span
-                        className="font-mono text-sm font-bold tabular-nums"
-                        style={{ color: cat.color, minWidth: 28, textAlign: "right" }}
+                        className="font-mono tabular-nums"
+                        style={{ fontSize: 16, fontWeight: 600, color: cat.color, minWidth: 30, textAlign: "right" }}
                       >
                         {val.toFixed(1)}
                       </span>
                     </div>
 
                     {/* Slider */}
-                    <div className="relative">
+                    <div>
                       <input
                         type="range"
                         name={skill.key}
@@ -174,16 +173,13 @@ export default function RatePlayerForm({
                         onChange={(e) =>
                           set(skill.key as SkillKey, parseFloat(e.target.value))
                         }
-                        className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
-                        style={{
-                          background: `linear-gradient(to right, ${cat.color} 0%, ${cat.color} ${((val - 1) / 4) * 100}%, rgba(255,255,255,0.08) ${((val - 1) / 4) * 100}%, rgba(255,255,255,0.08) 100%)`,
-                          accentColor: cat.color,
-                        }}
+                        className="prog-slider"
+                        style={{ "--fill": pct, "--accent": cat.color } as React.CSSProperties}
                       />
                       {/* Scale ticks */}
-                      <div className="flex justify-between mt-1 px-0.5">
+                      <div className="flex justify-between mt-2">
                         {[1, 2, 3, 4, 5].map((n) => (
-                          <span key={n} className="font-mono text-[10px] text-text-dim">
+                          <span key={n} className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.3)" }}>
                             {n}
                           </span>
                         ))}
@@ -201,14 +197,12 @@ export default function RatePlayerForm({
       <input type="hidden" name="highlighted_skill" value={highlightedSkill} />
 
       {/* Highlight picker */}
-      <section className="mt-8">
-        <div
-          className="font-mono text-xs font-semibold uppercase tracking-widest mb-1 pb-2 border-b"
-          style={{ color: "#9ca3af", borderColor: "rgba(255,255,255,0.07)" }}
-        >
+      <section className="mt-10">
+        <div className="eyebrow mb-2" style={{ fontSize: 10, color: "#c9a96a" }}>
           Featured Skill
         </div>
-        <p className="font-sans text-xs text-text-dim mb-4 mt-2">
+        <hr className="rule" />
+        <p className="font-sans text-xs text-text-dim mb-4 mt-3">
           Choose one skill to highlight on your profile and in the activity feed.
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -221,9 +215,9 @@ export default function RatePlayerForm({
                 onClick={() => setHighlightedSkill(key)}
                 className="font-mono text-[10px] px-2.5 py-1 rounded-full transition-all duration-150"
                 style={{
-                  background: isSelected ? `${color}18` : "rgba(255,255,255,0.04)",
-                  border:     isSelected ? `1px solid ${color}44` : "1px solid rgba(255,255,255,0.08)",
-                  color:      isSelected ? color : "#6b7280",
+                  background: isSelected ? `${color}18` : "rgba(236,229,216,0.04)",
+                  border:     isSelected ? `1px solid ${color}55` : "1px solid var(--hairline)",
+                  color:      isSelected ? color : "rgba(236,229,216,0.45)",
                 }}
               >
                 {label} <span style={{ opacity: 0.7 }}>{values[key].toFixed(1)}</span>
@@ -238,10 +232,11 @@ export default function RatePlayerForm({
         <button
           type="submit"
           disabled={pending}
-          className="font-mono text-sm px-6 py-3 rounded-lg font-semibold transition-all duration-150"
+          className="eyebrow rounded-md px-6 py-3 font-semibold transition-all duration-150"
           style={{
+            fontSize: 11,
             background: pending ? "rgba(34,214,138,0.3)" : "#22d68a",
-            color: pending ? "rgba(255,255,255,0.5)" : "#0e1116",
+            color: pending ? "rgba(255,255,255,0.5)" : "#0d1a11",
             cursor: pending ? "not-allowed" : "pointer",
           }}
         >
@@ -249,7 +244,8 @@ export default function RatePlayerForm({
         </button>
         <a
           href={`/players/${playerId}`}
-          className="font-mono text-sm px-6 py-3 rounded-lg border border-white/10 text-text-dim hover:text-text-primary transition-colors duration-150"
+          className="eyebrow rounded-md px-6 py-3 transition-colors duration-150"
+          style={{ fontSize: 11, border: "1px solid rgba(201,169,106,0.45)", color: "#c9a96a" }}
         >
           Cancel
         </a>
