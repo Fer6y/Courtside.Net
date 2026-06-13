@@ -119,7 +119,7 @@ export default function PlayerCard({
           </span>
           {player.country && (
             <span className="flex items-center gap-1.5 shrink-0">
-              <CountryFlag code={player.country} size={18} />
+              <CountryFlag code={player.country} size={20} />
               <span className="font-mono hidden sm:inline" style={{ fontSize: 10, color: "rgba(236,229,216,0.4)", letterSpacing: "0.08em" }}>
                 {player.country}
               </span>
