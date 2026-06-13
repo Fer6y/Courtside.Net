@@ -1,5 +1,8 @@
 // Shared types and helpers for user profile layout customization
 
+import type { LucideIcon } from "lucide-react";
+import { Star, Trophy, MessageSquare, Folder, Activity, PenLine } from "lucide-react";
+
 export type SectionId =
   | "favorites"
   | "trophy_case"
@@ -31,7 +34,7 @@ export interface SectionVariant { key: string; label: string }
 export interface SectionMeta {
   label:       string;
   description: string;
-  icon:        string;
+  Icon:        LucideIcon;
   variants?:   SectionVariant[];
 }
 
@@ -39,21 +42,21 @@ export const SECTION_META: Record<SectionId, SectionMeta> = {
   favorites: {
     label:       "Favorites",
     description: "Your favorited matches",
-    icon:        "⭐",
+    Icon:        Star,
     variants: [
       { key: "carousel", label: "Carousel" },
       { key: "grid",     label: "Grid"     },
     ],
   },
   trophy_case: {
-    label:       "Trophy Case",
+    label:       "Honours",
     description: "Achievement badges & decals",
-    icon:        "🏆",
+    Icon:        Trophy,
   },
   featured_comments: {
     label:       "Featured Comments",
     description: "Your most notable match comments",
-    icon:        "💬",
+    Icon:        MessageSquare,
     variants: [
       { key: "cards", label: "Cards" },
       { key: "list",  label: "List"  },
@@ -62,12 +65,12 @@ export const SECTION_META: Record<SectionId, SectionMeta> = {
   collections: {
     label:       "Collections",
     description: "Named match folders",
-    icon:        "📁",
+    Icon:        Folder,
   },
   recent_activity: {
     label:       "Recent Activity",
     description: "Recently watched & players rated",
-    icon:        "🎾",
+    Icon:        Activity,
     variants: [
       { key: "two_col", label: "Two Columns" },
       { key: "single",  label: "Full Width"  },
@@ -76,7 +79,7 @@ export const SECTION_META: Record<SectionId, SectionMeta> = {
   reviews: {
     label:       "All Reviews",
     description: "Your complete review history",
-    icon:        "📝",
+    Icon:        PenLine,
     variants: [
       { key: "cards",   label: "Cards"   },
       { key: "compact", label: "Compact" },

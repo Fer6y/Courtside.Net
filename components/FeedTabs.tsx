@@ -150,31 +150,33 @@ export default function FeedTabs({ communityItems, followingItems, isSignedIn, f
 
   return (
     <div>
-      {/* Tab switcher */}
-      <div className="flex items-center gap-1 mb-4">
+      {/* Tab switcher — gold-underlined eyebrow links */}
+      <div className="flex items-baseline gap-4 mb-5">
         {isSignedIn && (
           <button
             onClick={() => setTab("following")}
-            className="font-mono text-xs px-3 py-1.5 rounded-lg transition-all duration-150"
+            className="eyebrow transition-all duration-150"
             style={{
-              background: tab === "following" ? "rgba(34,214,138,0.12)" : "transparent",
-              color:      tab === "following" ? "#22d68a" : "#6b7280",
-              border:     tab === "following" ? "1px solid rgba(34,214,138,0.25)" : "1px solid transparent",
+              fontSize: 10,
+              paddingBottom: 2,
+              color:        tab === "following" ? "#c9a96a" : "rgba(236,229,216,0.4)",
+              borderBottom: tab === "following" ? "1px solid rgba(201,169,106,0.6)" : "1px solid transparent",
             }}
           >
             Following
             {followingCount > 0 && (
-              <span className="ml-1.5 font-mono text-[9px] opacity-70">({followingCount})</span>
+              <span className="ml-1.5" style={{ fontSize: 9, opacity: 0.7 }}>({followingCount})</span>
             )}
           </button>
         )}
         <button
           onClick={() => setTab("everyone")}
-          className="font-mono text-xs px-3 py-1.5 rounded-lg transition-all duration-150"
+          className="eyebrow transition-all duration-150"
           style={{
-            background: tab === "everyone" ? "rgba(34,214,138,0.12)" : "transparent",
-            color:      tab === "everyone" ? "#22d68a" : "#6b7280",
-            border:     tab === "everyone" ? "1px solid rgba(34,214,138,0.25)" : "1px solid transparent",
+            fontSize: 10,
+            paddingBottom: 2,
+            color:        tab === "everyone" ? "#c9a96a" : "rgba(236,229,216,0.4)",
+            borderBottom: tab === "everyone" ? "1px solid rgba(201,169,106,0.6)" : "1px solid transparent",
           }}
         >
           Everyone

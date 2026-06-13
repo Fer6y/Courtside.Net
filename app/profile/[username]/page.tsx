@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Folder } from "lucide-react";
 import FollowButton from "@/components/FollowButton";
 import TrophyCase from "@/components/TrophyCase";
 import UserAvatar from "@/components/UserAvatar";
@@ -354,10 +355,10 @@ export default async function ProfilePage({ params }: Props) {
             <SectionHeader title="Collections" count={namedCollections.length} />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {namedCollections.map(([name, entries]) => (
-                <div key={name} className="rounded-lg border border-white/5 bg-white/[0.02] p-4">
+                <div key={name} className="rounded-lg p-4" style={{ border: "1px solid var(--hairline-soft)", background: "rgba(236,229,216,0.02)" }}>
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-base leading-none">📁</span>
-                    <span className="font-mono text-sm font-semibold text-text-primary truncate">{name}</span>
+                    <Folder size={15} strokeWidth={1.6} style={{ color: "#c9a96a" }} className="shrink-0" />
+                    <span className="bill-name truncate" style={{ fontSize: 15, color: "#ece5d8" }}>{name}</span>
                   </div>
                   <div className="font-mono text-[10px] text-text-dim mb-2">{entries.length} {entries.length === 1 ? "match" : "matches"}</div>
                   {entries.slice(0, 2).map((w) => (

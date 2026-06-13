@@ -80,13 +80,13 @@ export default function ProfileLayoutEditor({ username, initialConfig }: Props) 
     <div>
 
       {/* Live preview hint */}
-      <p className="font-sans text-sm text-text-dim mb-8">
+      <p className="bill-name italic mb-8" style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.5)" }}>
         Reorder sections, toggle visibility, and choose how each one displays. Changes apply to your public profile.
       </p>
 
       {/* Visible sections */}
       <div className="mb-2">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-text-dim mb-3">Visible</p>
+        <p className="eyebrow mb-3" style={{ fontSize: 9, color: "rgba(236,229,216,0.4)" }}>Visible</p>
         <div className="flex flex-col gap-2">
           {visibleSections.map((id) => {
             const meta           = SECTION_META[id];
@@ -115,7 +115,7 @@ export default function ProfileLayoutEditor({ username, initialConfig }: Props) 
       {/* Hidden sections */}
       {hiddenSections.length > 0 && (
         <div className="mt-6">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-text-dim mb-3">Hidden</p>
+          <p className="eyebrow mb-3" style={{ fontSize: 9, color: "rgba(236,229,216,0.4)" }}>Hidden</p>
           <div className="flex flex-col gap-2">
             {hiddenSections.map((id) => {
               const meta           = SECTION_META[id];
@@ -196,10 +196,10 @@ function SectionCard({
 }: SectionCardProps) {
   return (
     <div
-      className="rounded-xl p-4 transition-all duration-150"
+      className="rounded-lg p-4 transition-all duration-150"
       style={{
-        border:     isHidden ? "1px solid rgba(255,255,255,0.04)" : "1px solid rgba(255,255,255,0.09)",
-        background: isHidden ? "rgba(255,255,255,0.01)" : "rgba(255,255,255,0.03)",
+        border:     isHidden ? "1px solid var(--hairline-soft)" : "1px solid var(--hairline)",
+        background: "rgba(236,229,216,0.02)",
         opacity:    isHidden ? 0.55 : 1,
       }}
     >
@@ -226,27 +226,29 @@ function SectionCard({
         )}
 
         {/* Icon */}
-        <span className="text-xl shrink-0 mt-0.5">{meta.icon}</span>
+        <meta.Icon size={18} strokeWidth={1.6} className="shrink-0 mt-1" style={{ color: "rgba(236,229,216,0.5)" }} />
+
 
         {/* Info + variant picker */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="font-mono text-sm font-semibold text-text-primary">{meta.label}</span>
+            <span className="bill-name" style={{ fontSize: 15, color: "#ece5d8" }}>{meta.label}</span>
           </div>
-          <p className="font-sans text-xs text-text-dim leading-relaxed">{meta.description}</p>
+          <p className="font-sans text-xs leading-relaxed" style={{ color: "rgba(236,229,216,0.45)" }}>{meta.description}</p>
 
-          {/* Variant pills — only when visible */}
+          {/* Variant options — only when visible */}
           {meta.variants && !isHidden && (
-            <div className="flex flex-wrap gap-1.5 mt-2.5">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2.5">
               {meta.variants.map((v) => (
                 <button
                   key={v.key}
                   onClick={() => onSetVariant(v.key)}
-                  className="font-mono text-[10px] px-2.5 py-1 rounded-full transition-all duration-150"
+                  className="eyebrow transition-all duration-150"
                   style={{
-                    background: currentVariant === v.key ? "rgba(34,214,138,0.14)" : "rgba(255,255,255,0.05)",
-                    border:     currentVariant === v.key ? "1px solid rgba(34,214,138,0.3)" : "1px solid rgba(255,255,255,0.08)",
-                    color:      currentVariant === v.key ? "#22d68a" : "#6b7280",
+                    fontSize: 9,
+                    paddingBottom: 2,
+                    color: currentVariant === v.key ? "#c9a96a" : "rgba(236,229,216,0.4)",
+                    borderBottom: currentVariant === v.key ? "1px solid rgba(201,169,106,0.6)" : "1px solid transparent",
                   }}
                 >
                   {v.label}
@@ -259,11 +261,11 @@ function SectionCard({
         {/* Visible / Hidden toggle */}
         <button
           onClick={onToggleHidden}
-          className="shrink-0 font-mono text-xs px-3 py-1.5 rounded-lg transition-all duration-150 whitespace-nowrap"
+          className="shrink-0 eyebrow px-3 py-1.5 rounded-md transition-all duration-150 whitespace-nowrap"
           style={{
-            background: isHidden ? "rgba(255,255,255,0.05)" : "rgba(34,214,138,0.1)",
-            border:     isHidden ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(34,214,138,0.2)",
-            color:      isHidden ? "#6b7280" : "#22d68a",
+            border: "1px solid var(--hairline)",
+            color:  isHidden ? "rgba(236,229,216,0.45)" : "#c9a96a",
+            fontSize: 9,
           }}
         >
           {isHidden ? "Show" : "Hide"}

@@ -1,6 +1,15 @@
 import Link from "next/link";
+import { Flame, Zap, ThumbsDown, type LucideIcon } from "lucide-react";
 import RadarChart from "@/components/radar/RadarChart";
 import GuideSidebar from "@/components/GuideSidebar";
+
+// Maps the legacy emoji keys in the mock data to the real line icons the
+// app now uses, so the guide demonstrates what users actually see.
+const RX_ICON: Record<string, LucideIcon> = {
+  "🔥": Flame,
+  "😲": Zap,
+  "👎": ThumbsDown,
+};
 
 export const metadata = {
   title: "How it works — Courtside",
@@ -120,20 +129,23 @@ function ReviewMockup() {
           { emoji: "🔥", count: 14, active: true },
           { emoji: "😲", count: 6,  active: false },
           { emoji: "👎", count: 1,  active: false },
-        ].map(({ emoji, count, active }) => (
-          <div
-            key={emoji}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-xs"
-            style={{
-              background: active ? "rgba(34,214,138,0.12)" : "rgba(255,255,255,0.05)",
-              border:     active ? "1px solid rgba(34,214,138,0.25)" : "1px solid rgba(255,255,255,0.08)",
-              color:      active ? "#22d68a" : "#6b7280",
-            }}
-          >
-            <span>{emoji}</span>
-            <span>{count}</span>
-          </div>
-        ))}
+        ].map(({ emoji, count, active }) => {
+          const Icon = RX_ICON[emoji];
+          return (
+            <div
+              key={emoji}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-xs"
+              style={{
+                background: active ? "rgba(201,169,106,0.12)" : "rgba(236,229,216,0.04)",
+                border:     active ? "1px solid rgba(201,169,106,0.4)" : "1px solid rgba(236,229,216,0.12)",
+                color:      active ? "#c9a96a" : "rgba(236,229,216,0.45)",
+              }}
+            >
+              <Icon size={13} strokeWidth={1.7} />
+              <span>{count}</span>
+            </div>
+          );
+        })}
         <span className="font-mono text-xs text-text-dim ml-2">3 comments</span>
       </div>
     </div>
@@ -167,15 +179,18 @@ function CommentMockup() {
           </div>
           <p className="font-sans text-xs text-text-mid leading-relaxed">{text}</p>
           <div className="flex items-center gap-1.5 mt-2">
-            {Object.entries(reactions).map(([emoji, count]) => (
-              <div
-                key={emoji}
-                className="flex items-center gap-1 px-1.5 py-0.5 rounded-full font-mono text-[9px]"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", color: "#6b7280" }}
-              >
-                {emoji} {count}
-              </div>
-            ))}
+            {Object.entries(reactions).map(([emoji, count]) => {
+              const Icon = RX_ICON[emoji];
+              return (
+                <div
+                  key={emoji}
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded-full font-mono text-[9px]"
+                  style={{ background: "rgba(236,229,216,0.04)", border: "1px solid rgba(236,229,216,0.1)", color: "rgba(236,229,216,0.5)" }}
+                >
+                  <Icon size={10} strokeWidth={1.7} /> {count}
+                </div>
+              );
+            })}
           </div>
         </div>
       ))}
@@ -470,8 +485,8 @@ export default function GuidePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
               <div>
                 <p className="font-sans text-sm text-text-mid leading-relaxed mb-5">
-                  Every review and comment has three reaction buttons — <strong className="text-text-primary">🔥 Fire</strong>,{" "}
-                  <strong className="text-text-primary">😲 Surprised</strong>, and <strong className="text-text-primary">👎 Disagree</strong>. Tap to react, tap again to undo.
+                  Every review and comment has three reaction buttons — <strong className="text-text-primary">Fire</strong>,{" "}
+                  <strong className="text-text-primary">Surprised</strong>, and <strong className="text-text-primary">Disagree</strong>. Tap to react, tap again to undo.
                   Counts are always visible so you can see how the community responded.
                 </p>
                 <p className="font-sans text-sm text-text-mid leading-relaxed mb-5">
@@ -589,7 +604,7 @@ export default function GuidePage() {
                     { label: "Everyone tab",      color: "#4a9eff", desc: "All community activity. Good for discovering new players and opinions."     },
                     { label: "Trending Players",  color: "#9ca3af", desc: "Most-rated players over the last 14 days, ranked by community attention."   },
                     { label: "Top 25 Clashes",    color: "#4a9eff", desc: "Recent matches where both players were ranked in the top 25."               },
-                    { label: "Hot Matches",       color: "#f5c518", desc: "Most-reviewed matches in the last 14 days. 🔥 count scales with reviews × rating." },
+                    { label: "Hot Matches",       color: "#c9a96a", desc: "Most-reviewed matches in the last 14 days. Flame count scales with reviews × rating." },
                   ].map(({ label, color, desc }) => (
                     <div key={label} className="flex items-start gap-2">
                       <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-2" style={{ background: color }} />

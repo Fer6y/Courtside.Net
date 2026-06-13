@@ -33,14 +33,28 @@ Community platform where tennis fans rate player skills, review matches, and bui
 - Use server components by default; client components only when interactivity required
 - All database queries go through /lib/supabase
 - Tailwind for all styling, no CSS modules
-- Dark theme only (colors defined in tailwind.config)
-- IBM Plex Mono for numbers, scores, headings, data, brand
-- DM Sans for body text, reviews, comments, UI labels
-- Never mix the two fonts in the same context
-- Green (#22d68a) = actions, wins. Red (#e74c3c) = losses. Blue (#4a9eff) = comparisons. Amber (#f5c518) = highlights.
-- Cards use subtle borders (rgba(255,255,255,0.05)) and low-opacity backgrounds (rgba(255,255,255,0.03)), never solid fills
-- Player names are always tappable (dashed underline, quick bubble popup)
-- Surface badges (Hard/Clay/Grass) are color-coded consistently everywhere
+- Dark theme only. Tokens live in app/globals.css (@theme), NOT tailwind.config
+
+### Design language — "The Programme" (redesign June 2026, see docs/ui-redesign-plan.md)
+The app is styled like a tournament programme / fine menu, not a dark dashboard.
+- **Three type roles, kept distinct (never blurred):**
+  - **Fraunces** (`--font-serif`, `.bill-name`) — player names, match-ups, page titles, marquee headings. Italic carries "v." / "d." and editorial flourishes.
+  - **IBM Plex Mono** — scores, ratings, dates, stats, and small-caps **eyebrow labels** (`.eyebrow`: ~10px, 0.2em tracking, uppercase). Mono is NOT used for headings anymore.
+  - **DM Sans** — body text, reviews, comments, UI labels.
+- **Layout primitives** (in globals.css `@layer components`): `.eyebrow`, `.rule`, `.rule-divider` (—— LABEL ——), `.dot-leader` + `.dot-leader-dots` (menu-style "Label …… value"), `.bill-name`. Prefer these over boxed cards. Hairlines (`var(--hairline)`, `var(--hairline-soft)`) separate content; cards survive only as interactive objects (forms, review cards).
+- **Court themes:** the page background is a selectable court via `data-court="grass|clay|hard"` on `<html>` (default grass). Read from the `court` cookie in the root layout (lib/courts.ts). Match pages override to the surface played on via CourtOverride. Picker on the customize page.
+
+### Color
+- **Green (#22d68a)** = actions, wins, CTAs (used sparingly). **Gold (#c9a96a)** = honours, slam/luxury accents, ornament, active filter underlines — REPLACED bright amber #f5c518 in programme contexts. **Cream (#ece5d8)** = serif display text. Red (#e74c3c) = losses. Blue (#4a9eff) = comparisons.
+- Surface badges/text (Hard #4a90d9 / Clay #d4734e / Grass #5cb85c) are color-coded consistently everywhere.
+- Grand Slam pages get tinted cover bands per slam (getCoverBand in lib/tournamentTiers) — content identity, identical on every court theme.
+- Slam trophy decals: components/trophies/TrophyDecals.tsx (gold per-slam silhouettes + Masters cup). Honours rows use API-verified slam_wins only.
+
+### Other
+- NO emoji as iconography — use lucide line icons (reactions = Flame/Zap/ThumbsDown). The gold `✦` fleuron marks winners; `✓`/`✕` are allowed UI marks.
+- Filters/tabs are small-caps eyebrow text links with gold underlines, NOT pills.
+- Content rules (see docs): no vanity site-stats; factual career claims need a verified source; scope catalogue-derived stats honestly ("since 2020").
+- Player names are always tappable (PlayerNameWithBubble — dashed underline, bubble popup)
 - Animations: 150-200ms, functional not decorative. Spring physics for popups.
 - Mobile-first responsive. Touch targets 44px minimum.
 - Never refactor code unless explicitly asked
