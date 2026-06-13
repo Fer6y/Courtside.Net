@@ -31,6 +31,12 @@ const RATING_OPTIONS = [
   { label: "7.0+", value: "7" }, { label: "8.0+", value: "8" },
   { label: "9.0+", value: "9" },
 ];
+// Default view is "marquee" (top-50 meetings, represented by no param);
+// "all" opens the full chronological log.
+const SCOPE_OPTIONS = [
+  { label: "Marquee",     value: "marquee" },
+  { label: "All matches", value: "all"     },
+];
 const SURFACE_COLOR: Record<string, string> = {
   Hard: "#4a90d9", Clay: "#d4734e", Grass: "#5cb85c", Carpet: "#9ca3af",
 };
@@ -50,6 +56,7 @@ export interface MatchFilters {
   tournament?: string; // single
   player?:     string; // single UUID
   playerName?: string;
+  scope?:      string; // single — "marquee" (default) | "all"
 }
 
 interface Props {
@@ -64,7 +71,7 @@ interface PlayerResult {
 }
 
 const ALL_KEYS: (keyof MatchFilters)[] = [
-  "round","surface","level","sets","year","minRating","tournament","player","playerName",
+  "round","surface","level","sets","year","minRating","tournament","player","playerName","scope",
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -234,6 +241,7 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
     : options.tournaments;
 
   const chips = [
+    { key: "scope",      label: singleLabel("scope", "Marquee", SCOPE_OPTIONS) },
     { key: "level",      label: multiLabel("level",   "Level",   LEVEL_OPTIONS) },
     { key: "round",      label: multiLabel("round", "Round", ROUND_ORDER.map((r) => ({ label: ROUND_SHORT[r] ?? r, value: r })))  },
     { key: "tournament", label: singleLabel("tournament", "Tournament") },
@@ -302,6 +310,19 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
             minWidth: 160,
           }}
         >
+          {/* Scope — marquee vs the full log */}
+          {openChip === "scope" && (
+            <div className="flex flex-col gap-1" style={{ minWidth: 150 }}>
+              <DropLabel>What to show</DropLabel>
+              {SCOPE_OPTIONS.map((o) => (
+                <RadioRow key={o.value} label={o.label}
+                  active={(eff.scope ?? "marquee") === o.value}
+                  onClick={() => selectSingle({ scope: o.value === "marquee" ? undefined : o.value })}
+                />
+              ))}
+            </div>
+          )}
+
           {/* Level */}
           {openChip === "level" && (
             <div className="flex flex-col gap-1">

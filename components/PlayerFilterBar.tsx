@@ -4,11 +4,16 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const RANK_OPTIONS = [
-  { label: "Top 10",  value: "10" },
-  { label: "Top 25",  value: "25" },
-  { label: "Top 50",  value: "50" },
-  { label: "Top 100", value: "100" },
+  { label: "Top 10",      value: "10"  },
+  { label: "Top 30",      value: "30"  },
+  { label: "Top 50",      value: "50"  },
+  { label: "Top 100",     value: "100" },
+  { label: "All players", value: "all" },
 ];
+
+// The field opens on the top 30; anything else is an explicit choice the
+// page carries in the URL. "30" is therefore treated as the no-op default.
+const DEFAULT_RANK = "30";
 
 export interface PlayerFilters {
   country?:  string;
@@ -42,7 +47,7 @@ export default function PlayerFilterBar({ filters, countries, basePath, extraPar
     const next: Record<string, string> = { ...extraParams };
     const merged = { ...filters, ...updates };
     if (merged.country) next.country = merged.country;
-    if (merged.rankMax) next.rankMax = merged.rankMax;
+    if (merged.rankMax && merged.rankMax !== DEFAULT_RANK) next.rankMax = merged.rankMax;
     const qs = new URLSearchParams(next).toString();
     router.push(`${basePath}${qs ? `?${qs}` : ""}`);
     setOpenChip(null);
@@ -52,7 +57,9 @@ export default function PlayerFilterBar({ filters, countries, basePath, extraPar
   function clearFilter(...keys: string[]) {
     const next: Record<string, string> = { ...extraParams };
     if (!keys.includes("country") && filters.country) next.country = filters.country;
-    if (!keys.includes("rankMax") && filters.rankMax) next.rankMax = filters.rankMax;
+    if (!keys.includes("rankMax") && filters.rankMax && filters.rankMax !== DEFAULT_RANK) {
+      next.rankMax = filters.rankMax;
+    }
     const qs = new URLSearchParams(next).toString();
     router.push(`${basePath}${qs ? `?${qs}` : ""}`);
     setOpenChip(null);
@@ -64,13 +71,13 @@ export default function PlayerFilterBar({ filters, countries, basePath, extraPar
     setOpenChip(null);
   }
 
-  const hasAnyFilter = !!(filters.country || filters.rankMax);
+  const hasAnyFilter = !!(filters.country || (filters.rankMax && filters.rankMax !== DEFAULT_RANK));
 
   const filteredCountries = countrySearch.trim()
     ? countries.filter((c) => c.toLowerCase().includes(countrySearch.toLowerCase()))
     : countries;
 
-  const rankLabel = RANK_OPTIONS.find((o) => o.value === filters.rankMax)?.label;
+  const rankLabel = RANK_OPTIONS.find((o) => o.value === (filters.rankMax ?? DEFAULT_RANK))?.label;
 
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
@@ -79,25 +86,23 @@ export default function PlayerFilterBar({ filters, countries, basePath, extraPar
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
 
-        {/* Rank range */}
+        {/* Rank range — always has a value (defaults to Top 30); pick "All
+            players" to lift the cut. No clear affordance, it's never empty. */}
         <Chip
           label="Rank"
           value={rankLabel}
           isOpen={openChip === "rank"}
           onToggle={() => setOpenChip(openChip === "rank" ? null : "rank")}
-          onClear={() => clearFilter("rankMax")}
+          onClear={() => {}}
+          hideClear
         >
           <div className="flex flex-col gap-0.5" style={{ minWidth: 110 }}>
             {RANK_OPTIONS.map((o) => (
               <OptionButton
                 key={o.value}
                 label={o.label}
-                active={filters.rankMax === o.value}
-                onClick={() =>
-                  filters.rankMax === o.value
-                    ? clearFilter("rankMax")
-                    : navigate({ rankMax: o.value })
-                }
+                active={(filters.rankMax ?? DEFAULT_RANK) === o.value}
+                onClick={() => navigate({ rankMax: o.value })}
               />
             ))}
           </div>
@@ -162,7 +167,7 @@ export default function PlayerFilterBar({ filters, countries, basePath, extraPar
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function Chip({
-  label, value, isOpen, onToggle, onClear, children,
+  label, value, isOpen, onToggle, onClear, children, hideClear,
 }: {
   label: string;
   value?: string;
@@ -170,6 +175,7 @@ function Chip({
   onToggle: () => void;
   onClear: () => void;
   children: React.ReactNode;
+  hideClear?: boolean;
 }) {
   const active = !!value;
   return (
@@ -200,7 +206,7 @@ function Chip({
         >
           {active ? value : label}
         </button>
-        {active && (
+        {active && !hideClear && (
           <button
             onClick={(e) => { e.stopPropagation(); onClear(); }}
             className="font-mono transition-colors duration-150"

@@ -116,6 +116,10 @@ export default async function PlayersPage({
   const activeTour = tour === "WTA" ? "WTA" : "ATP";
   const activeSort = sort ?? "rank";
 
+  // The Field opens on the top of the game, not the full catalogue. Default
+  // to the top 30 by rank; "all" is the explicit opt-out for the long tail.
+  const effRankMax = rankMax ?? "30";
+
   const supabase = getSupabase();
 
   // ── Fetch distinct countries for filter dropdown ───────────────
@@ -138,8 +142,10 @@ export default async function PlayersPage({
   // Filter by country
   if (country) query = query.eq("country", country);
 
-  // Filter by rank range
-  if (rankMax) query = query.lte("current_rank", Number(rankMax)).not("current_rank", "is", null);
+  // Filter by rank range — default top 30, unless "all" opts out of the cut
+  if (effRankMax !== "all") {
+    query = query.lte("current_rank", Number(effRankMax)).not("current_rank", "is", null);
+  }
 
   // Only DB-sort for non-stat sorts
   if (!STAT_SORTS.has(activeSort)) {
@@ -205,9 +211,10 @@ export default async function PlayersPage({
     const qs = new URLSearchParams();
     if (merged.tour) qs.set("tour", merged.tour);
     if (merged.sort && merged.sort !== "rank") qs.set("sort", merged.sort);
-    // Preserve active filters when changing tour/sort
+    // Preserve active filters when changing tour/sort. Bare URL = Top 30,
+    // so only carry rankMax when it differs from the default.
     if (country) qs.set("country", country);
-    if (rankMax) qs.set("rankMax", rankMax);
+    if (effRankMax !== "30") qs.set("rankMax", effRankMax);
     return `/players${qs.toString() ? `?${qs}` : ""}`;
   }
 
@@ -245,7 +252,7 @@ export default async function PlayersPage({
         className="bill-name italic mb-7 mt-1"
         style={{ fontWeight: 300, fontSize: 14, color: "rgba(236,229,216,0.5)" }}
       >
-        Every player in the catalogue — Grand Slams &amp; Masters 1000
+        The top of the game — rate their skills, read their form
       </p>
 
       {/* Sort options */}
@@ -273,7 +280,7 @@ export default async function PlayersPage({
       {/* Filter chips — country + rank */}
       <div className="mb-6">
         <PlayerFilterBar
-          filters={{ country, rankMax }}
+          filters={{ country, rankMax: effRankMax }}
           countries={countries}
           basePath="/players"
           extraParams={extraParams}
@@ -284,10 +291,6 @@ export default async function PlayersPage({
         <p className="text-loss font-sans text-sm">Failed to load players.</p>
       ) : (
         <>
-          <p className="eyebrow mb-3" style={{ fontSize: 10, color: "rgba(236,229,216,0.35)" }}>
-            {sorted.length} players
-          </p>
-
           {sorted.length === 0 ? (
             <div
               className="rounded-lg p-12 text-center"

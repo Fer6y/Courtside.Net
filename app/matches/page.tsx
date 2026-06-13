@@ -48,6 +48,7 @@ type SearchParams = Promise<{
   level?:      string;  // comma-separated: "slam,masters"
   sets?:       string;  // comma-separated: "3,4,5"
   minRating?:  string;
+  scope?:      string;  // "marquee" (default) | "all"
 }>;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -93,10 +94,33 @@ const getFilterOptions = unstable_cache(
   { revalidate: 3600 }
 );
 
+// The "marquee" set: IDs of the tour's current top-50 players. Order of Play
+// opens on meetings where BOTH players are in this set — the match-ups people
+// actually tune in for — rather than the full chronological log.
+//
+// NOTE: current_rank is today's rank, not rank-at-match-time, so this biases
+// toward today's stars. That's intentional ("focus on top players"). 50 is the
+// single knob here — bump it to widen the marquee.
+const MARQUEE_RANK_CUTOFF = 50;
+const getTopPlayerIds = unstable_cache(
+  async (tour: string) => {
+    const db = getSupabase();
+    const { data } = await db
+      .from("players")
+      .select("id")
+      .filter("career_stats->>tour", "eq", tour)
+      .lte("current_rank", MARQUEE_RANK_CUTOFF)
+      .not("current_rank", "is", null);
+    return (data ?? []).map((r) => r.id as string);
+  },
+  ["matches-marquee-ids"],
+  { revalidate: 3600 }
+);
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function MatchesPage({ searchParams }: { searchParams: SearchParams }) {
-  const { tour, round, tournament, surface, year, player, playerName, level, sets, minRating } =
+  const { tour, round, tournament, surface, year, player, playerName, level, sets, minRating, scope } =
     await searchParams;
 
   const activeTour = tour === "WTA" ? "WTA" : "ATP";
@@ -126,6 +150,7 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
     if (level)       qs.set("level", level);
     if (sets)        qs.set("sets", sets);
     if (minRating)   qs.set("minRating", minRating);
+    if (scope)       qs.set("scope", scope);
     return `/matches?${qs.toString()}`;
   }
 
@@ -163,7 +188,7 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
   const setsArr  = getArr(sets);
 
   // When sets filter is active, fetch more records (JS filtering happens below)
-  const fetchLimit = setsArr.length > 0 ? 500 : 100;
+  const fetchLimit = setsArr.length > 0 ? 500 : 40;
 
   // ── Build DB query ───────────────────────────────────────────────────────────
   let query = supabase
@@ -200,6 +225,17 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
   const isUuid = player && /^[0-9a-f-]{36}$/i.test(player);
   if (isUuid) query = query.or(`player1_id.eq.${player},player2_id.eq.${player}`);
 
+  // Marquee default — both players in the tour's current top 50. Lifted when
+  // scope=all, or when drilling into one player (then show all their matches,
+  // including against lower-ranked opponents).
+  const marquee = scope !== "all" && !isUuid;
+  if (marquee) {
+    const topIds = await getTopPlayerIds(activeTour);
+    if (topIds.length > 0) {
+      query = query.in("player1_id", topIds).in("player2_id", topIds);
+    }
+  }
+
   // Level (multi) — only apply when not both selected (both = no filter)
   if (levels.length === 1) {
     if (levels[0] === "slam") {
@@ -232,8 +268,10 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
   }
 
   const hasAnyFilter = !!(round || tournament || surface || year || player || level || sets || minRating);
-  const filters: MatchFilters = { round, tournament, surface, year, player, playerName, level, sets, minRating };
-  const tourSubtitle = activeTour === "WTA" ? "Grand Slams & Premier · WTA" : "Grand Slams & Masters 1000 · ATP";
+  const filters: MatchFilters = { round, tournament, surface, year, player, playerName, level, sets, minRating, scope };
+  const tourSubtitle = marquee
+    ? "The match-ups that mattered — top-50 meetings"
+    : activeTour === "WTA" ? "Every match · WTA" : "Every match · ATP";
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-12">
@@ -289,9 +327,6 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
         </div>
       ) : (
         <>
-          <p className="eyebrow mb-3" style={{ fontSize: 10, color: "rgba(236,229,216,0.35)" }}>
-            {matches!.length}{matches!.length >= 100 ? "+" : ""} match{matches!.length !== 1 ? "es" : ""}
-          </p>
           <div>
             {(matches as MatchWithPlayers[]).map((match) => (
               <MatchRow key={match.id} match={match} />
