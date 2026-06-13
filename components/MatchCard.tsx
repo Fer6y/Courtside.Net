@@ -70,7 +70,7 @@ export default function MatchCard({
     >
       {/* Match-up + score */}
       <div className="flex items-baseline justify-between gap-x-4 gap-y-0.5 flex-wrap">
-        <span className="bill-name min-w-0" style={{ fontSize: 18 }}>
+        <span className="bill-name min-w-0 text-[16px] sm:text-[18px]">
           <span style={{ fontWeight: hasWinner ? 500 : 400, color: "#ece5d8" }}>
             <PlayerNameWithBubble playerId={first.id} playerName={first?.name ?? "Unknown"} />
           </span>

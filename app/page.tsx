@@ -149,8 +149,7 @@ export default async function HomePage() {
 
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
       <section
-        className="flex flex-col items-center justify-center text-center px-4"
-        style={{ minHeight: "calc(82vh - 60px)" }}
+        className="relative flex flex-col items-center justify-center text-center px-4 min-h-[calc(100svh_-_100px)] md:min-h-[calc(100vh_-_60px)]"
       >
         <CourtsideMark size={76} className="mb-5" />
         <div className="eyebrow" style={{ fontSize: 11, color: "#c9a96a" }}>
@@ -199,46 +198,51 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        {/* This fortnight — editorial feature */}
-        {featuredFinal && (
-          <div className="w-full mt-14" style={{ maxWidth: 480 }}>
-            <div className="rule-divider mb-3">
-              <span className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.5)" }}>
-                This fortnight — {(featuredFinal.tournament as string).replace(/\s+\d{4}$/, "")}
-              </span>
+        {/* Bottom strip — pinned to the foot of the hero so the masthead
+            (logo · title · options) stays vertically centred and uncluttered.
+            On mobile it's a slim footnote; the scroll cue is desktop-only. */}
+        <div className="absolute inset-x-0 bottom-0 px-4 pb-6 flex flex-col items-center gap-5">
+          {/* This fortnight — editorial feature, kept small */}
+          {featuredFinal && (
+            <div className="w-full mx-auto" style={{ maxWidth: 420 }}>
+              <div className="rule-divider mb-2">
+                <span className="eyebrow" style={{ fontSize: 8, color: "rgba(236,229,216,0.45)" }}>
+                  This fortnight — {(featuredFinal.tournament as string).replace(/\s+\d{4}$/, "")}
+                </span>
+              </div>
+              <Link
+                href={`/matches/${featuredFinal.id}`}
+                className="flex items-baseline justify-between gap-x-3 gap-y-0.5 flex-wrap transition-colors duration-150"
+              >
+                <span className="bill-name" style={{ fontSize: 14 }}>
+                  <span style={{ fontWeight: 500, color: "#ece5d8" }}>
+                    {(featuredFinal.player1 as { name?: string } | null)?.name}
+                  </span>
+                  <span className="italic" style={{ fontWeight: 300, fontSize: 12, color: "rgba(236,229,216,0.4)" }}>
+                    {" "}v.{" "}
+                  </span>
+                  <span style={{ fontWeight: 500, color: "#ece5d8" }}>
+                    {(featuredFinal.player2 as { name?: string } | null)?.name}
+                  </span>
+                </span>
+                <span className="font-mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "rgba(236,229,216,0.45)" }}>
+                  FINAL
+                  {featuredFinal.surface && (
+                    <> · <span style={{ color: SURFACE_COLOR[featuredFinal.surface as string] ?? "inherit" }}>
+                      {(featuredFinal.surface as string).toUpperCase()}
+                    </span></>
+                  )}
+                  {featuredFinal.match_date && <> · {(featuredFinal.match_date as string).slice(0, 4)}</>}
+                </span>
+              </Link>
             </div>
-            <Link
-              href={`/matches/${featuredFinal.id}`}
-              className="flex items-baseline justify-between gap-3 flex-wrap transition-colors duration-150"
-            >
-              <span className="bill-name" style={{ fontSize: 16 }}>
-                <span style={{ fontWeight: 500, color: "#ece5d8" }}>
-                  {(featuredFinal.player1 as { name?: string } | null)?.name}
-                </span>
-                <span className="italic" style={{ fontWeight: 300, fontSize: 13, color: "rgba(236,229,216,0.4)" }}>
-                  {" "}v.{" "}
-                </span>
-                <span style={{ fontWeight: 500, color: "#ece5d8" }}>
-                  {(featuredFinal.player2 as { name?: string } | null)?.name}
-                </span>
-              </span>
-              <span className="font-mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "rgba(236,229,216,0.45)" }}>
-                FINAL
-                {featuredFinal.surface && (
-                  <> · <span style={{ color: SURFACE_COLOR[featuredFinal.surface as string] ?? "inherit" }}>
-                    {(featuredFinal.surface as string).toUpperCase()}
-                  </span></>
-                )}
-                {featuredFinal.match_date && <> · {(featuredFinal.match_date as string).slice(0, 4)}</>}
-              </span>
-            </Link>
-          </div>
-        )}
+          )}
 
-        {/* Scroll hint */}
-        <div className="mt-12 flex flex-col items-center gap-1.5 opacity-40">
-          <div className="w-px h-8" style={{ background: "linear-gradient(to bottom, rgba(236,229,216,0), rgba(236,229,216,0.4))" }} />
-          <span className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.6)" }}>Scroll</span>
+          {/* Scroll cue — desktop only; on mobile the screen already reads clean */}
+          <div className="hidden sm:flex flex-col items-center gap-1.5 opacity-40">
+            <div className="w-px h-8" style={{ background: "linear-gradient(to bottom, rgba(236,229,216,0), rgba(236,229,216,0.4))" }} />
+            <span className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.6)" }}>Scroll</span>
+          </div>
         </div>
       </section>
 

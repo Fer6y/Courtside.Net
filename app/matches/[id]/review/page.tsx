@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import ReviewMatchForm from "./ReviewMatchForm";
 import { getExistingReview } from "./actions";
+import CourtOverride from "@/components/CourtOverride";
+import { surfaceToCourt, courtOverrideScript } from "@/lib/courts";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -45,8 +47,18 @@ export default async function ReviewMatchPage({ params }: Props) {
 
   const existing = await getExistingReview(id);
 
+  // Read the page on the court this match was played on — clay on clay,
+  // grass on grass — matching the match page, overriding the user's theme
+  const matchCourt = surfaceToCourt(match.surface as string | null);
+
   return (
     <main className="max-w-2xl mx-auto px-4 py-10">
+      {matchCourt && (
+        <>
+          <script dangerouslySetInnerHTML={{ __html: courtOverrideScript(matchCourt) }} />
+          <CourtOverride court={matchCourt} />
+        </>
+      )}
       {/* Back */}
       <Link
         href={`/matches/${id}`}

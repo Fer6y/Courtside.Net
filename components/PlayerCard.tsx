@@ -69,7 +69,7 @@ export default function PlayerCard({
   return (
     <Link
       href={`/players/${player.id}`}
-      className="flex items-center gap-4 transition-colors duration-150"
+      className="flex items-center gap-3 sm:gap-4 transition-colors duration-150"
       style={{
         padding: "14px 14px",
         border: "0.5px solid var(--hairline-soft)",
@@ -80,9 +80,8 @@ export default function PlayerCard({
     >
       {/* Portrait */}
       <div
-        className="rounded-full overflow-hidden shrink-0 flex items-center justify-center"
+        className="rounded-full overflow-hidden shrink-0 flex items-center justify-center w-12 h-12 sm:w-[60px] sm:h-[60px]"
         style={{
-          width: 60, height: 60,
           border: portraitRing(player.current_rank),
           background: "rgba(236,229,216,0.05)",
         }}
@@ -105,8 +104,8 @@ export default function PlayerCard({
 
       {/* Name + chips + excerpt */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="bill-name truncate" style={{ fontSize: 20, color: "#ece5d8" }}>
+        <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+          <span className="bill-name truncate min-w-0 text-[17px] sm:text-[20px]" style={{ color: "#ece5d8" }}>
             {player.name}
           </span>
           {player.country && (
@@ -145,13 +144,17 @@ export default function PlayerCard({
       {/* Right rail — rank + honours / nudge */}
       <div className="text-right shrink-0">
         {player.current_rank ? (
-          <div className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: rankColor(player.current_rank) }}>
+          <div className="font-mono text-[16px] sm:text-[18px]" style={{ fontWeight: 600, color: rankColor(player.current_rank) }}>
             No. {player.current_rank}
           </div>
         ) : null}
         {slamCount > 0 ? (
           <div className="font-mono" style={{ fontSize: 11, color: "rgba(201,169,106,0.8)", marginTop: 4, letterSpacing: "0.1em" }}>
-            {"✦".repeat(Math.min(slamCount, 4))} {slamCount} slam{slamCount !== 1 ? "s" : ""}
+            {/* Compact on mobile (✦4) so it doesn't crush the name column; full on desktop */}
+            <span className="sm:hidden whitespace-nowrap">✦ {slamCount}</span>
+            <span className="hidden sm:inline">
+              {"✦".repeat(Math.min(slamCount, 4))} {slamCount} slam{slamCount !== 1 ? "s" : ""}
+            </span>
           </div>
         ) : !isRated ? (
           <div className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.35)", marginTop: 5 }}>
