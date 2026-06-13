@@ -287,6 +287,16 @@ async function discoverAndStage(tour: "ATP" | "WTA", year: number) {
         []
       ) as unknown[];
 
+      // Guard against the wrong-seasonId disease (see
+      // docs/match-data-validation-2026-06-12.md): a real Masters main draw is
+      // 48–96 players (47–95 matches). Anything smaller is a co-located
+      // challenger/ITF/qualifying event grabbed by mistake — never stage it.
+      // The verified-discovery path is scripts/probe-masters-seasonids.ts.
+      if (singles.length < 45) {
+        console.log(`    SKIP (only ${singles.length} singles — not a Masters main draw): ${name} ${year} ${tour} season ${seasonId}`);
+        continue;
+      }
+
       await supabase.from("api_raw_staging").insert({
         method:   "get_fixtures",
         params: {
