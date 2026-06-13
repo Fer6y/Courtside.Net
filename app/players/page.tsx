@@ -215,11 +215,12 @@ export default async function PlayersPage({
   // and average in JS rather than risk a huge player-id IN list.
   const skillsMap = new Map<string, ReturnType<typeof topSkills>>();
   {
-    const skillRows = await fetchAllRows<Record<string, unknown>>((from, to) =>
-      supabase.from("skill_ratings").select(["player_id", ...SKILL_KEYS].join(",")).range(from, to)
-    );
+    const { data: skillRows } = await supabase
+      .from("skill_ratings")
+      .select(["player_id", ...SKILL_KEYS].join(","))
+      .returns<Record<string, unknown>[]>();
     const acc = new Map<string, { sums: Record<string, number>; counts: Record<string, number> }>();
-    for (const row of skillRows) {
+    for (const row of skillRows ?? []) {
       const pid = row.player_id as string;
       if (!pid) continue;
       let a = acc.get(pid);
