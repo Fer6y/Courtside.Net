@@ -49,11 +49,11 @@ function Section({
     <section
       id={id}
       className="py-16 scroll-mt-24"
-      style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+      style={{ borderBottom: "1px solid var(--hairline-soft)" }}
     >
       <div className="flex items-baseline gap-3 mb-8">
-        <span className="font-mono text-xs text-text-dim">{num}</span>
-        <h2 className="font-mono text-2xl font-bold text-text-primary">{title}</h2>
+        <span className="eyebrow" style={{ fontSize: 10, color: "rgba(201,169,106,0.7)" }}>No. {num}</span>
+        <h2 className="bill-name text-2xl" style={{ fontWeight: 500 }}>{title}</h2>
       </div>
       {children}
     </section>
@@ -381,13 +381,15 @@ export default function GuidePage() {
       <div className="mb-12">
         <Link
           href="/"
-          className="font-sans text-sm text-text-dim hover:text-text-mid mb-6 inline-block transition-colors duration-150"
+          className="eyebrow mb-6 inline-block transition-colors duration-150"
+          style={{ fontSize: 10, color: "rgba(236,229,216,0.4)" }}
         >
           ← Home
         </Link>
-        <h1 className="font-mono text-4xl font-bold text-text-primary mb-3">How Courtside works</h1>
-        <p className="font-sans text-base text-text-mid max-w-xl leading-relaxed">
-          Courtside is a community platform for tennis fans. Rate players&apos; skills, review matches,
+        <div className="eyebrow mb-2" style={{ fontSize: 10, color: "#c9a96a" }}>The Programme</div>
+        <h1 className="bill-name mb-3" style={{ fontSize: 44, fontWeight: 500, lineHeight: 1.05 }}>How Courtside works</h1>
+        <p className="bill-name italic max-w-xl" style={{ fontWeight: 300, fontSize: 17, color: "rgba(236,229,216,0.6)" }}>
+          A community platform for tennis fans. Rate players&apos; skills, review matches,
           compare head-to-head, and build a living catalogue of your tennis fandom.
         </p>
       </div>
