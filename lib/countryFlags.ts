@@ -47,7 +47,7 @@ const CODE_MAP: Record<string, string> = {
   GBR: "gb", GEO: "ge", GER: "de", GHA: "gh", GRE: "gr",
   GUA: "gt", HKG: "hk", HUN: "hu", INA: "id", IND: "in",
   IRL: "ie", IRN: "ir", ISL: "is", ISR: "il", ITA: "it",
-  IVB: "vg", JAM: "jm", JPN: "jp", KAZ: "kz", KEN: "ke",
+  IVB: "vg", JAM: "jm", JOR: "jo", JPN: "jp", KAZ: "kz", KEN: "ke",
   KGZ: "kg", KOR: "kr", KUW: "kw", LAT: "lv", LBA: "ly",
   LIE: "li", LTU: "lt", LUX: "lu", MAR: "ma", MAS: "my",
   MDA: "md", MEX: "mx", MKD: "mk", MLT: "mt", MNE: "me",
