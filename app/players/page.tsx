@@ -25,7 +25,17 @@ const SORT_OPTIONS = [
   { label: "Win Streak",  value: "streak" },
 ];
 
-const STAT_SORTS = new Set(["matches", "streak"]);
+// Sorts computed in JS rather than the DB. "form" (last-10 wins) and "recent"
+// (most-recent title) are the implicit default orders for the Hot Streaks and
+// Recent Winners lenses — they have no chip in the sort bar.
+const STAT_SORTS = new Set(["matches", "streak", "form", "recent"]);
+
+// The default ordering each lens opens in when the user hasn't picked a sort.
+function viewDefaultOrder(view: string): string {
+  if (view === "hot") return "form";
+  if (view === "winners") return "recent";
+  return "rank";
+}
 
 // The three lenses on the field. "top30" opens by default; the other two are
 // computed from match results (see hot-streak / recent-winner helpers below).
@@ -43,6 +53,15 @@ interface MatchRow {
   winner_id: string | null;
   match_date: string | null;
   round: string | null;
+  tournament: string | null;
+  tournament_season: number | null;
+}
+
+// What a card highlights under the active lens: a recent-form record (Hot
+// Streaks) or the title just won (Recent Winners). Null on the default view.
+export interface FormNote {
+  text: string;
+  color: string;
 }
 
 interface PlayerStats {
@@ -80,31 +99,43 @@ function playerMatches(playerId: string, matches: MatchRow[]): MatchRow[] {
     .sort((a, b) => (b.match_date ?? "").localeCompare(a.match_date ?? ""));
 }
 
+// A player's win–loss record across their last 10 matches.
+function lastTenRecord(playerId: string, matches: MatchRow[]): { wins: number; losses: number } {
+  const recent = playerMatches(playerId, matches).slice(0, 10);
+  const wins = recent.filter((m) => m.winner_id === playerId).length;
+  return { wins, losses: recent.length - wins };
+}
+
 // Hot streak: 90%+ win rate across the player's last 10 matches. Requires a
 // full sample of 10 so the rate is meaningful (≥9 of the last 10 won).
 function isHotStreak(playerId: string, matches: MatchRow[]): boolean {
-  const recent = playerMatches(playerId, matches).slice(0, 10);
-  if (recent.length < 10) return false;
-  const wins = recent.filter((m) => m.winner_id === playerId).length;
-  return wins / recent.length >= 0.9;
+  const { wins, losses } = lastTenRecord(playerId, matches);
+  if (wins + losses < 10) return false;
+  return wins / (wins + losses) >= 0.9;
 }
 
-// Recent winners: anyone who won a tournament final within the last 365 days.
-function recentWinnerSet(matches: MatchRow[]): Set<string> {
+interface RecentTitle {
+  tournament: string;
+  season: number | null;
+  date: string;
+}
+
+// Most recent tournament final each player won within the last 365 days,
+// keyed by winner id. Drives both the Recent Winners filter and its chip.
+function recentTitles(matches: MatchRow[]): Map<string, RecentTitle> {
   const cutoff = new Date();
   cutoff.setFullYear(cutoff.getFullYear() - 1);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
-  const winners = new Set<string>();
+  const titles = new Map<string, RecentTitle>();
   for (const m of matches) {
-    if (
-      m.round === "Final" &&
-      m.winner_id &&
-      (m.match_date ?? "") >= cutoffStr
-    ) {
-      winners.add(m.winner_id);
+    if (m.round !== "Final" || !m.winner_id || (m.match_date ?? "") < cutoffStr) continue;
+    const date = m.match_date ?? "";
+    const cur = titles.get(m.winner_id);
+    if (!cur || date > cur.date) {
+      titles.set(m.winner_id, { tournament: m.tournament ?? "Title", season: m.tournament_season, date });
     }
   }
-  return winners;
+  return titles;
 }
 
 // All match rows for a tour, cached hourly (match results only change on
@@ -117,7 +148,7 @@ const getTourMatchRows = unstable_cache(
     const db = getSupabase();
     return fetchAllRows<MatchRow>((from, to) =>
       db.from("matches")
-        .select("id, player1_id, player2_id, winner_id, match_date, round")
+        .select("id, player1_id, player2_id, winner_id, match_date, round, tournament, tournament_season")
         .eq("tour", tour)
         .range(from, to)
     );
@@ -134,11 +165,15 @@ export default async function PlayersPage({
   const { tour, sort, view } = await searchParams;
 
   const activeTour = tour === "WTA" ? "WTA" : "ATP";
-  const activeSort = sort ?? "rank";
 
   // The Field opens on the top of the game. "top30" is the default lens;
   // "hot" and "winners" are computed from match results across all ranks.
   const activeView = VIEW_OPTIONS.some((v) => v.value === view) ? view! : DEFAULT_VIEW;
+
+  // An explicit ?sort wins; otherwise each lens opens in its natural order
+  // (Top 30 → rank, Hot Streaks → form, Recent Winners → most recent title).
+  const sortExplicit = sort !== undefined;
+  const activeSort = sort ?? viewDefaultOrder(activeView);
 
   const supabase = getSupabase();
   const admin = createClient(
@@ -179,18 +214,41 @@ export default async function PlayersPage({
   const matchRows = allPlayers.length > 0 ? await getTourMatchRows(activeTour) : [];
 
   // ── Apply the computed lenses ─────────────────────────────────
+  const titleMap = activeView === "winners" ? recentTitles(matchRows) : null;
   let players = allPlayers;
   if (activeView === "hot") {
     players = allPlayers.filter((p) => isHotStreak(p.id, matchRows));
-  } else if (activeView === "winners") {
-    const winners = recentWinnerSet(matchRows);
-    players = allPlayers.filter((p) => winners.has(p.id));
+  } else if (titleMap) {
+    players = allPlayers.filter((p) => titleMap.has(p.id));
   }
 
   // ── Compute form stats for every displayed card ───────────────
   const statsMap = new Map<string, PlayerStats>();
   for (const p of players) {
     statsMap.set(p.id, computeStats(p.id, matchRows));
+  }
+
+  // ── Per-card context chip + the data the lens sorts on ────────
+  // Hot Streaks shows each player's last-10 record; Recent Winners shows the
+  // title just won. Cached here so the chip and the sort agree.
+  const recordMap = new Map<string, { wins: number; losses: number }>();
+  const formNoteMap = new Map<string, FormNote>();
+  if (activeView === "hot") {
+    for (const p of players) {
+      const rec = lastTenRecord(p.id, matchRows);
+      recordMap.set(p.id, rec);
+      formNoteMap.set(p.id, { text: `${rec.wins}–${rec.losses} · last 10`, color: "#22d68a" });
+    }
+  } else if (titleMap) {
+    for (const p of players) {
+      const t = titleMap.get(p.id);
+      if (!t) continue;
+      // Tournament names already carry the year (e.g. "Australian Open 2026");
+      // only append the season when it isn't already in the name.
+      const hasYear = t.season != null && t.tournament.includes(String(t.season));
+      const label = !hasYear && t.season != null ? `${t.tournament} ${t.season}` : t.tournament;
+      formNoteMap.set(p.id, { text: `✦ ${label}`, color: "#c9a96a" });
+    }
   }
 
   // ── Sort by stat if needed ────────────────────────────────────
@@ -203,6 +261,18 @@ export default async function PlayersPage({
   } else if (activeSort === "streak") {
     sorted.sort(
       (a, b) => (statsMap.get(b.id)?.streak ?? 0) - (statsMap.get(a.id)?.streak ?? 0)
+    );
+  } else if (activeSort === "form") {
+    // Hottest first: most wins in the last 10, then current win streak.
+    sorted.sort((a, b) => {
+      const ra = recordMap.get(a.id), rb = recordMap.get(b.id);
+      return (rb?.wins ?? 0) - (ra?.wins ?? 0)
+        || (statsMap.get(b.id)?.streak ?? 0) - (statsMap.get(a.id)?.streak ?? 0);
+    });
+  } else if (activeSort === "recent" && titleMap) {
+    // Freshest title first.
+    sorted.sort((a, b) =>
+      (titleMap.get(b.id)?.date ?? "").localeCompare(titleMap.get(a.id)?.date ?? "")
     );
   }
 
@@ -255,14 +325,25 @@ export default async function PlayersPage({
     }
   }
 
-  // Build URL preserving current tour / sort / view state
+  // Build URL preserving current tour / sort / view state.
   function buildUrl(params: { tour?: string; sort?: string; view?: string }) {
-    const merged = { tour: activeTour, sort: activeSort, view: activeView, ...params };
+    const targetTour = params.tour ?? activeTour;
+    const targetView = params.view ?? activeView;
+    const switchingView = params.view !== undefined && params.view !== activeView;
+
+    // Resolve the sort: an explicit click wins; switching lens drops the old
+    // sort so the new lens opens in its own natural order; otherwise we carry
+    // the user's chosen sort (but not a defaulted one).
+    let targetSort: string | undefined;
+    if (params.sort !== undefined) targetSort = params.sort;
+    else if (sortExplicit && !switchingView) targetSort = activeSort;
+
     const qs = new URLSearchParams();
-    if (merged.tour) qs.set("tour", merged.tour);
-    if (merged.sort && merged.sort !== "rank") qs.set("sort", merged.sort);
+    if (targetTour) qs.set("tour", targetTour);
+    // Only carry sort when it differs from the lens's natural order.
+    if (targetSort && targetSort !== viewDefaultOrder(targetView)) qs.set("sort", targetSort);
     // Bare URL = Top 30, so only carry view when it differs from the default.
-    if (merged.view && merged.view !== DEFAULT_VIEW) qs.set("view", merged.view);
+    if (targetView !== DEFAULT_VIEW) qs.set("view", targetView);
     return `/players${qs.toString() ? `?${qs}` : ""}`;
   }
 
@@ -374,6 +455,7 @@ export default async function PlayersPage({
                 stats={statsMap.get(player.id) ?? null}
                 topSkills={skillsMap.get(player.id) ?? []}
                 reviewExcerpt={reviewMap.get(player.id) ?? null}
+                formNote={formNoteMap.get(player.id) ?? null}
               />
             ))}
           </div>

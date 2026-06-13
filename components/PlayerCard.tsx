@@ -50,16 +50,25 @@ function Chip({
   );
 }
 
+// A contextual chip shown under the active filter lens — e.g. "9–1 · last 10"
+// for Hot Streaks, "✦ Rome 2026" for Recent Winners. Null on the default view.
+export interface PlayerCardFormNote {
+  text: string;
+  color: string;
+}
+
 export default function PlayerCard({
   player,
   stats,
   topSkills,
   reviewExcerpt,
+  formNote = null,
 }: {
   player: Player;
   stats: PlayerCardStats | null;
   topSkills: TopSkill[];
   reviewExcerpt: string | null;
+  formNote?: PlayerCardFormNote | null;
 }) {
   const slamWins = (player.career_stats?.slam_wins ?? null) as Record<string, number> | null;
   const slamCount = slamWins ? Object.values(slamWins).reduce((a, b) => a + (b || 0), 0) : 0;
@@ -136,6 +145,9 @@ export default function PlayerCard({
         </div>
 
         <div className="flex gap-1.5 mt-2 flex-wrap items-center">
+          {formNote && (
+            <Chip color={formNote.color}>{formNote.text}</Chip>
+          )}
           {isRated
             ? topSkills.map((sk) => (
                 <Chip key={sk.key} color={sk.color}>
