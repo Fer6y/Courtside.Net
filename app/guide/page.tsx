@@ -399,7 +399,7 @@ export default function GuidePage() {
 
         {/* Sticky sidebar */}
         <div className="hidden lg:block sticky top-24">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-text-dim mb-3 px-3">Contents</p>
+          <p className="eyebrow mb-3 px-3" style={{ fontSize: 9, color: "rgba(236,229,216,0.4)" }}>Contents</p>
           <GuideSidebar />
         </div>
 
