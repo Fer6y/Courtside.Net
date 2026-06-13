@@ -193,14 +193,14 @@ html[data-court="hard"] {
      call site). .btn-paper is the primary "embossed menu card"; .btn-ghost is
      the gold-hairline secondary. These replace the bright neon-green fills. */
   .btn-paper {
-    background: var(--color-cream);
-    color: #14110b;
-    border: 1px solid var(--color-cream);
+    background: rgba(236, 229, 216, 0.07);
+    color: var(--color-cream);
+    border: 1px solid rgba(236, 229, 216, 0.5);
     transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   }
   .btn-paper:hover {
-    background: #f6f1e7;
-    border-color: #f6f1e7;
+    background: rgba(236, 229, 216, 0.14);
+    border-color: rgba(236, 229, 216, 0.75);
   }
   .btn-ghost {
     background: transparent;
