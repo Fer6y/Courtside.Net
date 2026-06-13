@@ -34,8 +34,7 @@ export default function Error({
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={reset}
-            className="font-mono text-xs px-5 py-2.5 rounded-lg font-semibold transition-all duration-150 cursor-pointer"
-            style={{ background: "#22d68a", color: "#0e1116" }}
+            className="btn-solid font-mono text-xs px-5 py-2.5 rounded-lg font-semibold cursor-pointer"
           >
             Try Again
           </button>

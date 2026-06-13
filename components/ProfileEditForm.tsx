@@ -136,11 +136,8 @@ export default function ProfileEditForm({
           type="button"
           onClick={save}
           disabled={isPending}
-          className="font-mono text-sm px-6 py-2.5 rounded-lg font-semibold transition-all duration-200"
+          className={`font-mono text-sm px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 ${saved ? "btn-confirmed" : "btn-solid"}`}
           style={{
-            background: saved  ? "rgba(34,214,138,0.12)" : "#22d68a",
-            color:      saved  ? "#22d68a"               : "#0e1116",
-            border:     saved  ? "1px solid rgba(34,214,138,0.3)" : "none",
             opacity:    isPending ? 0.6 : 1,
             cursor:     isPending ? "not-allowed" : "pointer",
           }}

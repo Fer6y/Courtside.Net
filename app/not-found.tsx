@@ -20,8 +20,7 @@ export default function NotFound() {
         <div className="flex items-center justify-center gap-3">
           <Link
             href="/"
-            className="font-mono text-xs px-5 py-2.5 rounded-lg font-semibold transition-all duration-150"
-            style={{ background: "#22d68a", color: "#0e1116" }}
+            className="btn-solid font-mono text-xs px-5 py-2.5 rounded-lg font-semibold"
           >
             Back Home
           </Link>

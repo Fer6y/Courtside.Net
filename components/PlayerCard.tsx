@@ -102,23 +102,40 @@ export default function PlayerCard({
         )}
       </div>
 
-      {/* Name + chips + excerpt */}
+      {/* Content — rank leads the line so it reads as a ranked list; no
+          marooned right rail (that left a big empty gap mid-pill on mobile). */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+        <div className="flex items-baseline gap-x-2 gap-y-1 flex-wrap min-w-0">
+          {player.current_rank ? (
+            <span
+              className="font-mono shrink-0 text-[13px] sm:text-[15px]"
+              style={{ fontWeight: 600, color: rankColor(player.current_rank), letterSpacing: "0.02em" }}
+            >
+              No. {player.current_rank}
+            </span>
+          ) : null}
           <span className="bill-name truncate min-w-0 text-[17px] sm:text-[20px]" style={{ color: "#ece5d8" }}>
             {player.name}
           </span>
           {player.country && (
             <span className="flex items-center gap-1.5 shrink-0">
-              <CountryFlag code={player.country} size={20} />
+              <CountryFlag code={player.country} size={18} />
               <span className="font-mono hidden sm:inline" style={{ fontSize: 10, color: "rgba(236,229,216,0.4)", letterSpacing: "0.08em" }}>
                 {player.country}
               </span>
             </span>
           )}
+          {slamCount > 0 && (
+            <span
+              className="font-mono shrink-0 whitespace-nowrap"
+              style={{ fontSize: 11, color: "rgba(201,169,106,0.85)", letterSpacing: "0.1em" }}
+            >
+              ✦ {slamCount}
+            </span>
+          )}
         </div>
 
-        <div className="flex gap-1.5 mt-2 flex-wrap">
+        <div className="flex gap-1.5 mt-2 flex-wrap items-center">
           {isRated
             ? topSkills.map((sk) => (
                 <Chip key={sk.key} color={sk.color}>
@@ -128,6 +145,11 @@ export default function PlayerCard({
             : null}
           {stats && stats.totalMatches > 0 && (
             <Chip>{stats.totalMatches} matches</Chip>
+          )}
+          {!isRated && (
+            <span className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.4)" }}>
+              be the first to rate
+            </span>
           )}
         </div>
 
@@ -139,28 +161,6 @@ export default function PlayerCard({
             &ldquo;{reviewExcerpt}&rdquo;
           </p>
         )}
-      </div>
-
-      {/* Right rail — rank + honours / nudge */}
-      <div className="text-right shrink-0">
-        {player.current_rank ? (
-          <div className="font-mono text-[16px] sm:text-[18px]" style={{ fontWeight: 600, color: rankColor(player.current_rank) }}>
-            No. {player.current_rank}
-          </div>
-        ) : null}
-        {slamCount > 0 ? (
-          <div className="font-mono" style={{ fontSize: 11, color: "rgba(201,169,106,0.8)", marginTop: 4, letterSpacing: "0.1em" }}>
-            {/* Compact on mobile (✦4) so it doesn't crush the name column; full on desktop */}
-            <span className="sm:hidden whitespace-nowrap">✦ {slamCount}</span>
-            <span className="hidden sm:inline">
-              {"✦".repeat(Math.min(slamCount, 4))} {slamCount} slam{slamCount !== 1 ? "s" : ""}
-            </span>
-          </div>
-        ) : !isRated ? (
-          <div className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.35)", marginTop: 5 }}>
-            be the first to rate
-          </div>
-        ) : null}
       </div>
     </Link>
   );

@@ -232,13 +232,8 @@ export default function RatePlayerForm({
         <button
           type="submit"
           disabled={pending}
-          className="eyebrow rounded-md px-6 py-3 font-semibold transition-all duration-150"
-          style={{
-            fontSize: 11,
-            background: pending ? "rgba(34,214,138,0.3)" : "#22d68a",
-            color: pending ? "rgba(255,255,255,0.5)" : "#0d1a11",
-            cursor: pending ? "not-allowed" : "pointer",
-          }}
+          className="eyebrow btn-solid rounded-md px-6 py-3 font-semibold"
+          style={{ fontSize: 11 }}
         >
           {pending ? "Saving…" : existing ? "Update Rating" : "Submit Rating"}
         </button>

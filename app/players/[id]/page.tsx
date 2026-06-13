@@ -316,8 +316,8 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           </Link>
           <Link
             href={userId ? `/players/${id}/rate` : "/sign-in"}
-            className="eyebrow rounded-md px-4 py-2.5 font-semibold transition-all duration-150"
-            style={{ fontSize: 10, background: "#22d68a", color: "#0d1a11" }}
+            className="eyebrow btn-solid rounded-md px-4 py-2.5 font-semibold"
+            style={{ fontSize: 10 }}
           >
             Rate Player
           </Link>

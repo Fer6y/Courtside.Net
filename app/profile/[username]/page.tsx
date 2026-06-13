@@ -633,7 +633,7 @@ export default async function ProfilePage({ params }: Props) {
         <div className="rounded-lg p-10 text-center" style={{ border: "1px solid var(--hairline-soft)", background: "rgba(236,229,216,0.02)" }}>
           <p className="bill-name italic mb-5" style={{ fontWeight: 300, fontSize: 15, color: "rgba(236,229,216,0.5)" }}>Rate a player&apos;s skills or review a match to start building your catalogue.</p>
           <div className="flex gap-3 justify-center">
-            <Link href="/players" className="eyebrow px-4 py-2 rounded-md transition-colors duration-150" style={{ fontSize: 10, background: "#22d68a", color: "#0d1a11" }}>Rate a player</Link>
+            <Link href="/players" className="eyebrow btn-solid px-4 py-2 rounded-md" style={{ fontSize: 10 }}>Rate a player</Link>
             <Link href="/matches" className="eyebrow px-4 py-2 rounded-md transition-colors duration-150" style={{ fontSize: 10, border: "1px solid var(--hairline)", color: "rgba(236,229,216,0.55)" }}>Browse matches</Link>
           </div>
         </div>

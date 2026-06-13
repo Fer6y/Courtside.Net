@@ -130,6 +130,13 @@ html[data-court="hard"] {
 
 /* ─── Base styles ─────────────────────────────────────────────────────────── */
 @layer base {
+  /* Stop iOS Safari / Android Chrome from auto-inflating font sizes (the
+     "looks zoomed-in on mobile" effect that bloats type beyond what we set
+     and breaks the tuned card layouts). Tailwind v4 no longer ships this. */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
   body {
     background-color: var(--court-bg, #0d1a11);
     background-image: var(--court-texture);
@@ -211,6 +218,29 @@ html[data-court="hard"] {
   .btn-ghost:hover {
     border-color: rgba(201, 169, 106, 0.8);
     background: rgba(201, 169, 106, 0.07);
+  }
+  /* Solid programme primary — a printed cream-card with dark ink. The confident
+     primary action (Submit, Save, Follow, Apply), replacing the neon-green fills. */
+  .btn-solid {
+    background: var(--color-cream);
+    color: #0e1116;
+    border: 1px solid var(--color-cream);
+    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  }
+  .btn-solid:hover {
+    background: #fffaf2;
+    border-color: #fffaf2;
+  }
+  .btn-solid:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  /* Gold "saved/confirmed" pill — the post-action confirmation state, replacing
+     the green-tinted "Saved ✓" fills. Pair with the gold ✓ mark. */
+  .btn-confirmed {
+    background: rgba(201, 169, 106, 0.14);
+    color: #c9a96a;
+    border: 1px solid rgba(201, 169, 106, 0.4);
   }
 
   /* Programme slider — a ruled hairline track with a hollow gold thumb,

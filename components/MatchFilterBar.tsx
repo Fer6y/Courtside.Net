@@ -531,8 +531,8 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
             <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
               <button
                 onClick={applyAndClose}
-                className="w-full font-mono text-xs font-semibold py-2 rounded-lg transition-colors duration-150"
-                style={{ background: "#22d68a", color: "#0e1116", cursor: "pointer" }}
+                className="btn-solid w-full font-mono text-xs font-semibold py-2 rounded-lg"
+                style={{ cursor: "pointer" }}
               >
                 Apply filters
               </button>

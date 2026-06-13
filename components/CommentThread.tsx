@@ -270,13 +270,8 @@ function CommentInput({
       <button
         onClick={onSubmit}
         disabled={isPending || !value.trim()}
-        className="font-mono text-xs px-3 py-1.5 rounded-lg font-semibold transition-all duration-150 shrink-0"
-        style={{
-          background: isPending || !value.trim() ? "rgba(34,214,138,0.3)" : "#22d68a",
-          color:      isPending || !value.trim() ? "rgba(0,0,0,0.4)"      : "#0e1116",
-          cursor:     isPending || !value.trim() ? "not-allowed"           : "pointer",
-          minHeight:  36,
-        }}
+        className="btn-solid font-mono text-xs px-3 py-1.5 rounded-lg font-semibold shrink-0"
+        style={{ minHeight: 36 }}
       >
         Post
       </button>

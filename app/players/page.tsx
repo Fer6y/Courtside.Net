@@ -4,7 +4,6 @@ import { unstable_cache } from "next/cache";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import type { Player } from "@/types";
 import Link from "next/link";
-import PlayerFilterBar from "@/components/PlayerFilterBar";
 import PlayerCard from "@/components/PlayerCard";
 import { SKILL_KEYS, topSkills } from "@/lib/skillMeta";
 
@@ -13,10 +12,9 @@ export const metadata = {
 };
 
 type SearchParams = Promise<{
-  tour?:    string;
-  sort?:    string;
-  country?: string;
-  rankMax?: string;
+  tour?: string;
+  sort?: string;
+  view?: string;
 }>;
 
 const SORT_OPTIONS = [
@@ -29,12 +27,22 @@ const SORT_OPTIONS = [
 
 const STAT_SORTS = new Set(["matches", "streak"]);
 
+// The three lenses on the field. "top30" opens by default; the other two are
+// computed from match results (see hot-streak / recent-winner helpers below).
+const VIEW_OPTIONS = [
+  { label: "Top 30",         value: "top30",   note: "By current rank" },
+  { label: "Hot Streaks",    value: "hot",     note: "90%+ win rate in last 10 matches" },
+  { label: "Recent Winners", value: "winners", note: "Tournament winners of the last year" },
+];
+const DEFAULT_VIEW = "top30";
+
 interface MatchRow {
   id: string;
   player1_id: string;
   player2_id: string;
   winner_id: string | null;
   match_date: string | null;
+  round: string | null;
 }
 
 interface PlayerStats {
@@ -65,6 +73,40 @@ function computeStats(playerId: string, matches: MatchRow[]): PlayerStats {
   return stats;
 }
 
+// A player's matches, most-recent first.
+function playerMatches(playerId: string, matches: MatchRow[]): MatchRow[] {
+  return matches
+    .filter((m) => m.player1_id === playerId || m.player2_id === playerId)
+    .sort((a, b) => (b.match_date ?? "").localeCompare(a.match_date ?? ""));
+}
+
+// Hot streak: 90%+ win rate across the player's last 10 matches. Requires a
+// full sample of 10 so the rate is meaningful (≥9 of the last 10 won).
+function isHotStreak(playerId: string, matches: MatchRow[]): boolean {
+  const recent = playerMatches(playerId, matches).slice(0, 10);
+  if (recent.length < 10) return false;
+  const wins = recent.filter((m) => m.winner_id === playerId).length;
+  return wins / recent.length >= 0.9;
+}
+
+// Recent winners: anyone who won a tournament final within the last 365 days.
+function recentWinnerSet(matches: MatchRow[]): Set<string> {
+  const cutoff = new Date();
+  cutoff.setFullYear(cutoff.getFullYear() - 1);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const winners = new Set<string>();
+  for (const m of matches) {
+    if (
+      m.round === "Final" &&
+      m.winner_id &&
+      (m.match_date ?? "") >= cutoffStr
+    ) {
+      winners.add(m.winner_id);
+    }
+  }
+  return winners;
+}
+
 // All match rows for a tour, cached hourly (match results only change on
 // import). The previous version built one query containing every player ID
 // (~56,000 characters) which the database rejected outright — and even if
@@ -75,7 +117,7 @@ const getTourMatchRows = unstable_cache(
     const db = getSupabase();
     return fetchAllRows<MatchRow>((from, to) =>
       db.from("matches")
-        .select("id, player1_id, player2_id, winner_id, match_date")
+        .select("id, player1_id, player2_id, winner_id, match_date, round")
         .eq("tour", tour)
         .range(from, to)
     );
@@ -89,30 +131,20 @@ export default async function PlayersPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { tour, sort, country, rankMax } = await searchParams;
+  const { tour, sort, view } = await searchParams;
 
   const activeTour = tour === "WTA" ? "WTA" : "ATP";
   const activeSort = sort ?? "rank";
 
-  // The Field opens on the top of the game, not the full catalogue. Default
-  // to the top 30 by rank; "all" is the explicit opt-out for the long tail.
-  const effRankMax = rankMax ?? "30";
+  // The Field opens on the top of the game. "top30" is the default lens;
+  // "hot" and "winners" are computed from match results across all ranks.
+  const activeView = VIEW_OPTIONS.some((v) => v.value === view) ? view! : DEFAULT_VIEW;
 
   const supabase = getSupabase();
   const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-
-  // ── Fetch distinct countries for filter dropdown ───────────────
-  const { data: countryRows } = await supabase
-    .from("players")
-    .select("country")
-    .filter("career_stats->>tour", "eq", activeTour)
-    .not("api_player_key", "is", null)
-    .not("country", "is", null)
-    .order("country");
-  const countries = [...new Set((countryRows ?? []).map((r) => r.country).filter(Boolean))].sort() as string[];
 
   // ── Fetch players ─────────────────────────────────────────────
   let query = supabase
@@ -121,12 +153,11 @@ export default async function PlayersPage({
     .filter("career_stats->>tour", "eq", activeTour)
     .not("api_player_key", "is", null);
 
-  // Filter by country
-  if (country) query = query.eq("country", country);
-
-  // Filter by rank range — default top 30, unless "all" opts out of the cut
-  if (effRankMax !== "all") {
-    query = query.lte("current_rank", Number(effRankMax)).not("current_rank", "is", null);
+  // Top 30 is a clean DB cut by rank. Hot Streaks / Recent Winners span all
+  // ranks and are decided from match results, so they fetch the full tour and
+  // filter in JS below.
+  if (activeView === "top30") {
+    query = query.lte("current_rank", 30).not("current_rank", "is", null);
   }
 
   // Only DB-sort for non-stat sorts
@@ -141,14 +172,23 @@ export default async function PlayersPage({
   }
 
   const { data: rawPlayers, error } = await query;
-  const players = (rawPlayers ?? []) as Player[];
+  const allPlayers = (rawPlayers ?? []) as Player[];
 
-  // ── Compute surface stats for every card ──────────────────────
-  // Cards always show form (best-surface win%, match count), so we compute
-  // for all displayed players — not just when sorting by a stat. The tour's
-  // match rows are cached hourly.
+  // Match rows for the tour (cached hourly) power both the form stats on every
+  // card and the Hot Streaks / Recent Winners lenses.
+  const matchRows = allPlayers.length > 0 ? await getTourMatchRows(activeTour) : [];
+
+  // ── Apply the computed lenses ─────────────────────────────────
+  let players = allPlayers;
+  if (activeView === "hot") {
+    players = allPlayers.filter((p) => isHotStreak(p.id, matchRows));
+  } else if (activeView === "winners") {
+    const winners = recentWinnerSet(matchRows);
+    players = allPlayers.filter((p) => winners.has(p.id));
+  }
+
+  // ── Compute form stats for every displayed card ───────────────
   const statsMap = new Map<string, PlayerStats>();
-  const matchRows = players.length > 0 ? await getTourMatchRows(activeTour) : [];
   for (const p of players) {
     statsMap.set(p.id, computeStats(p.id, matchRows));
   }
@@ -215,23 +255,18 @@ export default async function PlayersPage({
     }
   }
 
-  // Build URL preserving current filter state
-  function buildUrl(params: { tour?: string; sort?: string }) {
-    const merged = { tour: activeTour, sort: activeSort, ...params };
+  // Build URL preserving current tour / sort / view state
+  function buildUrl(params: { tour?: string; sort?: string; view?: string }) {
+    const merged = { tour: activeTour, sort: activeSort, view: activeView, ...params };
     const qs = new URLSearchParams();
     if (merged.tour) qs.set("tour", merged.tour);
     if (merged.sort && merged.sort !== "rank") qs.set("sort", merged.sort);
-    // Preserve active filters when changing tour/sort. Bare URL = Top 30,
-    // so only carry rankMax when it differs from the default.
-    if (country) qs.set("country", country);
-    if (effRankMax !== "30") qs.set("rankMax", effRankMax);
+    // Bare URL = Top 30, so only carry view when it differs from the default.
+    if (merged.view && merged.view !== DEFAULT_VIEW) qs.set("view", merged.view);
     return `/players${qs.toString() ? `?${qs}` : ""}`;
   }
 
-  // Extra params passed to PlayerFilterBar so it preserves tour + sort when filtering
-  const extraParams: Record<string, string> = {};
-  if (activeTour !== "ATP") extraParams.tour = activeTour;
-  if (activeSort !== "rank") extraParams.sort = activeSort;
+  const activeViewNote = VIEW_OPTIONS.find((v) => v.value === activeView)?.note;
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-12">
@@ -267,7 +302,7 @@ export default async function PlayersPage({
 
       {/* Sort options */}
       <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap mb-4">
-        <span className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.35)" }}>
+        <span className="eyebrow" style={{ fontSize: 11, color: "rgba(236,229,216,0.35)" }}>
           Sort —
         </span>
         {SORT_OPTIONS.map(({ label, value }) => (
@@ -276,10 +311,10 @@ export default async function PlayersPage({
             href={buildUrl({ sort: value })}
             className="eyebrow transition-colors duration-150"
             style={{
-              fontSize: 10,
+              fontSize: 12,
               color: activeSort === value ? "#c9a96a" : "rgba(236,229,216,0.45)",
               borderBottom: activeSort === value ? "1px solid rgba(201,169,106,0.6)" : "1px solid transparent",
-              paddingBottom: 2,
+              paddingBottom: 4,
             }}
           >
             {label}
@@ -287,20 +322,35 @@ export default async function PlayersPage({
         ))}
       </div>
 
-      {/* Filter chips — country + rank */}
-      <div className="flex items-baseline gap-x-3 mb-6">
-        <span className="eyebrow shrink-0" style={{ fontSize: 9, color: "rgba(236,229,216,0.35)" }}>
+      {/* Filter — Top 30 · Hot Streaks · Recent Winners */}
+      <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap mb-1">
+        <span className="eyebrow shrink-0" style={{ fontSize: 11, color: "rgba(236,229,216,0.35)" }}>
           Filter —
         </span>
-        <div className="min-w-0 flex-1">
-          <PlayerFilterBar
-            filters={{ country, rankMax: effRankMax }}
-            countries={countries}
-            basePath="/players"
-            extraParams={extraParams}
-          />
-        </div>
+        {VIEW_OPTIONS.map(({ label, value }) => (
+          <Link
+            key={value}
+            href={buildUrl({ view: value })}
+            className="eyebrow transition-colors duration-150"
+            style={{
+              fontSize: 12,
+              color: activeView === value ? "#c9a96a" : "rgba(236,229,216,0.45)",
+              borderBottom: activeView === value ? "1px solid rgba(201,169,106,0.6)" : "1px solid transparent",
+              paddingBottom: 4,
+            }}
+          >
+            {label}
+          </Link>
+        ))}
       </div>
+      {activeViewNote && (
+        <p
+          className="bill-name italic mb-6"
+          style={{ fontWeight: 300, fontSize: 12, color: "rgba(236,229,216,0.4)" }}
+        >
+          {activeViewNote}
+        </p>
+      )}
 
       {error ? (
         <p className="text-loss font-sans text-sm">Failed to load players.</p>

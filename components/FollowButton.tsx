@@ -40,13 +40,13 @@ export default function FollowButton({ targetProfileId, initialIsFollowing }: Pr
     <button
       onClick={toggle}
       disabled={isPending}
-      className="font-mono text-xs px-4 py-2 rounded-lg font-semibold transition-all duration-150"
+      className={`font-mono text-xs px-4 py-2 rounded-lg font-semibold transition-all duration-150 ${isFollowing ? "" : "btn-solid"}`}
       style={{
-        background:  isFollowing ? "transparent" : "#22d68a",
-        color:       isFollowing ? "#9ca3af"      : "#0e1116",
-        border:      isFollowing ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
-        cursor:      isPending   ? "not-allowed"  : "pointer",
-        opacity:     isPending   ? 0.6            : 1,
+        background:  isFollowing ? "transparent" : undefined,
+        color:       isFollowing ? "#9ca3af"     : undefined,
+        border:      isFollowing ? "1px solid rgba(255,255,255,0.1)" : undefined,
+        cursor:      isPending   ? "not-allowed" : "pointer",
+        opacity:     isPending   ? 0.6           : 1,
         minHeight:   36,
       }}
     >
