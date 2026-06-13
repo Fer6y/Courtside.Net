@@ -92,22 +92,67 @@ matching real history.**
 - **`match_date` backfill produced garbage** on some rows (US Open 2021 matches
   dated May 2026). Re-import overwrote with real API dates.
 
-## NEW: the Masters 1000 data has the same disease (not yet fixed)
-Discovered during re-import — two Masters staging rows were actually slam draws:
-- "Western & Southern Open 2024 ATP" (seasonId 19405) was **the real US Open 2024
-  draw** mislabeled as Cincinnati. Renamed in place via event-key upsert.
-  → **Cincinnati 2024 ATP is now a gap** (no data, previously wrong data).
-- "Italian Open 2025 WTA" (seasonId 15965) was **the real Roland Garros 2025 WTA
-  draw**. Same rename. → **Italian Open 2025 WTA is now a gap.**
+## Masters 1000 — same disease, FULL CLEANUP EXECUTED 2026-06-13
 
-`validate-slam-draws.ts` also flags 7 partial Masters groups with 0 finals:
-Western & Southern Open 2025 ATP (23 rows), Miami 2025 WTA (9), Indian Wells 2023
-ATP (22), Italian Open 2023 WTA (30), Western & Southern Open 2020 WTA (54),
-Miami 2021 WTA (3), Italian Open 2022 WTA (24). Plus previously known gaps:
-Indian Wells 2025 ATP, Italian Open 2024 ATP. A Masters cleanup pass with the
-same probe-verify-reimport technique is the obvious follow-up (needs a
-draw-size-aware round mapping — Masters draws are 56/96, not 128).
+The Masters 1000 data had the same wrong-seasonId disease, but **far more
+widespread** than first thought: of 90 `masters_1000` groups, **~50 were wrong**
+(not the 7 originally flagged). Two failure modes:
+1. **Junior/challenger pollution** — a co-located 28/32-draw event imported under
+   the Masters name (e.g. Indian Wells 2022 ATP "final" was Mansouri vs Bovy;
+   all of Monte-Carlo 2021–2024 were challenger draws).
+2. **Real Masters draw under the wrong name** — e.g. Cincinnati filed as Canada,
+   Wuhan ↔ Beijing swapped (the API itself reused the city labels).
+
+### Root cause
+`scripts/fetch-masters.ts` accepted the FIRST tournamentId found inside a loose,
+overlapping date window via `TourRank:2`, never checking the candidate's draw or
+identity. Overlapping windows (Canada/Cincinnati share Aug 12–15) caused the
+cross-labels; the Olympics (Tokyo 2021, Paris 2024) sits next to the Canada week.
+
+### The fix — identity by `tournament/info`, not by date
+The decisive discovery: **`{tour}/tournament/info/{seasonId}`** returns
+`{ name: "<Event> - <City>", tier, court, date }`. Tier is
+`"ATP World Tour Masters 1000"` / `"WTA 1000"` (Olympics = `"Olympic Tennis
+Event"`, challengers = `"Future"`, slams = `"Grand Slam"`). So a candidate's
+identity is verifiable directly — no fragile date windows.
+
+Pipeline (mirrors the slam fix):
+1. **`scripts/probe-masters-seasonids.ts`** — per (tour, year), PAGE
+   `player/past-matches` (`GameYear:Y;TourRank:2`, `pageNo`) to collect candidate
+   tournamentIds (paging is required or spring Masters never surface — the
+   endpoint returns only the 10 most-recent per page, newest-first). Verify each
+   via `tournament/info` (tier gate) + name→event map + `tournament/results`
+   (≥45 singles, exactly 1 final); per event keep the largest draw. **92/94
+   editions verified**, every final matching real history → `_verified-masters-seasons.json`.
+2. **`scripts/cleanup-polluted-masters.ts`** — deleted 69 changed groups + 6
+   orphan groups (Madrid 2020 ATP/WTA, Shanghai 2021/2022 ATP, Guadalajara 2021
+   WTA, Wuhan 2023 WTA — all cancelled/phantom), 2490 rows, after the zero
+   reviews/watched_matches safety check.
+3. **`scripts/reimport-masters.ts`** — re-imported all 92 with **count-based
+   round labels** (roundIds are positional, not absolute — roundId 6 is "R32" in
+   a 96-draw but "R16" in a 56-draw; order roundIds ascending and name them
+   counting back from the Final).
+4. **`scripts/import-cincy2020-wta.ts`** — the one edition with no Final played
+   (2020 Cincinnati WTA, NY bubble: Osaka withdrew, **Azarenka won by walkover**).
+   Re-labels its 54 matches and appends the documented `Azarenka def. Osaka (W/O)`.
+
+### Bug found & fixed: cross-tour api_event_key collisions
+MatchStat match `id`s are unique only **within a tour** — ATP and WTA id ranges
+overlap (US Open 2021 ATP = 868955–869214; Madrid 2026 WTA = 868962–869098). The
+matches table has `UNIQUE(api_event_key)`, so the first Masters reimport (bare
+ids) silently **overwrote 76 US Open 2021 ATP rows** with WTA 2026 matches. Fix:
+Masters now write **tour-namespaced** keys (`ATP-<id>` / `WTA-<id>`); slams keep
+bare ids (disjoint). US Open 2021 ATP restored via
+`scripts/restore-uso2021-atp.ts`. ⚠️ Slam imports still use bare ids — a latent
+risk if a future WTA slam edition's id range overlaps an existing ATP one;
+namespace there too if it ever bites.
+
+### Guardrail
+`fetch-masters.ts` now refuses to stage any draw < 45 singles.
+`validate-slam-draws.ts` now enforces **masters_1000 strictly** (45–100 rows,
+exactly 1 final, no round-robin, no null rounds, ≤18-day span) and exits 1 on
+failure. **Result: all 50 grand_slam + 93 masters_1000 groups pass.**
 
 ## Audit scripts
 `scripts/_audit-finals.ts` … `_audit-finals4.ts` (read-only, safe to re-run),
-`scripts/validate-slam-draws.ts` (the permanent guardrail).
+`scripts/validate-slam-draws.ts` (the permanent guardrail for slams AND Masters).

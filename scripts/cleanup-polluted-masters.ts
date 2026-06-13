@@ -34,27 +34,41 @@ interface Verified {
   seasonId: string; currentSeasonId: string | null; changed: boolean;
 }
 
+// ── Orphan junk groups: cancelled / non-existent editions with no real draw to
+// re-import (the probe correctly found none). Confirmed by _reconcile-masters.ts.
+// DELETED with no re-import (matches + their staging).
+const ORPHAN_GROUPS: { tournament: string; tour: string }[] = [
+  { tournament: "Guadalajara Open 2021", tour: "WTA" }, // 2021 Guadalajara was the WTA Finals, not a 1000
+  { tournament: "Madrid Open 2020",      tour: "ATP" }, // Madrid 2020 cancelled (COVID)
+  { tournament: "Madrid Open 2020",      tour: "WTA" },
+  { tournament: "Shanghai Masters 2021", tour: "ATP" }, // Shanghai 2020–2022 cancelled (COVID)
+  { tournament: "Shanghai Masters 2022", tour: "ATP" },
+  { tournament: "Wuhan Open 2023",       tour: "WTA" }, // phantom: was really Beijing (→ China Open 2023)
+];
+
 async function main() {
   const verified: Verified[] = JSON.parse(
     fs.readFileSync("scripts/_verified-masters-seasons.json", "utf8")
   );
   const changed = verified.filter((v) => v.changed);
-  console.log(`\nCleanup — ${changed.length} Masters groups whose seasonId changed\n`);
+  console.log(`\nCleanup — ${changed.length} changed groups + ${ORPHAN_GROUPS.length} orphan junk groups\n`);
 
-  // ── Collect all match ids in the changed groups ────────────────────────────
+  // ── Collect all match ids in the changed groups + orphans ──────────────────
   const allIds: string[] = [];
-  const groupTournament = (v: Verified) => `${v.name} ${v.year}`;
-  for (const v of changed) {
-    const tournament = groupTournament(v);
+  const targets = [
+    ...changed.map((v) => ({ tournament: `${v.name} ${v.year}`, tour: v.tour, note: `was season ${v.currentSeasonId ?? "—"} → ${v.seasonId}` })),
+    ...ORPHAN_GROUPS.map((o) => ({ tournament: o.tournament, tour: o.tour, note: "orphan (no real edition)" })),
+  ];
+  for (const t of targets) {
     const { data, error } = await supabase
       .from("matches")
       .select("id")
-      .eq("tournament", tournament)
-      .eq("tour", v.tour)
+      .eq("tournament", t.tournament)
+      .eq("tour", t.tour)
       .eq("tournament_tier", "masters_1000")
       .limit(500);
     if (error) throw error;
-    console.log(`  ${tournament} ${v.tour}: ${data.length} rows  (was season ${v.currentSeasonId ?? "—"} → ${v.seasonId})`);
+    console.log(`  ${t.tournament} ${t.tour}: ${data.length} rows  (${t.note})`);
     allIds.push(...data.map((r) => r.id));
   }
   console.log(`\n  Total rows to delete: ${allIds.length}`);
@@ -102,6 +116,17 @@ async function main() {
         slam_name: v.name, year: String(v.year),
       })
       .select("id");
+    if (error) throw error;
+    stagingDeleted += data?.length ?? 0;
+  }
+  // Orphan staging rows (any seasonId) — match by name + year + tour.
+  for (const o of ORPHAN_GROUPS) {
+    const m = o.tournament.match(/^(.*)\s(\d{4})$/);
+    if (!m) continue;
+    const [, name, year] = m;
+    const { data, error } = await supabase
+      .from("api_raw_staging").delete().eq("method", "get_fixtures")
+      .contains("params", { slam_name: name, year, tour: o.tour }).select("id");
     if (error) throw error;
     stagingDeleted += data?.length ?? 0;
   }

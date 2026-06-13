@@ -113,13 +113,13 @@ async function main() {
 
   // ── Step 1: stage fixtures (skip if already staged) ────────────────────────
   for (const ed of editions) {
-    const { data: existing } = await supabase
+    const { data: existingRows } = await supabase
       .from("api_raw_staging")
       .select("id")
       .eq("method", "get_fixtures")
       .contains("params", { seasonId: ed.seasonId, tour: ed.tour })
-      .maybeSingle();
-    if (existing) { console.log(`  staged: ${ed.name} ${ed.year} ${ed.tour} (skip fetch)`); continue; }
+      .limit(1);
+    if (existingRows?.length) { console.log(`  staged: ${ed.name} ${ed.year} ${ed.tour} (skip fetch)`); continue; }
 
     const raw = await matchstat<Record<string, unknown>>(
       `${ed.tour.toLowerCase()}/tournament/results/${ed.seasonId}`
@@ -148,10 +148,10 @@ async function main() {
       .select("params, response")
       .eq("method", "get_fixtures")
       .contains("params", { seasonId: ed.seasonId, tour: ed.tour, slam_name: ed.name, year: String(ed.year) })
-      .maybeSingle();
+      .limit(1);
     if (error) throw error;
-    if (!data) throw new Error(`No staging row for ${ed.name} ${ed.year} ${ed.tour} (season ${ed.seasonId})`);
-    stagingRows.push(data);
+    if (!data?.length) throw new Error(`No staging row for ${ed.name} ${ed.year} ${ed.tour} (season ${ed.seasonId})`);
+    stagingRows.push(data[0]);
   }
 
   // ── Step 2: create missing players ─────────────────────────────────────────
@@ -233,7 +233,11 @@ async function main() {
         score:             f[FIELD_MAP.score] ? String(f[FIELD_MAP.score]) : null,
         surface,
         match_date:        normaliseDate(f[FIELD_MAP.date]),
-        api_event_key:     eventKey,
+        // Namespace by tour — MatchStat match ids are unique only WITHIN a tour;
+        // ATP & WTA id ranges overlap (e.g. WTA 2026 ≈ ATP 2021), so a bare id
+        // as the unique api_event_key collides across tours and silently
+        // overwrites the other tour's match. See docs/match-data-validation.
+        api_event_key:     `${tour}-${eventKey}`,
         tournament_season: parseInt(year) || null,
         tournament_tier:   "masters_1000",
         source:            "api_tennis",
