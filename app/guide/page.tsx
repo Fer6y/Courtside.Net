@@ -431,7 +431,7 @@ export default function GuidePage() {
                   attribute that highlights your take. This appears next to your name in the Activity feed.
                 </p>
 
-                <Link href="/players" className="font-mono text-sm font-semibold px-4 py-2 rounded-lg inline-block transition-all duration-150" style={{ background: "#22d68a", color: "#0e1116" }}>
+                <Link href="/players" className="eyebrow btn-paper rounded-md px-4 py-2 inline-block" style={{ fontSize: 10 }}>
                   Browse Players →
                 </Link>
               </div>
