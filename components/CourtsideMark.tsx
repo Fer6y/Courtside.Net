@@ -40,9 +40,10 @@ export default function CourtsideMark({
         strokeWidth="1"
       />
 
-      {/* Gold seam — the "C", opening to the right */}
+      {/* Gold seam — a tight "C" whose belly curves in toward the centre,
+         still reaching top and bottom so it reads as a tennis seam */}
       <path
-        d="M 40 8 C 13 21, 13 43, 40 56"
+        d="M 42 11 C 19 20, 19 44, 42 53"
         stroke="#c9a96a"
         strokeWidth="2.4"
         strokeLinecap="round"
@@ -50,7 +51,7 @@ export default function CourtsideMark({
 
       {/* Faint companion seam — the tennis ball's double curve */}
       <path
-        d="M 45 9 C 21 21, 21 43, 45 55"
+        d="M 46 13 C 26 21, 26 43, 46 51"
         stroke="rgba(236,229,216,0.22)"
         strokeWidth="1"
         strokeLinecap="round"

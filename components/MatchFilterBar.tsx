@@ -106,6 +106,12 @@ function buildYearRanges(years: string[]): { label: string; value: string }[] {
 export default function MatchFilterBar({ filters, options, basePath, hidePlayer }: Props) {
   const router = useRouter();
 
+  // Filters live in the URL, but App Router's Back navigation can return to the
+  // list with the query string stripped. Mirror the active filters into
+  // sessionStorage (scoped per basePath) so that landing back here with an
+  // empty URL restores the set the user last had selected.
+  const storageKey = `courtside-filters:${basePath}`;
+
   // pending holds uncommitted multi-select changes — only pushed when dropdown closes
   const [pending, setPending]             = useState<Partial<Record<MultiKey, string | undefined>>>({});
   const [openChip, setOpenChip]           = useState<string | null>(null);
@@ -147,6 +153,36 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
     }, 300);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [playerQuery]);
+
+  // ── Restore filters on mount if the URL came back empty ──────────────────────
+  // Runs once. If Back stripped the query string (no filter params in the URL)
+  // but we have a saved set from this session, replace the URL with it. Any
+  // params already present (e.g. tour=WTA) are preserved.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const current = new URLSearchParams(window.location.search);
+    if (ALL_KEYS.some((k) => current.has(k))) return; // URL already carries filters
+    let saved = "";
+    try { saved = sessionStorage.getItem(storageKey) ?? ""; } catch { /* ignore */ }
+    if (!saved) return;
+    const savedParams = new URLSearchParams(saved);
+    for (const [k, v] of savedParams) current.set(k, v);
+    router.replace(`${basePath}?${current.toString()}`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Persist the active URL filters whenever they change ──────────────────────
+  // Write-only: clearing is handled explicitly in clearAll/clearFilter so the
+  // initial empty render never wipes a set we're about to restore above.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams();
+    for (const k of ALL_KEYS) { const v = filters[k]; if (v) params.set(k, String(v)); }
+    const str = params.toString();
+    if (!str) return;
+    try { sessionStorage.setItem(storageKey, str); } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   // ── Push effective filters to URL and reset pending ──────────────────────────
   function pushFilters(overrides: Partial<MatchFilters> = {}) {
@@ -198,12 +234,19 @@ export default function MatchFilterBar({ filters, options, basePath, hidePlayer 
       if (!keys.includes(k)) { const v = eff[k]; if (v) next[k] = v; }
     }
     const qs = new URLSearchParams(next).toString();
+    // Keep the saved set in sync — drop it entirely when nothing remains, so a
+    // later Back to an empty URL doesn't resurrect the cleared filters.
+    try {
+      if (qs) sessionStorage.setItem(storageKey, qs);
+      else sessionStorage.removeItem(storageKey);
+    } catch { /* ignore */ }
     router.push(`${basePath}${qs ? `?${qs}` : ""}`);
     setOpenChip(null);
   }
 
   function clearAll() {
     setPending({});
+    try { sessionStorage.removeItem(storageKey); } catch { /* ignore */ }
     router.push(basePath);
     setOpenChip(null);
   }
