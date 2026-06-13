@@ -24,37 +24,27 @@ const SORT_OPTIONS = [
   { label: "Name",        value: "name" },
   { label: "Age",         value: "age" },
   { label: "Matches",     value: "matches" },
-  { label: "Hard %",      value: "hard" },
-  { label: "Clay %",      value: "clay" },
-  { label: "Grass %",     value: "grass" },
   { label: "Win Streak",  value: "streak" },
 ];
 
-const STAT_SORTS = new Set(["matches", "hard", "clay", "grass", "streak"]);
+const STAT_SORTS = new Set(["matches", "streak"]);
 
 interface MatchRow {
   id: string;
   player1_id: string;
   player2_id: string;
   winner_id: string | null;
-  surface: string | null;
   match_date: string | null;
 }
 
 interface PlayerStats {
   totalMatches: number;
-  hardWins: number;  hardTotal: number;
-  clayWins: number;  clayTotal: number;
-  grassWins: number; grassTotal: number;
   streak: number;
 }
 
 function computeStats(playerId: string, matches: MatchRow[]): PlayerStats {
   const stats: PlayerStats = {
     totalMatches: 0,
-    hardWins: 0, hardTotal: 0,
-    clayWins: 0, clayTotal: 0,
-    grassWins: 0, grassTotal: 0,
     streak: 0,
   };
 
@@ -62,14 +52,6 @@ function computeStats(playerId: string, matches: MatchRow[]): PlayerStats {
     (m) => m.player1_id === playerId || m.player2_id === playerId
   );
   stats.totalMatches = mine.length;
-
-  for (const m of mine) {
-    const won = m.winner_id === playerId;
-    const s = m.surface?.toLowerCase();
-    if (s === "hard")  { stats.hardTotal++;  if (won) stats.hardWins++;  }
-    if (s === "clay")  { stats.clayTotal++;  if (won) stats.clayWins++;  }
-    if (s === "grass") { stats.grassTotal++; if (won) stats.grassWins++; }
-  }
 
   // Current streak: scan from most recent backwards
   const sorted = [...mine].sort(
@@ -83,11 +65,6 @@ function computeStats(playerId: string, matches: MatchRow[]): PlayerStats {
   return stats;
 }
 
-function winPct(wins: number, total: number): number | null {
-  if (total === 0) return null;
-  return Math.round((wins / total) * 100);
-}
-
 // All match rows for a tour, cached hourly (match results only change on
 // import). The previous version built one query containing every player ID
 // (~56,000 characters) which the database rejected outright — and even if
@@ -98,7 +75,7 @@ const getTourMatchRows = unstable_cache(
     const db = getSupabase();
     return fetchAllRows<MatchRow>((from, to) =>
       db.from("matches")
-        .select("id, player1_id, player2_id, winner_id, surface, match_date")
+        .select("id, player1_id, player2_id, winner_id, match_date")
         .eq("tour", tour)
         .range(from, to)
     );
@@ -183,24 +160,6 @@ export default async function PlayersPage({
     sorted.sort(
       (a, b) => (statsMap.get(b.id)?.totalMatches ?? 0) - (statsMap.get(a.id)?.totalMatches ?? 0)
     );
-  } else if (activeSort === "hard") {
-    sorted.sort((a, b) => {
-      const sa = statsMap.get(a.id)!;
-      const sb = statsMap.get(b.id)!;
-      return (winPct(sb.hardWins, sb.hardTotal) ?? -1) - (winPct(sa.hardWins, sa.hardTotal) ?? -1);
-    });
-  } else if (activeSort === "clay") {
-    sorted.sort((a, b) => {
-      const sa = statsMap.get(a.id)!;
-      const sb = statsMap.get(b.id)!;
-      return (winPct(sb.clayWins, sb.clayTotal) ?? -1) - (winPct(sa.clayWins, sa.clayTotal) ?? -1);
-    });
-  } else if (activeSort === "grass") {
-    sorted.sort((a, b) => {
-      const sa = statsMap.get(a.id)!;
-      const sb = statsMap.get(b.id)!;
-      return (winPct(sb.grassWins, sb.grassTotal) ?? -1) - (winPct(sa.grassWins, sa.grassTotal) ?? -1);
-    });
   } else if (activeSort === "streak") {
     sorted.sort(
       (a, b) => (statsMap.get(b.id)?.streak ?? 0) - (statsMap.get(a.id)?.streak ?? 0)
