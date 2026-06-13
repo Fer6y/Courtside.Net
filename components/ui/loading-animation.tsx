@@ -15,72 +15,74 @@ export default function LoadingAnimation() {
   return (
     <>
       <style>{`
-        @keyframes cs-bounce {
+        @keyframes cs-fall {
           0% {
-            transform: translateY(0px) scaleX(0.95) scaleY(1.1);
-            box-shadow:
-              0 -9px  0 -16px rgba(255,255,255,0.45),
-              0 -15px 0 -17px rgba(255,255,255,0.22);
+            transform: translate(-50%, 0) scaleX(0.95) scaleY(1.07);
             animation-timing-function: cubic-bezier(0.5, 0, 1, 0.45);
           }
-          35% {
-            transform: translateY(60px) scaleX(1.25) scaleY(0.75);
-            box-shadow: none;
-            animation-timing-function: cubic-bezier(0, 0.55, 0.45, 1);
+          48% {
+            transform: translate(-50%, 70px) scaleX(1.16) scaleY(0.82);
+            animation-timing-function: cubic-bezier(0, 0.5, 0.45, 1);
           }
-          65% {
-            transform: translateY(0px) scaleX(0.95) scaleY(1.1);
-            box-shadow:
-              0  9px  0 -16px rgba(255,255,255,0.45),
-              0  15px 0 -17px rgba(255,255,255,0.22);
-            animation-timing-function: cubic-bezier(0, 0, 0.4, 1);
+          52% {
+            transform: translate(-50%, 70px) scaleX(1.16) scaleY(0.82);
+            animation-timing-function: cubic-bezier(0, 0.5, 0.45, 1);
           }
           100% {
-            transform: translateY(0px) scaleX(1) scaleY(1);
-            box-shadow:
-              -7px 0 0 -17px rgba(255,255,255,0.2),
-               7px 0 0 -17px rgba(255,255,255,0.2);
+            transform: translate(-50%, 0) scaleX(0.95) scaleY(1.07);
+            animation-timing-function: cubic-bezier(0.5, 0, 1, 0.45);
           }
         }
 
-        @keyframes cs-burst {
-          0%,  28% { transform: translateX(-50%) scaleX(0);   opacity: 0; }
-          35%      { transform: translateX(-50%) scaleX(1);   opacity: 1; }
-          54%      { transform: translateX(-50%) scaleX(1.5); opacity: 0; }
-          100%     { transform: translateX(-50%) scaleX(1.5); opacity: 0; }
+        @keyframes cs-ground-shadow {
+          0%, 100% { transform: translateX(-50%) scaleX(0.65); opacity: 0.3; }
+          50%      { transform: translateX(-50%) scaleX(1.2);  opacity: 0.62; }
         }
       `}</style>
 
       <div className="flex flex-col items-center justify-center" style={{ width: 120, height: 160 }}>
 
-        {/* Bounce area — 40px wide, 100px tall (60px travel + 40px ball) */}
-        <div style={{ position: "relative", width: 40, height: 100 }}>
+        {/* Bounce area — 40px ball, 70px travel */}
+        <div style={{ position: "relative", width: 64, height: 122 }}>
 
-          {/* Ground burst — appears on impact at 35% */}
+          {/* Grounded contact shadow — widens and darkens on impact */}
           <div
             aria-hidden="true"
             style={{
               position: "absolute",
               bottom: 0,
               left: "50%",
-              width: 30,
-              height: 4,
+              width: 36,
+              height: 8,
               borderRadius: "50%",
-              background: "rgba(255,255,255,0.15)",
-              animation: "cs-burst 800ms cubic-bezier(0.5, 0, 1, 0.45) infinite",
+              background: "rgba(0,0,0,0.5)",
+              filter: "blur(1.5px)",
+              animation: "cs-ground-shadow 950ms infinite",
             }}
           />
 
-          {/* Ball */}
+          {/* Tennis ball — optic-yellow felt, C-seam, gold rim */}
           <div
+            aria-hidden="true"
             style={{
+              position: "absolute",
+              top: 0,
+              left: "50%",
               width: 40,
               height: 40,
-              borderRadius: "50%",
-              background: "#22d68a",
-              animation: "cs-bounce 800ms infinite",
+              transformOrigin: "center bottom",
+              animation: "cs-fall 950ms infinite",
             }}
-          />
+          >
+            <svg viewBox="0 0 48 48" width="40" height="40">
+              <circle cx="24" cy="24" r="23" fill="#d4e03c" />
+              <ellipse cx="18" cy="16" rx="13" ry="10" fill="#e6ef74" opacity="0.55" />
+              <ellipse cx="29" cy="33" rx="14" ry="11" fill="#aebf2c" opacity="0.4" />
+              <path d="M34 4 C 10 11, 10 37, 34 44" fill="none" stroke="#9aa824" strokeWidth="3.4" strokeLinecap="round" />
+              <path d="M34 4 C 10 11, 10 37, 34 44" fill="none" stroke="#f4efdd" strokeWidth="1.8" strokeLinecap="round" />
+              <circle cx="24" cy="24" r="23" fill="none" stroke="#c9a96a" strokeWidth="1.1" />
+            </svg>
+          </div>
 
         </div>
 
