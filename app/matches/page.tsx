@@ -2,35 +2,12 @@ import { getSupabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import { fetchAllRows } from "@/lib/fetchAllRows";
-import type { MatchWithPlayers, Surface } from "@/types";
+import type { MatchWithPlayers } from "@/types";
 import Link from "next/link";
-import PlayerNameWithBubble from "@/components/PlayerNameWithBubble";
 import MatchFilterBar, { type MatchFilters } from "@/components/MatchFilterBar";
+import MatchCard, { type MatchReviewSummary } from "@/components/MatchCard";
 
 export const metadata = { title: "Matches — Courtside" };
-
-const SURFACE_COLORS: Record<Surface, string> = {
-  Hard: "#4a90d9", Clay: "#d4734e", Grass: "#5cb85c", Carpet: "#9ca3af",
-};
-
-const ROUND_SHORT: Record<string, string> = {
-  "Round of 128": "R128", "Round of 64": "R64",
-  "Round of 32":  "R32",  "Round of 16": "R16",
-  "Quarterfinal": "QF",   "Semifinal":   "SF",
-  "Final":        "F",    "Round Robin": "RR",
-};
-
-// Short label for the order-of-play meta line. Slams get their gold
-// monogram; everything else shows its name (year stripped — the year has
-// its own slot in the line).
-function tournamentAbbrev(name: string): string {
-  const n = name.toLowerCase();
-  if (n.includes("australian open")) return "AO";
-  if (n.includes("roland garros") || n.includes("french open")) return "RG";
-  if (n.includes("wimbledon")) return "W";
-  if (n.includes("us open")) return "USO";
-  return name.replace(/\s+\d{4}$/, "").toUpperCase();
-}
 
 // Grand Slam name patterns — everything else in our dataset is Masters
 const SLAM_PATTERNS = [
@@ -267,6 +244,38 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
       .slice(0, 100);
   }
 
+  // ── Community review summary per displayed match (one batched query) ─────────
+  // ≤40 ids, so a scoped IN is safe. Top excerpt = highest-rated commented
+  // review, newest as tie-break.
+  const reviewSummary = new Map<string, MatchReviewSummary>();
+  const displayedIds = (matches ?? []).map((m) => m.id);
+  if (displayedIds.length > 0) {
+    const { data: revRows } = await admin
+      .from("reviews")
+      .select("match_id, match_rating, comment, created_at")
+      .in("match_id", displayedIds);
+    if (revRows && revRows.length > 0) {
+      const agg = new Map<string, { sum: number; count: number; top: { rating: number; created: string; comment: string } | null }>();
+      for (const r of revRows) {
+        const mid = r.match_id as string;
+        let a = agg.get(mid);
+        if (!a) { a = { sum: 0, count: 0, top: null }; agg.set(mid, a); }
+        const rating = Number(r.match_rating);
+        a.sum += rating; a.count++;
+        const comment = (r.comment as string | null)?.trim();
+        if (comment) {
+          const created = r.created_at as string;
+          if (!a.top || rating > a.top.rating || (rating === a.top.rating && created > a.top.created)) {
+            a.top = { rating, created, comment };
+          }
+        }
+      }
+      for (const [mid, a] of agg) {
+        reviewSummary.set(mid, { avg: a.sum / a.count, count: a.count, topExcerpt: a.top?.comment ?? null });
+      }
+    }
+  }
+
   const hasAnyFilter = !!(round || tournament || surface || year || player || level || sets || minRating);
   const filters: MatchFilters = { round, tournament, surface, year, player, playerName, level, sets, minRating, scope };
   const tourSubtitle = marquee
@@ -329,60 +338,11 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
         <>
           <div>
             {(matches as MatchWithPlayers[]).map((match) => (
-              <MatchRow key={match.id} match={match} />
+              <MatchCard key={match.id} match={match} summary={reviewSummary.get(match.id) ?? null} />
             ))}
           </div>
         </>
       )}
     </main>
-  );
-}
-
-function MatchRow({ match }: { match: MatchWithPlayers }) {
-  const surface = match.surface as Surface | null;
-  const p1Won = !!match.winner_id && match.winner_id === match.player1?.id;
-  const p2Won = !!match.winner_id && match.winner_id === match.player2?.id;
-  const hasWinner = p1Won || p2Won;
-
-  // Winner reads first on the bill — "Alcaraz d. Sinner"
-  const first  = p2Won ? match.player2 : match.player1;
-  const second = p2Won ? match.player1 : match.player2;
-
-  const abbrev  = tournamentAbbrev(match.tournament);
-  const tier    = match.tournament_tier;
-  const abbrevColor =
-    tier === "grand_slam" ? "#c9a96a" :
-    tier === "masters_1000" ? "rgba(192,192,192,0.7)" :
-    "rgba(236,229,216,0.45)";
-  const year = match.match_date?.slice(0, 4);
-  const round = ROUND_SHORT[match.round ?? ""] ?? match.round;
-
-  return (
-    <Link
-      href={`/matches/${match.id}`}
-      className="flex items-baseline justify-between gap-x-4 gap-y-0.5 flex-wrap py-3 px-1 transition-colors duration-150"
-      style={{ borderBottom: "1px solid var(--hairline-soft)" }}
-    >
-      <span className="bill-name min-w-0" style={{ fontSize: 16 }}>
-        <span style={{ fontWeight: hasWinner ? 500 : 400, color: "#ece5d8" }}>
-          <PlayerNameWithBubble playerId={first.id} playerName={first?.name ?? "Unknown"} />
-        </span>
-        <span className="italic" style={{ fontWeight: 300, fontSize: 13, color: "rgba(236,229,216,0.4)" }}>
-          {" "}{hasWinner ? "d." : "v."}{" "}
-        </span>
-        <span style={{ fontWeight: 300, color: hasWinner ? "rgba(236,229,216,0.65)" : "#ece5d8" }}>
-          <PlayerNameWithBubble playerId={second.id} playerName={second?.name ?? "Unknown"} />
-        </span>
-      </span>
-      <span
-        className="font-mono shrink-0"
-        style={{ fontSize: 11, letterSpacing: "0.08em", color: "rgba(236,229,216,0.45)" }}
-      >
-        <span style={{ color: abbrevColor }}>{abbrev}</span>
-        {round && <> · {round}</>}
-        {surface && <> · <span style={{ color: SURFACE_COLORS[surface] }}>{surface.toUpperCase()}</span></>}
-        {year && <> · {year}</>}
-      </span>
-    </Link>
   );
 }

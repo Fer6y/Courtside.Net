@@ -1,11 +1,12 @@
 import { getSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import type { Player } from "@/types";
 import Link from "next/link";
-import Image from "next/image";
 import PlayerFilterBar from "@/components/PlayerFilterBar";
-import CountryFlag from "@/components/CountryFlag";
+import PlayerCard from "@/components/PlayerCard";
+import { SKILL_KEYS, topSkills } from "@/lib/skillMeta";
 
 export const metadata = {
   title: "Players — Courtside",
@@ -33,6 +34,7 @@ const SORT_OPTIONS = [
 const STAT_SORTS = new Set(["matches", "hard", "clay", "grass", "streak"]);
 
 interface MatchRow {
+  id: string;
   player1_id: string;
   player2_id: string;
   winner_id: string | null;
@@ -97,7 +99,7 @@ const getTourMatchRows = unstable_cache(
     const db = getSupabase();
     return fetchAllRows<MatchRow>((from, to) =>
       db.from("matches")
-        .select("player1_id, player2_id, winner_id, surface, match_date")
+        .select("id, player1_id, player2_id, winner_id, surface, match_date")
         .eq("tour", tour)
         .range(from, to)
     );
@@ -121,6 +123,10 @@ export default async function PlayersPage({
   const effRankMax = rankMax ?? "30";
 
   const supabase = getSupabase();
+  const admin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
   // ── Fetch distinct countries for filter dropdown ───────────────
   const { data: countryRows } = await supabase
@@ -163,15 +169,14 @@ export default async function PlayersPage({
   const { data: rawPlayers, error } = await query;
   const players = (rawPlayers ?? []) as Player[];
 
-  // ── Compute stats if needed ───────────────────────────────────
+  // ── Compute surface stats for every card ──────────────────────
+  // Cards always show form (best-surface win%, match count), so we compute
+  // for all displayed players — not just when sorting by a stat. The tour's
+  // match rows are cached hourly.
   const statsMap = new Map<string, PlayerStats>();
-
-  if (STAT_SORTS.has(activeSort) && players.length > 0) {
-    const matchRows = await getTourMatchRows(activeTour);
-
-    for (const p of players) {
-      statsMap.set(p.id, computeStats(p.id, matchRows));
-    }
+  const matchRows = players.length > 0 ? await getTourMatchRows(activeTour) : [];
+  for (const p of players) {
+    statsMap.set(p.id, computeStats(p.id, matchRows));
   }
 
   // ── Sort by stat if needed ────────────────────────────────────
@@ -203,6 +208,54 @@ export default async function PlayersPage({
     sorted.sort(
       (a, b) => (statsMap.get(b.id)?.streak ?? 0) - (statsMap.get(a.id)?.streak ?? 0)
     );
+  }
+
+  // ── Community skills — aggregate per player (table is tiny) ────
+  // skill_ratings holds only a handful of rows today, so we read them all
+  // and average in JS rather than risk a huge player-id IN list.
+  const skillsMap = new Map<string, ReturnType<typeof topSkills>>();
+  {
+    const skillRows = await fetchAllRows<Record<string, unknown>>((from, to) =>
+      supabase.from("skill_ratings").select(["player_id", ...SKILL_KEYS].join(",")).range(from, to)
+    );
+    const acc = new Map<string, { sums: Record<string, number>; counts: Record<string, number> }>();
+    for (const row of skillRows) {
+      const pid = row.player_id as string;
+      if (!pid) continue;
+      let a = acc.get(pid);
+      if (!a) { a = { sums: {}, counts: {} }; acc.set(pid, a); }
+      for (const k of SKILL_KEYS) {
+        const v = Number(row[k]);
+        if (!isNaN(v) && v > 0) { a.sums[k] = (a.sums[k] ?? 0) + v; a.counts[k] = (a.counts[k] ?? 0) + 1; }
+      }
+    }
+    for (const [pid, a] of acc) {
+      const avgMap: Record<string, number> = {};
+      for (const k of SKILL_KEYS) if (a.counts[k]) avgMap[k] = a.sums[k] / a.counts[k];
+      skillsMap.set(pid, topSkills(avgMap, 2));
+    }
+  }
+
+  // ── Recent review excerpt per player ──────────────────────────
+  // Walk commented reviews newest-first and attach each to its match's two
+  // players. Bounded by the (small) review count, not players × matches, so
+  // no giant IN list. Match → players comes from the tour rows above.
+  const reviewMap = new Map<string, string>();
+  {
+    const matchPlayers = new Map<string, [string, string]>();
+    for (const m of matchRows) matchPlayers.set(m.id, [m.player1_id, m.player2_id]);
+    const { data: reviewRows } = await admin
+      .from("reviews")
+      .select("match_id, comment, created_at")
+      .not("comment", "is", null)
+      .order("created_at", { ascending: false });
+    for (const r of reviewRows ?? []) {
+      const pids = matchPlayers.get(r.match_id as string);
+      if (!pids) continue;
+      const text = (r.comment as string | null)?.trim();
+      if (!text) continue;
+      for (const pid of pids) if (!reviewMap.has(pid)) reviewMap.set(pid, text);
+    }
   }
 
   // Build URL preserving current filter state
@@ -302,13 +355,13 @@ export default async function PlayersPage({
             </div>
           ) : (
           <div>
-            {sorted.map((player, i) => (
-              <PlayerRow
+            {sorted.map((player) => (
+              <PlayerCard
                 key={player.id}
                 player={player}
-                rank={i + 1}
-                activeSort={activeSort}
                 stats={statsMap.get(player.id) ?? null}
+                topSkills={skillsMap.get(player.id) ?? []}
+                reviewExcerpt={reviewMap.get(player.id) ?? null}
               />
             ))}
           </div>
@@ -316,108 +369,5 @@ export default async function PlayersPage({
         </>
       )}
     </main>
-  );
-}
-
-function PlayerRow({
-  player,
-  rank,
-  activeSort,
-  stats,
-}: {
-  player: Player;
-  rank: number;
-  activeSort: string;
-  stats: PlayerStats | null;
-}) {
-  const dim  = { color: "rgba(236,229,216,0.45)" };
-  const stat = (value: React.ReactNode, label: string, color?: string) => (
-    <span className="font-mono" style={{ fontSize: 13, letterSpacing: "0.06em", color: color ?? "#ece5d8" }}>
-      {value}{" "}
-      <span className="uppercase" style={{ fontSize: 9, letterSpacing: "0.15em", ...dim }}>{label}</span>
-    </span>
-  );
-
-  // Decide what to show on the right side based on active sort
-  function statDisplay(): React.ReactNode {
-    if (!stats) {
-      if (activeSort === "age" && player.age) return stat(player.age, "yrs");
-      if (activeSort === "country" && player.country) return stat(player.country, "");
-      return player.current_rank
-        ? <span className="font-mono" style={{ fontSize: 13, ...dim }}>No. {player.current_rank}</span>
-        : null;
-    }
-
-    if (activeSort === "matches") return stat(stats.totalMatches, "matches");
-    if (activeSort === "hard") {
-      const pct = winPct(stats.hardWins, stats.hardTotal);
-      return pct !== null ? stat(`${pct}%`, `hard (${stats.hardTotal})`, "#4a90d9") : stat("—", "hard");
-    }
-    if (activeSort === "clay") {
-      const pct = winPct(stats.clayWins, stats.clayTotal);
-      return pct !== null ? stat(`${pct}%`, `clay (${stats.clayTotal})`, "#d4734e") : stat("—", "clay");
-    }
-    if (activeSort === "grass") {
-      const pct = winPct(stats.grassWins, stats.grassTotal);
-      return pct !== null ? stat(`${pct}%`, `grass (${stats.grassTotal})`, "#5cb85c") : stat("—", "grass");
-    }
-    if (activeSort === "streak") return stat(`${stats.streak}W`, "streak", "#22d68a");
-
-    // Default: rank
-    return player.current_rank
-      ? <span className="font-mono" style={{ fontSize: 13, ...dim }}>No. {player.current_rank}</span>
-      : null;
-  }
-
-  return (
-    <Link
-      href={`/players/${player.id}`}
-      className="flex items-center justify-between gap-4 py-2.5 px-1 transition-colors duration-150"
-      style={{ borderBottom: "1px solid var(--hairline-soft)" }}
-    >
-      <div className="flex items-center gap-3 min-w-0">
-        {/* Position number */}
-        <span className="font-mono w-6 text-right shrink-0" style={{ fontSize: 11, color: "rgba(236,229,216,0.35)" }}>
-          {rank}
-        </span>
-
-        {/* Player photo */}
-        <div
-          className="w-9 h-9 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
-          style={{ border: "1px solid rgba(236,229,216,0.18)", background: "rgba(236,229,216,0.04)" }}
-        >
-          {player.photo_url ? (
-            <Image
-              src={player.photo_url}
-              alt={player.name}
-              width={36}
-              height={36}
-              className="w-full h-full object-cover object-top"
-              unoptimized
-            />
-          ) : (
-            <span className="bill-name" style={{ fontSize: 13, color: "rgba(236,229,216,0.45)" }}>
-              {player.name.charAt(0)}
-            </span>
-          )}
-        </div>
-
-        {/* Name + country */}
-        <span className="bill-name truncate" style={{ fontSize: 16, color: "#ece5d8" }}>
-          {player.name}
-        </span>
-        {player.country && (
-          <span className="flex items-center gap-1.5 shrink-0">
-            <CountryFlag code={player.country} size={20} />
-            <span className="font-mono hidden sm:inline" style={{ fontSize: 10, color: "rgba(236,229,216,0.35)", letterSpacing: "0.1em" }}>
-              {player.country}
-            </span>
-          </span>
-        )}
-      </div>
-
-      {/* Stat display */}
-      <div className="shrink-0">{statDisplay()}</div>
-    </Link>
   );
 }
