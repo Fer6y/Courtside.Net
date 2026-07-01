@@ -13,6 +13,8 @@ const isPublicRoute = createRouteMatcher([
   "/profile(.*)",         // public profiles are readable by anyone
   "/guide",               // onboarding guide — linked from home for guests
   "/api/webhooks(.*)",    // Clerk webhook must be public — no auth header
+  "/api/search(.*)",      // global search — read-only public data, used by guests
+  "/api/players(.*)",     // player search + bubbles — used on public pages
   "/sitemap.xml",         // search engines can't sign in
   "/robots.txt",
 ]);
