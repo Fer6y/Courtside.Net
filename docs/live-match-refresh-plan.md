@@ -5,8 +5,44 @@ is reviewable on Courtside within ~30 minutes of its conclusion, automatically,
 with no manual script runs — and with the wrong-seasonId protections built in
 from day one.
 
-**Status:** designed July 1, 2026 (during Wimbledon 2026, which has 0 rows —
-see stopgap at the bottom). Not yet implemented.
+**Status:** designed July 1, 2026 (during Wimbledon 2026, which had 0 rows).
+**Phase 0 (manual Wimbledon import) and Phase 1 (the pipeline) shipped the
+same day** — see "As built" below. §2's original design called for a
+`tracked_tournaments` state table; the shipped version derives all state from
+existing tables instead (simpler, zero required migrations), so §2 is kept
+for background and superseded by "As built".
+
+## As built (July 1, 2026)
+
+- **`app/api/cron/refresh-matches/route.ts`** — the pipeline. Bearer-auth via
+  `CRON_SECRET` (route is on the middleware public list; it does its own
+  auth). Time-boxed (240s budget, `maxDuration 300`), idempotent, returns a
+  JSON run summary. `?force=discover` bypasses the hourly discovery gate.
+- **`lib/tournamentCalendar.ts`** — the 15 tracked events: canonical DB name,
+  tier, surface, tours, wide MM-DD window, tournament/info name patterns, and
+  the identity gate (`identityMatches`).
+- **`lib/matchImport.ts`** — the engine: identity-gated discovery, draw
+  polling, completed-only upserts with per-tier api_event_key conventions,
+  duplicate-provisional-row dedupe (§5b), paged player creation (20/run),
+  live structural validation, and rankings sync.
+- **State is derived, not stored:** the seasonId cache is the
+  `api_raw_staging` fixtures row (`slam_name`/`year`/`tour` in params — the
+  same rows every importer has always written); "event finished" is derived
+  from a Final-with-winner in `matches`. Rankings sync fires only on the run
+  where a Final first lands. No new required tables.
+- **`refresh_log`** (optional, recommended): run history table —
+  `supabase/migrations/add_refresh_log.sql`, paste into the Supabase SQL
+  editor whenever. The route silently skips logging until it exists.
+- **Scheduling:** `vercel.json` has a daily 05:00 UTC cron (works on Hobby)
+  as the safety net; point cron-job.org at the route every 20 min for the
+  real-time cadence. Both send `Authorization: Bearer <CRON_SECRET>`.
+- **Verified live:** first run found Wimbledon 2026 in-window, reused the
+  cached seasonIds, polled both tours (79 + 80 draw rows), re-suppressed the
+  duplicate provisional row still present in the API feed, validated clean,
+  in 3.0s.
+
+Still open (Phase 2/3): slam honours update on completion, photo backfill for
+mid-event player creations, `revalidateTag` cache nudges, "New this week" UI.
 
 ---
 
