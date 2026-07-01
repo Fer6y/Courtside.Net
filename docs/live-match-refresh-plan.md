@@ -148,6 +148,16 @@ and the client's own 50 req/min throttle.
 5. **Guardrail after completion** — full `validate-slam-draws.ts` bounds run
    when an event closes; during play only structural checks (partial draws are
    expected mid-event).
+   
+   5b. **Dedupe same-round player pairs** *(discovered live, Wimbledon 2026
+   day 1)* — the API can publish one match twice under different ids: a live
+   provisional row (`result_type: "completed"`, betting odds attached, wrong
+   winner) and a corrected row (`result_type: "retired"`, right winner).
+   Rule: group completed fixtures by (round, unordered player pair); prefer
+   the row with a special `result_type` (retired/walkover), else the newer
+   id; delete superseded ids from the DB so every poll self-heals. Validation
+   flags any duplicate pair that slips through. Implemented + proven in
+   `scripts/import-wimbledon-2026.ts`.
 6. **New players get real profiles** — created via `player/profile` with
    api_player_key, DOB→age, country, photo; same as reimport-slams, so no
    photo-less orphans and no name-based duplicates.
