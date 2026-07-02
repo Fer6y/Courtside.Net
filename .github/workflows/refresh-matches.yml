@@ -1,27 +1,39 @@
-# Pings the live match-refresh pipeline every 20 minutes
-# (docs/live-match-refresh-plan.md). Free on public repos.
+# Pings the live match-refresh pipeline (docs/live-match-refresh-plan.md).
+#
+# GitHub's schedule floor is 5 minutes (and best-effort), so each run pings
+# the endpoint 4 times, 90 seconds apart — covering its whole 5-minute slot
+# for an effective ~90-second refresh cadence. Free on public repos; every
+# ping is idempotent, and off-season pings are no-ops (the route exits
+# instantly when no tournament is in its window).
 #
 # Requires the CRON_SECRET repository secret (GitHub → Settings →
 # Secrets and variables → Actions) — same value as the Vercel env var.
 #
-# The step fails on any non-200 response, so GitHub emails you if the
-# pipeline ever starts erroring. Off-season runs are no-ops (the route
-# exits instantly when no tournament is in its window).
+# A non-200 response fails the run, so GitHub emails you if the pipeline
+# ever starts erroring.
 
 name: Refresh matches
 
 on:
   schedule:
-    - cron: "*/20 * * * *" # every 20 minutes, UTC
+    - cron: "*/5 * * * *" # every 5 minutes, UTC
   workflow_dispatch: # adds a manual "Run workflow" button in the Actions tab
+
+concurrency:
+  group: refresh-matches
+  cancel-in-progress: false
 
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 8
     steps:
-      - name: Ping the refresh endpoint
+      - name: Ping the refresh endpoint every ~90s
         run: |
-          curl --fail-with-body --silent --show-error --max-time 280 \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "https://courtside-net.vercel.app/api/cron/refresh-matches"
+          for i in 1 2 3 4; do
+            curl --fail-with-body --silent --show-error --max-time 280 \
+              -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+              "https://courtside-net.vercel.app/api/cron/refresh-matches"
+            echo ""
+            if [ "$i" -lt 4 ]; then sleep 90; fi
+          done

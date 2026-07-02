@@ -33,9 +33,13 @@ for background and superseded by "As built".
 - **`refresh_log`** (optional, recommended): run history table —
   `supabase/migrations/add_refresh_log.sql`, paste into the Supabase SQL
   editor whenever. The route silently skips logging until it exists.
-- **Scheduling:** `vercel.json` has a daily 05:00 UTC cron (works on Hobby)
-  as the safety net; point cron-job.org at the route every 20 min for the
-  real-time cadence. Both send `Authorization: Bearer <CRON_SECRET>`.
+- **Scheduling:** `.github/workflows/refresh-matches.yml` — GitHub Actions
+  every 5 minutes (the schedule floor), with each run pinging 4× at 90s
+  intervals → effective ~90-second cadence, free on the public repo. Failures
+  email Scott. `vercel.json` keeps a daily 05:00 UTC cron as a safety net.
+  Both send `Authorization: Bearer <CRON_SECRET>`. Discovery probes are
+  gated to the first ~3 minutes of each hour so the higher ping cadence
+  doesn't multiply API cost while waiting for an event to start.
 - **Verified live:** first run found Wimbledon 2026 in-window, reused the
   cached seasonIds, polled both tours (79 + 80 draw rows), re-suppressed the
   duplicate provisional row still present in the API feed, validated clean,

@@ -2,8 +2,9 @@
  * GET /api/cron/refresh-matches
  *
  * The live match-refresh pipeline (docs/live-match-refresh-plan.md).
- * Ping this every 20–30 minutes from a scheduler; it is idempotent and
- * time-boxed, so overlapping or missed runs are harmless.
+ * Pinged every ~90 seconds by the GitHub Actions workflow
+ * (.github/workflows/refresh-matches.yml); idempotent and time-boxed, so
+ * overlapping or missed runs are harmless.
  *
  * Auth: requires `Authorization: Bearer <CRON_SECRET>`. Vercel Cron sends
  * this automatically when the CRON_SECRET env var is set; external
@@ -97,9 +98,11 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // ── 2. Discovery (hourly, or forced) ─────────────────────────────────
+    // ── 2. Discovery (a couple of attempts per hour, or forced) ──────────
+    // The probe costs ~20–40 API calls, so with ~90s ping cadence it only
+    // fires in the first minutes of each hour until the event is found.
     const needsDiscovery = targets.filter((t) => !t.seasonId);
-    const discoveryDue = force || now.getUTCMinutes() < 20;
+    const discoveryDue = force || now.getUTCMinutes() < 3;
     if (needsDiscovery.length > 0 && discoveryDue) {
       for (const tour of ["ATP", "WTA"] as Tour[]) {
         const tourTargets = needsDiscovery.filter((t) => t.tour === tour);
