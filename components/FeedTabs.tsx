@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import UserAvatar from "@/components/UserAvatar";
+import PressBoxTag from "@/components/PressBoxTag";
+import { isPressBox } from "@/lib/pressBox";
 import type { ActivityItem } from "@/lib/feedTypes";
 
 const SURFACE_COLOR: Record<string, string> = {
@@ -52,6 +54,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
             <Link href={`/profile/${user.username}`} className="font-sans text-sm font-medium text-text-primary hover:text-primary transition-colors">
               {name}
             </Link>
+            {isPressBox(user.clerk_user_id) && <PressBoxTag />}
             <span className="font-sans text-xs text-text-dim">reviewed</span>
             {m ? (
               <Link href={href} className="font-sans text-sm font-medium text-text-primary hover:text-primary transition-colors truncate">
@@ -101,6 +104,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
           <Link href={`/profile/${user.username}`} className="font-sans text-sm font-medium text-text-primary hover:text-primary transition-colors">
             {name}
           </Link>
+          {isPressBox(user.clerk_user_id) && <PressBoxTag />}
           <span className="font-sans text-xs text-text-dim">rated</span>
           {p ? (
             <Link href={href} className="font-sans text-sm font-medium text-text-primary hover:text-primary transition-colors">

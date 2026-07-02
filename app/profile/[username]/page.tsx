@@ -9,6 +9,8 @@ import UserAvatar from "@/components/UserAvatar";
 import { type AchievementTier } from "@/lib/achievements";
 import { resolveLayout, getVariant, type LayoutConfig, type SectionId } from "@/lib/profileLayout";
 import { type AvatarConfig } from "@/lib/avatarTemplates";
+import PressBoxTag from "@/components/PressBoxTag";
+import { isPressBox } from "@/lib/pressBox";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -567,7 +569,10 @@ export default async function ProfilePage({ params }: Props) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <h1 className="bill-name leading-none mb-1" style={{ fontSize: 32, fontWeight: 500 }}>{displayName}</h1>
+              <div className="flex items-center gap-2.5 flex-wrap mb-1">
+                <h1 className="bill-name leading-none" style={{ fontSize: 32, fontWeight: 500 }}>{displayName}</h1>
+                {isPressBox(profile.clerk_user_id) && <PressBoxTag size="md" />}
+              </div>
               <p className="eyebrow" style={{ fontSize: 10, color: "rgba(236,229,216,0.5)" }}>@{profile.username}</p>
             </div>
             <div className="flex items-center gap-2">

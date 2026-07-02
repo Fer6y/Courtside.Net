@@ -1,9 +1,10 @@
 import type { AvatarConfig } from "@/lib/avatarTemplates";
 
 export interface ProfileMini {
-  id:           string;
-  username:     string;
-  display_name: string | null;
+  id:            string;
+  username:      string;
+  display_name:  string | null;
+  clerk_user_id: string | null;
   avatar_config: AvatarConfig | null;
 }
 

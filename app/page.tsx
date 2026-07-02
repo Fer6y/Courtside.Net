@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { TOUR_PREF_COOKIE, asTourPreference } from "@/lib/tourPreference";
+import { isPressBox } from "@/lib/pressBox";
 import CountryFlag from "@/components/CountryFlag";
 import CourtsideMark from "@/components/CourtsideMark";
 import GuideBanner from "@/components/GuideBanner";
@@ -68,7 +69,7 @@ const getHomeData = unstable_cache(
       db.from("reviews")
         .select(`
           id, match_rating, comment, created_at,
-          profile:user_id ( username, display_name ),
+          profile:user_id ( username, display_name, clerk_user_id ),
           match:match_id (
             id, tournament, tournament_tier, round, surface, match_date,
             player1:player1_id ( id, name ),
@@ -385,7 +386,9 @@ export default async function HomePage() {
                         {fmt(r.match_rating)}
                       </span>
                       <span className="eyebrow block mt-0.5" style={{ fontSize: 8, color: "rgba(236,229,216,0.35)" }}>
-                        {prof?.display_name ?? prof?.username ?? "Community"} · {timeAgo(r.created_at)}
+                        {prof?.display_name ?? prof?.username ?? "Community"}
+                        {isPressBox(prof?.clerk_user_id) && <span style={{ color: "#c9a96a" }}> · Press Box</span>}
+                        {" · "}{timeAgo(r.created_at)}
                       </span>
                     </span>
                   </Link>

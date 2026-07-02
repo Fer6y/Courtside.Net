@@ -100,7 +100,7 @@ export default async function FeedPage() {
       .from("reviews")
       .select(`
         id, match_rating, comment, created_at,
-        user:user_id ( id, username, display_name, avatar_config ),
+        user:user_id ( id, username, display_name, clerk_user_id, avatar_config ),
         match:match_id (
           id, tournament, round, surface, match_date,
           player1:player1_id ( id, name ),
@@ -120,7 +120,7 @@ export default async function FeedPage() {
         serve, forehand, backhand, shot_variety,
         net_play, touch, return_play, reaction_time, deception,
         speed, court_coverage, positioning, anticipation,
-        user:user_id ( id, username, display_name, avatar_config ),
+        user:user_id ( id, username, display_name, clerk_user_id, avatar_config ),
         player:player_id ( id, name, country, current_rank )
       `)
       .gte("created_at", since30)
