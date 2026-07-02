@@ -34,9 +34,11 @@ for background and superseded by "As built".
   `supabase/migrations/add_refresh_log.sql`, paste into the Supabase SQL
   editor whenever. The route silently skips logging until it exists.
 - **Scheduling:** `.github/workflows/refresh-matches.yml` — GitHub Actions
-  every 5 minutes (the schedule floor), with each run pinging 4× at 90s
-  intervals → effective ~90-second cadence, free on the public repo. Failures
-  email Scott. `vercel.json` keeps a daily 05:00 UTC cron as a safety net.
+  every 5 minutes (the schedule floor), with each run pinging 2× at 150s
+  intervals → effective ~2.5-minute cadence (~1,150 API calls/day during a
+  slam, chosen to stay well inside quota; zero off-season), free on the
+  public repo. Failures email Scott. `vercel.json` keeps a daily 05:00 UTC
+  cron as a safety net.
   Both send `Authorization: Bearer <CRON_SECRET>`. Discovery probes are
   gated to the first ~3 minutes of each hour so the higher ping cadence
   doesn't multiply API cost while waiting for an event to start.

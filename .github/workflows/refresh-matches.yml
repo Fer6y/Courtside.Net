@@ -1,10 +1,11 @@
 # Pings the live match-refresh pipeline (docs/live-match-refresh-plan.md).
 #
 # GitHub's schedule floor is 5 minutes (and best-effort), so each run pings
-# the endpoint 4 times, 90 seconds apart — covering its whole 5-minute slot
-# for an effective ~90-second refresh cadence. Free on public repos; every
-# ping is idempotent, and off-season pings are no-ops (the route exits
-# instantly when no tournament is in its window).
+# the endpoint twice, 150 seconds apart — an effective ~2.5-minute refresh
+# cadence, balanced to stay well inside the tennis API's quota (~1,150
+# calls/day during a slam). Free on public repos; every ping is idempotent,
+# and off-season pings are no-ops (the route exits instantly when no
+# tournament is in its window).
 #
 # Requires the CRON_SECRET repository secret (GitHub → Settings →
 # Secrets and variables → Actions) — same value as the Vercel env var.
@@ -28,12 +29,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Ping the refresh endpoint every ~90s
+      - name: Ping the refresh endpoint every ~2.5 min
         run: |
-          for i in 1 2 3 4; do
+          for i in 1 2; do
             curl --fail-with-body --silent --show-error --max-time 280 \
               -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
               "https://courtside-net.vercel.app/api/cron/refresh-matches"
             echo ""
-            if [ "$i" -lt 4 ]; then sleep 90; fi
+            if [ "$i" -lt 2 ]; then sleep 150; fi
           done

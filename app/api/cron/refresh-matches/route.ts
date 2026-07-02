@@ -2,7 +2,7 @@
  * GET /api/cron/refresh-matches
  *
  * The live match-refresh pipeline (docs/live-match-refresh-plan.md).
- * Pinged every ~90 seconds by the GitHub Actions workflow
+ * Pinged every ~2.5 minutes by the GitHub Actions workflow
  * (.github/workflows/refresh-matches.yml); idempotent and time-boxed, so
  * overlapping or missed runs are harmless.
  *
