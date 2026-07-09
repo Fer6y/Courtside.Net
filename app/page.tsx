@@ -41,6 +41,24 @@ function timeAgo(iso: string) {
 
 function fmt(n: number) { return n.toFixed(1); }
 
+// Round depth for ordering the "This fortnight" day of play — deepest first.
+const ROUND_RANK: Record<string, number> = {
+  Final: 0, Semifinal: 1, Quarterfinal: 2,
+  "Round of 16": 3, "Round of 32": 4, "Round of 64": 5, "Round of 128": 6,
+};
+function roundAbbr(round: string) {
+  switch (round) {
+    case "Final":        return "FINAL";
+    case "Semifinal":    return "SEMI";
+    case "Quarterfinal": return "QF";
+    case "Round of 16":  return "R16";
+    case "Round of 32":  return "R32";
+    case "Round of 64":  return "R64";
+    case "Round of 128": return "R128";
+    default:             return round.toUpperCase();
+  }
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 // Public home page data, cached 5 minutes. Site-wide vanity counts were
@@ -61,7 +79,7 @@ const getHomeData = unstable_cache(
       { data: topAtp },
       { data: topWta },
       { data: rawReviews },
-      { data: featuredFinal },
+      { data: latestDay },
     ] = await Promise.all([
       topQuery("ATP"),
       topQuery("WTA"),
@@ -79,24 +97,51 @@ const getHomeData = unstable_cache(
         .order("created_at", { ascending: false })
         .limit(4),
 
-      // "This fortnight" — the most recent final in the catalogue
+      // "This fortnight" — anchor on the most recent day of play in the
+      // catalogue (not the most recent *Final*, which goes stale mid-slam
+      // because the final hasn't been played yet).
       db.from("matches")
-        .select(`
-          id, tournament, round, surface, match_date, tournament_tier, winner_id,
-          player1:player1_id ( id, name ),
-          player2:player2_id ( id, name )
-        `)
-        .eq("round", "Final")
+        .select("match_date")
         .not("match_date", "is", null)
         .order("match_date", { ascending: false })
         .limit(1)
         .maybeSingle(),
     ]);
+
+    // Pull every match on that latest day (both tours), deepest round first,
+    // and keep a tasteful few for the hero footer.
+    let featuredMatches: unknown[] = [];
+    let featuredTournament: string | null = null;
+    let featuredMoreCount = 0;
+    if (latestDay?.match_date) {
+      const { data: dayMatches } = await db
+        .from("matches")
+        .select(`
+          id, tournament, round, surface, match_date, tour, winner_id,
+          player1:player1_id ( id, name ),
+          player2:player2_id ( id, name )
+        `)
+        .eq("match_date", latestDay.match_date);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sorted = ((dayMatches ?? []) as any[]).sort((a, b) => {
+        const ra = ROUND_RANK[a.round] ?? 9;
+        const rb = ROUND_RANK[b.round] ?? 9;
+        if (ra !== rb) return ra - rb;
+        return String(a.tour).localeCompare(String(b.tour));
+      });
+      featuredTournament =
+        (sorted[0]?.tournament as string | undefined)?.replace(/\s+\d{4}$/, "") ?? null;
+      featuredMoreCount = Math.max(0, sorted.length - 5);
+      featuredMatches = sorted.slice(0, 5);
+    }
+
     return {
       topAtp: topAtp ?? [],
       topWta: topWta ?? [],
       rawReviews: rawReviews ?? [],
-      featuredFinal: featuredFinal ?? null,
+      featuredMatches,
+      featuredTournament,
+      featuredMoreCount,
     };
   },
   ["home-page-data"],
@@ -107,7 +152,8 @@ export default async function HomePage() {
   const { userId: clerkId } = await auth();
   const db = adminDb();
 
-  const { topAtp, topWta, rawReviews, featuredFinal } = await getHomeData();
+  const { topAtp, topWta, rawReviews, featuredMatches, featuredTournament, featuredMoreCount } =
+    await getHomeData();
 
   // "Top of the Draw" is ATP-focused by default; the WTA is folded in only when
   // the viewer has opted into both tours on their customize page (cookie is the
@@ -203,39 +249,56 @@ export default async function HomePage() {
             (logo · title · options) stays vertically centred and uncluttered.
             On mobile it's a slim footnote; the scroll cue is desktop-only. */}
         <div className="absolute inset-x-0 bottom-0 px-4 pb-6 flex flex-col items-center gap-5">
-          {/* This fortnight — editorial feature, kept small */}
-          {featuredFinal && (
-            <div className="w-full mx-auto" style={{ maxWidth: 420 }}>
-              <div className="rule-divider mb-2">
+          {/* This fortnight — the latest day of play, both tours. The gold ✦
+              marks the winner of matches already decided; upcoming ties show
+              neither mark. */}
+          {featuredMatches.length > 0 && (
+            <div className="w-full mx-auto" style={{ maxWidth: 460 }}>
+              <div className="rule-divider mb-2.5">
                 <span className="eyebrow" style={{ fontSize: 8, color: "rgba(236,229,216,0.45)" }}>
-                  This fortnight — {(featuredFinal.tournament as string).replace(/\s+\d{4}$/, "")}
+                  This fortnight{featuredTournament ? ` — ${featuredTournament}` : ""}
                 </span>
               </div>
-              <Link
-                href={`/matches/${featuredFinal.id}`}
-                className="flex items-baseline justify-between gap-x-3 gap-y-0.5 flex-wrap transition-colors duration-150"
-              >
-                <span className="bill-name" style={{ fontSize: 14 }}>
-                  <span style={{ fontWeight: 500, color: "#ece5d8" }}>
-                    {(featuredFinal.player1 as { name?: string } | null)?.name}
-                  </span>
-                  <span className="italic" style={{ fontWeight: 300, fontSize: 12, color: "rgba(236,229,216,0.4)" }}>
-                    {" "}v.{" "}
-                  </span>
-                  <span style={{ fontWeight: 500, color: "#ece5d8" }}>
-                    {(featuredFinal.player2 as { name?: string } | null)?.name}
-                  </span>
-                </span>
-                <span className="font-mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "rgba(236,229,216,0.45)" }}>
-                  FINAL
-                  {featuredFinal.surface && (
-                    <> · <span style={{ color: SURFACE_COLOR[featuredFinal.surface as string] ?? "inherit" }}>
-                      {(featuredFinal.surface as string).toUpperCase()}
-                    </span></>
-                  )}
-                  {featuredFinal.match_date && <> · {(featuredFinal.match_date as string).slice(0, 4)}</>}
-                </span>
-              </Link>
+              <div className="flex flex-col gap-1">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {(featuredMatches as any[]).map((m) => {
+                  const p1 = m.player1 as { id?: number; name?: string } | null;
+                  const p2 = m.player2 as { id?: number; name?: string } | null;
+                  const p1Won = m.winner_id != null && m.winner_id === p1?.id;
+                  const p2Won = m.winner_id != null && m.winner_id === p2?.id;
+                  return (
+                    <Link
+                      key={m.id}
+                      href={`/matches/${m.id}`}
+                      className="flex items-baseline justify-between gap-x-3 gap-y-0.5 flex-wrap transition-colors duration-150"
+                    >
+                      <span className="bill-name" style={{ fontSize: 13.5 }}>
+                        {p1Won && <span style={{ color: "#c9a96a" }}>✦ </span>}
+                        <span style={{ fontWeight: 500, color: "#ece5d8" }}>{p1?.name}</span>
+                        <span className="italic" style={{ fontWeight: 300, fontSize: 11, color: "rgba(236,229,216,0.4)" }}>
+                          {" "}v.{" "}
+                        </span>
+                        {p2Won && <span style={{ color: "#c9a96a" }}>✦ </span>}
+                        <span style={{ fontWeight: 500, color: "#ece5d8" }}>{p2?.name}</span>
+                      </span>
+                      <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: "0.08em", color: "rgba(236,229,216,0.4)" }}>
+                        {m.tour} · {roundAbbr(m.round as string)}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+              {featuredMoreCount > 0 && (
+                <div className="mt-1.5 text-center">
+                  <Link
+                    href="/matches"
+                    className="eyebrow transition-colors duration-150"
+                    style={{ fontSize: 8, color: "rgba(236,229,216,0.35)" }}
+                  >
+                    +{featuredMoreCount} more today →
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
