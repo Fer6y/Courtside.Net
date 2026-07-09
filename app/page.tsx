@@ -188,6 +188,14 @@ export default async function HomePage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const players = (topPlayers ?? []) as any[];
 
+  // Cover-feature header: "This fortnight" reads as a survey, so when only a
+  // single tie is on the latest day of play we name the round instead.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const singleFeatured = featuredMatches.length === 1 ? (featuredMatches[0] as any) : null;
+  const fortnightLabel = singleFeatured
+    ? [singleFeatured.round, featuredTournament].filter(Boolean).join(" — ")
+    : `This fortnight${featuredTournament ? ` — ${featuredTournament}` : ""}`;
+
   return (
     <div>
 
@@ -256,7 +264,7 @@ export default async function HomePage() {
             <div className="w-full mx-auto" style={{ maxWidth: 460 }}>
               <div className="rule-divider mb-2.5">
                 <span className="eyebrow" style={{ fontSize: 8, color: "rgba(236,229,216,0.45)" }}>
-                  This fortnight{featuredTournament ? ` — ${featuredTournament}` : ""}
+                  {fortnightLabel}
                 </span>
               </div>
               <div className="flex flex-col gap-1">
