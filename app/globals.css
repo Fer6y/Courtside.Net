@@ -102,6 +102,25 @@ html[data-court="hard"] {
 :root {
   --hairline:      rgba(236, 229, 216, 0.14);
   --hairline-soft: rgba(236, 229, 216, 0.09);
+
+  /* Fixed-chrome heights. The masthead, the bottom tab bar, the body's
+     scroll padding and the hero's min-height all derive from these — they
+     have to agree or content hides behind the chrome, so keep them here
+     rather than repeating magic numbers at four call sites.
+     The *-total vars fold in the notch / home-indicator insets (which need
+     `viewport-fit=cover` on the viewport meta to resolve to anything). */
+  --nav-top-h: 52px;
+  --nav-bottom-h: 58px;
+  --nav-top-total:    calc(var(--nav-top-h) + env(safe-area-inset-top));
+  --nav-bottom-total: calc(var(--nav-bottom-h) + env(safe-area-inset-bottom));
+}
+
+/* Desktop: one 60px masthead, no bottom tab bar. */
+@media (min-width: 768px) {
+  :root {
+    --nav-top-h: 60px;
+    --nav-bottom-h: 0px;
+  }
 }
 
 /* ─── shadcn CSS variable overrides (dark-only app) ──────────────────────── */

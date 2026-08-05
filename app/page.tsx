@@ -196,100 +196,170 @@ export default async function HomePage() {
     ? [singleFeatured.round, featuredTournament].filter(Boolean).join(" — ")
     : `This fortnight${featuredTournament ? ` — ${featuredTournament}` : ""}`;
 
+  // The day's card shares the hero column with the masthead, so its height is
+  // space taken from the billing above it. Tighten the type and leading as the
+  // card grows; a lone tie gets to spread out into a proper marquee billing.
+  const featuredCount = featuredMatches.length;
+  const density =
+    featuredCount <= 2
+      ? { name: 16, meta: 10, gap: "gap-2", pad: "py-0.5" }
+      : featuredCount <= 4
+      ? { name: 14.5, meta: 9.5, gap: "gap-1.5", pad: "" }
+      : { name: 13, meta: 9, gap: "gap-1", pad: "" };
+
   return (
     <div>
 
       {/* ── Guide banner (shown to logged-in users with < 5 reviews) ─────── */}
       {clerkId && <GuideBanner reviewCount={userReviewCount ?? 0} />}
 
-      {/* ── Hero ────────────────────────────────────────────────────────────── */}
+      {/* ── Hero ──────────────────────────────────────────────────────────────
+          One flex column: the masthead takes the slack (flex-1, self-centred)
+          and the day's card sits at the foot in normal flow. The card used to
+          be absolutely positioned, which put it outside the centring and let
+          it run over the CTAs once the day carried four or five ties. */}
       <section
-        className="relative flex flex-col items-center justify-center text-center px-4 min-h-[calc(100svh_-_100px)] md:min-h-[calc(100vh_-_60px)]"
+        className="flex flex-col items-center text-center px-4"
+        style={{
+          minHeight:
+            "calc(100svh - var(--nav-top-total) - var(--nav-bottom-total))",
+        }}
       >
-        <CourtsideMark size={76} className="mb-5" />
-        <div className="eyebrow" style={{ fontSize: 11, color: "#c9a96a" }}>
-          Catalogue your tennis fandom
-        </div>
-        <h1 className="bill-name" style={{ fontSize: 52, fontWeight: 500, margin: "14px 0 6px", lineHeight: 1 }}>
-          Courtside
-        </h1>
-        <p
-          className="bill-name italic"
-          style={{ fontWeight: 300, fontSize: 17, color: "rgba(236,229,216,0.6)" }}
-        >
-          The matches you watched, the players you rate.
-        </p>
-
-        {/* Double rule */}
-        <div className="w-full" style={{ maxWidth: 380, marginTop: 26 }}>
-          <hr className="rule" />
-          <hr className="rule" style={{ marginTop: 3 }} />
-        </div>
-
-        {/* CTAs */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
-          <Link
-            href={clerkId ? "/matches" : "/sign-up"}
-            className="eyebrow btn-paper rounded-md px-6 py-3 font-semibold"
-            style={{ fontSize: 11 }}
+        {/* Masthead — logo · title · options */}
+        <div className="flex-1 flex flex-col items-center justify-center w-full py-8">
+          <CourtsideMark size={76} className="mb-5 w-14 h-14 sm:w-[76px] sm:h-[76px]" />
+          <div className="eyebrow" style={{ fontSize: 11, color: "#c9a96a" }}>
+            Catalogue your tennis fandom
+          </div>
+          <h1
+            className="bill-name"
+            style={{
+              fontSize: "clamp(40px, 12vw, 52px)",
+              fontWeight: 500,
+              margin: "14px 0 6px",
+              lineHeight: 1,
+            }}
           >
-            {clerkId ? "Order of Play" : "Begin Your Catalogue"}
-          </Link>
-          {clerkId && (
+            Courtside
+          </h1>
+          <p
+            className="bill-name italic max-w-[19rem] sm:max-w-none"
+            style={{ fontWeight: 300, fontSize: 16, color: "rgba(236,229,216,0.6)" }}
+          >
+            The matches you watched, the players you rate.
+          </p>
+
+          {/* Double rule */}
+          <div className="w-full" style={{ maxWidth: 380, marginTop: 24 }}>
+            <hr className="rule" />
+            <hr className="rule" style={{ marginTop: 3 }} />
+          </div>
+
+          {/* CTAs — stacked full-width on phones (uniform 48px targets, no
+              ragged wrap), inline from sm up. */}
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-center gap-3 mt-7 w-full max-w-[19rem] sm:max-w-none">
             <Link
-              href="/players"
-              className="eyebrow btn-ghost rounded-md px-6 py-3"
+              href={clerkId ? "/matches" : "/sign-up"}
+              className="eyebrow btn-paper rounded-md px-6 py-3.5 font-semibold"
               style={{ fontSize: 11 }}
             >
-              The Field
+              {clerkId ? "Order of Play" : "Begin Your Catalogue"}
             </Link>
-          )}
-          <Link
-            href={clerkId ? "/feed" : "/guide"}
-            className="eyebrow btn-ghost rounded-md px-6 py-3"
-            style={{ fontSize: 11 }}
-          >
-            {clerkId ? "Your Activity" : "The Guide"}
-          </Link>
+            {clerkId && (
+              <Link
+                href="/players"
+                className="eyebrow btn-ghost rounded-md px-6 py-3.5"
+                style={{ fontSize: 11 }}
+              >
+                The Field
+              </Link>
+            )}
+            <Link
+              href={clerkId ? "/feed" : "/guide"}
+              className="eyebrow btn-ghost rounded-md px-6 py-3.5"
+              style={{ fontSize: 11 }}
+            >
+              {clerkId ? "Your Activity" : "The Guide"}
+            </Link>
+          </div>
         </div>
 
-        {/* Bottom strip — pinned to the foot of the hero so the masthead
-            (logo · title · options) stays vertically centred and uncluttered.
-            On mobile it's a slim footnote; the scroll cue is desktop-only. */}
-        <div className="absolute inset-x-0 bottom-0 px-4 pb-6 flex flex-col items-center gap-5">
+        {/* Foot of the hero — the day's card, then the desktop scroll cue. */}
+        <div className="w-full flex flex-col items-center gap-4 pb-5">
           {/* This fortnight — the latest day of play, both tours. The gold ✦
               marks the winner of matches already decided; upcoming ties show
               neither mark. */}
-          {featuredMatches.length > 0 && (
+          {featuredCount > 0 && (
             <div className="w-full mx-auto" style={{ maxWidth: 460 }}>
-              <div className="rule-divider mb-2.5">
-                <span className="eyebrow" style={{ fontSize: 8, color: "rgba(236,229,216,0.45)" }}>
+              <div className="rule-divider mb-3">
+                <span className="eyebrow" style={{ fontSize: 9, color: "rgba(236,229,216,0.5)" }}>
                   {fortnightLabel}
                 </span>
               </div>
-              <div className="flex flex-col gap-1">
+              <div className={`flex flex-col ${density.gap}`}>
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {(featuredMatches as any[]).map((m) => {
                   const p1 = m.player1 as { id?: number; name?: string } | null;
                   const p2 = m.player2 as { id?: number; name?: string } | null;
                   const p1Won = m.winner_id != null && m.winner_id === p1?.id;
                   const p2Won = m.winner_id != null && m.winner_id === p2?.id;
+                  // A lone tie is the marquee: centre it and stack the meta
+                  // underneath. The round is already in the label above, so
+                  // only the tour is repeated here.
+                  if (singleFeatured) {
+                    return (
+                      <Link key={m.id} href={`/matches/${m.id}`} className="block text-center">
+                        <span className="bill-name block" style={{ fontSize: 19, lineHeight: 1.3 }}>
+                          {p1Won && <span style={{ color: "#c9a96a" }}>✦ </span>}
+                          <span style={{ fontWeight: 500, color: "#ece5d8" }}>{p1?.name}</span>
+                          <span className="italic" style={{ fontWeight: 300, fontSize: 15, color: "rgba(236,229,216,0.4)" }}>
+                            {" "}v.{" "}
+                          </span>
+                          {p2Won && <span style={{ color: "#c9a96a" }}>✦ </span>}
+                          <span style={{ fontWeight: 500, color: "#ece5d8" }}>{p2?.name}</span>
+                        </span>
+                        <span
+                          className="font-mono block mt-1"
+                          style={{ fontSize: 10, letterSpacing: "0.14em", color: "rgba(236,229,216,0.4)" }}
+                        >
+                          {m.tour}
+                        </span>
+                      </Link>
+                    );
+                  }
                   return (
                     <Link
                       key={m.id}
                       href={`/matches/${m.id}`}
-                      className="flex items-baseline justify-between gap-x-3 gap-y-0.5 flex-wrap transition-colors duration-150"
+                      className={`flex items-baseline justify-between gap-x-3 text-left transition-colors duration-150 ${density.pad}`}
                     >
-                      <span className="bill-name" style={{ fontSize: 13.5 }}>
+                      {/* min-w-0 lets a long match-up wrap inside its own
+                          column instead of shoving the tour · round off the
+                          row. The vw term keeps two full names on one line on
+                          a 375px phone; it never exceeds the density size. */}
+                      <span
+                        className="bill-name min-w-0"
+                        style={{
+                          fontSize: `clamp(11.5px, 3.3vw, ${density.name}px)`,
+                          lineHeight: 1.35,
+                        }}
+                      >
                         {p1Won && <span style={{ color: "#c9a96a" }}>✦ </span>}
                         <span style={{ fontWeight: 500, color: "#ece5d8" }}>{p1?.name}</span>
-                        <span className="italic" style={{ fontWeight: 300, fontSize: 11, color: "rgba(236,229,216,0.4)" }}>
+                        <span className="italic" style={{ fontWeight: 300, fontSize: "0.82em", color: "rgba(236,229,216,0.4)" }}>
                           {" "}v.{" "}
                         </span>
                         {p2Won && <span style={{ color: "#c9a96a" }}>✦ </span>}
                         <span style={{ fontWeight: 500, color: "#ece5d8" }}>{p2?.name}</span>
                       </span>
-                      <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: "0.08em", color: "rgba(236,229,216,0.4)" }}>
+                      <span
+                        className="font-mono shrink-0 whitespace-nowrap"
+                        style={{
+                          fontSize: `clamp(8.5px, 2.4vw, ${density.meta}px)`,
+                          letterSpacing: "0.08em",
+                          color: "rgba(236,229,216,0.4)",
+                        }}
+                      >
                         {m.tour} · {roundAbbr(m.round as string)}
                       </span>
                     </Link>
@@ -297,11 +367,11 @@ export default async function HomePage() {
                 })}
               </div>
               {featuredMoreCount > 0 && (
-                <div className="mt-1.5 text-center">
+                <div className="mt-2.5 text-center">
                   <Link
                     href="/matches"
                     className="eyebrow transition-colors duration-150"
-                    style={{ fontSize: 8, color: "rgba(236,229,216,0.35)" }}
+                    style={{ fontSize: 9, color: "rgba(236,229,216,0.4)" }}
                   >
                     +{featuredMoreCount} more today →
                   </Link>
@@ -423,14 +493,18 @@ export default async function HomePage() {
                 const prof = r.profile as any;
                 if (!m) return null;
                 return (
+                  // Programme entry: match-up and score share the top line
+                  // (score hard right), the quote and byline run underneath
+                  // full-width. The old two-column split wrapped on phones and
+                  // left the score stranded mid-row.
                   <Link
                     key={r.id}
                     href={`/matches/${m.id}`}
-                    className="flex items-baseline justify-between gap-x-4 gap-y-1 flex-wrap py-3.5 px-1 transition-colors duration-150"
+                    className="block py-3.5 px-1 transition-colors duration-150"
                     style={{ borderBottom: "1px solid var(--hairline-soft)" }}
                   >
-                    <span className="min-w-0">
-                      <span className="bill-name block" style={{ fontSize: 16 }}>
+                    <span className="flex items-baseline justify-between gap-x-3">
+                      <span className="bill-name min-w-0" style={{ fontSize: 16 }}>
                         <span style={{ color: "#ece5d8" }}>{m.player1?.name?.split(" ").pop()}</span>
                         <span className="italic" style={{ fontWeight: 300, fontSize: 13, color: "rgba(236,229,216,0.4)" }}> v. </span>
                         <span style={{ color: "#ece5d8" }}>{m.player2?.name?.split(" ").pop()}</span>
@@ -443,24 +517,25 @@ export default async function HomePage() {
                           </span>
                         )}
                       </span>
-                      {r.comment && (
-                        <span
-                          className="bill-name italic block truncate mt-0.5"
-                          style={{ fontWeight: 300, fontSize: 13, color: "rgba(236,229,216,0.5)", maxWidth: 440 }}
-                        >
-                          &ldquo;{r.comment}&rdquo;
-                        </span>
-                      )}
-                    </span>
-                    <span className="shrink-0 text-right">
-                      <span className="font-mono font-semibold block" style={{ fontSize: 17, color: "#c9a96a" }}>
+                      <span
+                        className="font-mono font-semibold shrink-0"
+                        style={{ fontSize: 17, color: "#c9a96a" }}
+                      >
                         {fmt(r.match_rating)}
                       </span>
-                      <span className="eyebrow block mt-0.5" style={{ fontSize: 8, color: "rgba(236,229,216,0.35)" }}>
-                        {prof?.display_name ?? prof?.username ?? "Community"}
-                        {isPressBox(prof?.clerk_user_id) && <span style={{ color: "#c9a96a" }}> · Press Box</span>}
-                        {" · "}{timeAgo(r.created_at)}
+                    </span>
+                    {r.comment && (
+                      <span
+                        className="bill-name italic block truncate mt-1"
+                        style={{ fontWeight: 300, fontSize: 13, color: "rgba(236,229,216,0.5)" }}
+                      >
+                        &ldquo;{r.comment}&rdquo;
                       </span>
+                    )}
+                    <span className="eyebrow block mt-1.5" style={{ fontSize: 9, color: "rgba(236,229,216,0.35)" }}>
+                      {prof?.display_name ?? prof?.username ?? "Community"}
+                      {isPressBox(prof?.clerk_user_id) && <span style={{ color: "#c9a96a" }}> · Press Box</span>}
+                      {" · "}{timeAgo(r.created_at)}
                     </span>
                   </Link>
                 );

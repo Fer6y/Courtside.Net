@@ -91,8 +91,12 @@ export default function Navbar() {
     <>
       {/* ── Desktop top nav ─────────────────────────────────────────── */}
       <header
-        className="hidden md:flex fixed top-0 left-0 right-0 z-50 items-center h-[60px]"
-        style={{ background: MASTHEAD_BG, borderBottom: "1px solid var(--hairline)" }}
+        className="hidden md:flex fixed top-0 left-0 right-0 z-50 items-center"
+        style={{
+          height: "var(--nav-top-h)",
+          background: MASTHEAD_BG,
+          borderBottom: "1px solid var(--hairline)",
+        }}
       >
         <div className="w-full max-w-[1280px] mx-auto px-6 flex items-center gap-9">
           {/* Wordmark — ball mark + serif name */}
@@ -163,25 +167,36 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* ── Mobile top header ────────────────────────────────────────── */}
+      {/* ── Mobile top header ──────────────────────────────────────────
+          Taller than the old 44px band so the wordmark reads at arm's
+          length, and the search control is a full 44px target rather than
+          a bare 18px icon. Padded for the notch in landscape. */}
       <header
-        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-[44px]"
-        style={{ background: MASTHEAD_BG, borderBottom: "1px solid var(--hairline)" }}
+        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between"
+        style={{
+          height: "var(--nav-top-total)",
+          paddingTop: "env(safe-area-inset-top)",
+          paddingLeft: "max(12px, env(safe-area-inset-left))",
+          paddingRight: "max(12px, env(safe-area-inset-right))",
+          background: MASTHEAD_BG,
+          borderBottom: "1px solid var(--hairline)",
+        }}
       >
-        <div className="w-8" />
-        <Link href="/" className="flex items-center gap-2">
-          <CourtsideMark size={20} gradientId="csmark-mobile" />
-          <span className="bill-name" style={{ fontSize: 17, fontWeight: 500, color: CREAM }}>
+        {/* Spacer balancing the search button so the wordmark stays centred */}
+        <div className="w-11 shrink-0" />
+        <Link href="/" className="flex items-center gap-2.5">
+          <CourtsideMark size={23} gradientId="csmark-mobile" />
+          <span className="bill-name" style={{ fontSize: 19, fontWeight: 500, color: CREAM }}>
             Courtside
           </span>
         </Link>
         <button
           onClick={() => setSearchOpen(true)}
-          className="w-8 flex justify-end transition-colors"
+          className="w-11 h-11 -mr-1.5 flex items-center justify-center transition-colors"
           style={{ color: CREAM_DIM }}
           aria-label="Search"
         >
-          <Search size={18} />
+          <Search size={21} />
         </button>
       </header>
 
@@ -192,7 +207,7 @@ export default function Navbar() {
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-stretch justify-around"
         style={{
-          height: 56,
+          height: "var(--nav-bottom-total)",
           background: MASTHEAD_BG,
           borderTop: "1px solid var(--hairline)",
           paddingBottom: "env(safe-area-inset-bottom)",
@@ -205,7 +220,8 @@ export default function Navbar() {
             <Link
               key={href}
               href={href}
-              className="relative flex flex-col items-center justify-center gap-0.5 min-w-[44px] flex-1"
+              aria-current={active ? "page" : undefined}
+              className="relative flex flex-col items-center justify-center gap-1 min-w-[44px] flex-1"
             >
               {/* Active indicator — gold rule at the top edge, echoing desktop */}
               {active && (
@@ -214,8 +230,8 @@ export default function Navbar() {
                   style={{ width: 26, height: 2, background: GOLD }}
                 />
               )}
-              <Icon size={20} color={color} strokeWidth={active ? 2 : 1.5} />
-              <span className="eyebrow" style={{ fontSize: 8.5, letterSpacing: "0.12em", color }}>
+              <Icon size={21} color={color} strokeWidth={active ? 2 : 1.5} />
+              <span className="eyebrow" style={{ fontSize: 10, letterSpacing: "0.1em", color }}>
                 {label}
               </span>
             </Link>
