@@ -612,25 +612,46 @@ export default async function ProfilePage({ params }: Props) {
         </div>
       </div>
 
-      {/* ── Stats bar ─────────────────────────────────────────── */}
-      <div className="flex items-center flex-wrap gap-y-4 mb-10 pb-8" style={{ borderBottom: "1px solid var(--hairline)" }}>
-        {[
+      {/* ── Stats bar ───────────────────────────────────────────
+          The seven stats sit on one line from lg up (they need ~864px, which
+          is exactly the max-w-4xl content width). Below that they wrap, and
+          because each divider is rendered inside its own item, a wrap left a
+          stranded hairline at the start of every new line. So: plain grid on
+          mobile with the dividers hidden, untouched inline row on desktop. */}
+      <div
+        className="grid grid-cols-3 gap-x-4 gap-y-5 lg:flex lg:items-center lg:flex-wrap lg:gap-x-0 lg:gap-y-4 mb-10 pb-8"
+        style={{ borderBottom: "1px solid var(--hairline)" }}
+      >
+        {([
           { value: reviews.length,          label: "Reviews",       tab: "reviews"     },
           { value: favorites.length,        label: "Favorites",     tab: "favorites"   },
           { value: ratings.length,          label: "Players Rated", tab: "ratings"     },
           { value: namedCollections.length, label: "Collections",   tab: "collections" },
-          { value: achievements.length,     label: "Honours",       tab: "trophies"    },
+          // No `trophies` tab route exists — the [tab] page only accepts the
+          // six below, so linking this one 404'd. Honours already has its own
+          // trophy_case section further down the profile, so the count stays
+          // but stops pretending to be a destination.
+          { value: achievements.length,     label: "Honours",       tab: null          },
           { value: followers,               label: "Followers",     tab: "followers"   },
           { value: following,               label: "Following",     tab: "following"   },
-        ].map(({ value, label, tab }, i) => (
-          <div key={label} className="flex items-center">
-            {i > 0 && <div className="w-px h-8 mx-6" style={{ background: "var(--hairline)" }} />}
-            <Link href={`/profile/${profile.username}/${tab}`} className="group">
+        ] as { value: number; label: string; tab: string | null }[]).map(({ value, label, tab }, i) => {
+          const body = (
+            <>
               <div className="font-mono font-bold transition-colors duration-150" style={{ fontSize: 24, color: "#ece5d8" }}>{value}</div>
               <div className="eyebrow mt-0.5 transition-colors duration-150" style={{ fontSize: 9, color: "rgba(236,229,216,0.4)" }}>{label}</div>
-            </Link>
-          </div>
-        ))}
+            </>
+          );
+          return (
+            <div key={label} className="flex items-center">
+              {i > 0 && <div className="hidden lg:block w-px h-8 mx-6" style={{ background: "var(--hairline)" }} />}
+              {tab ? (
+                <Link href={`/profile/${profile.username}/${tab}`} className="group">{body}</Link>
+              ) : (
+                <div>{body}</div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* ── Empty state ────────────────────────────────────────── */}
