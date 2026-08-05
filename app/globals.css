@@ -166,6 +166,28 @@ html[data-court="hard"] {
   }
 }
 
+/* iOS Safari zooms the whole page when you focus a text field smaller than
+   16px, and every field in the app is 14px (Tailwind text-sm) — so tapping
+   into a review comment or the search box kicked the layout sideways.
+   Phones only; desktop keeps the tighter 14px.
+   Deliberately unlayered: this has to outrank Tailwind's `text-sm` utility,
+   and unlayered declarations beat every @layer. `text-size-adjust` does not
+   cover focus zoom, and clamping maximum-scale would break pinch-zoom. */
+@media (max-width: 767px) {
+  input[type="text"],
+  input[type="search"],
+  input[type="email"],
+  input[type="password"],
+  input[type="url"],
+  input[type="tel"],
+  input[type="number"],
+  input:not([type]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 /* ─── Programme utilities ──────────────────────────────────────────────────
    The shared layout language of the redesign: eyebrow labels, hairline
    rules, dot leaders, and serif bill names. See docs/ui-redesign-plan.md. */
@@ -269,17 +291,34 @@ html[data-court="hard"] {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 2px;
+    /* 44px touch target, 2px visual track. The input itself used to be 2px
+       tall, so on a phone only the 15px thumb caught taps — a ~15px hit band
+       for the app's primary rating gesture, and there are 17 of them on the
+       rate page.
+       display:block stops the taller box inflating the surrounding line box
+       (an inline-block input does, even with negative margins). The -10px
+       margins leave a 24px net box, which is what the old inline-block 2px
+       input plus its line-box leading actually occupied — so row spacing is
+       unchanged (measured 172/116 against the original 172/115). Visible
+       sliders sit ≥106px apart, so the 44px targets never overlap. */
+    height: 44px;
+    display: block;
+    margin-top: -10px;
+    margin-bottom: -10px;
     border-radius: 0;
     outline: none;
     cursor: pointer;
-    background: linear-gradient(
+    background-color: transparent;
+    background-image: linear-gradient(
       to right,
       var(--accent, #c9a96a) 0%,
       var(--accent, #c9a96a) calc(var(--fill, 0) * 1%),
       var(--hairline) calc(var(--fill, 0) * 1%),
       var(--hairline) 100%
     );
+    background-repeat: no-repeat;
+    background-size: 100% 2px;
+    background-position: center;
   }
   .prog-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
