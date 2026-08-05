@@ -46,13 +46,22 @@ const VIEW_OPTIONS = [
 ];
 const DEFAULT_VIEW = "top30";
 
+// Only the fields the form maths reads. Every extra column here is paid for
+// ~7,200 times over on the ATP side, which is what pushed the cached value
+// past Next's 2MB entry limit (see getTourMatchRows).
 interface MatchRow {
-  id: string;
   player1_id: string;
   player2_id: string;
   winner_id: string | null;
   match_date: string | null;
-  round: string | null;
+}
+
+// Recent Winners needs the tournament identity, but only for finals inside the
+// last year — a few dozen rows. Kept off MatchRow so the name and season don't
+// ride along on every match in the tour.
+interface FinalRow {
+  winner_id: string | null;
+  match_date: string | null;
   tournament: string | null;
   tournament_season: number | null;
 }
@@ -122,13 +131,12 @@ interface RecentTitle {
 
 // Most recent tournament final each player won within the last 365 days,
 // keyed by winner id. Drives both the Recent Winners filter and its chip.
-function recentTitles(matches: MatchRow[]): Map<string, RecentTitle> {
-  const cutoff = new Date();
-  cutoff.setFullYear(cutoff.getFullYear() - 1);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
+// The round and date window are applied by the query now (getRecentFinals),
+// so this just picks the freshest title per winner.
+function recentTitles(finals: FinalRow[]): Map<string, RecentTitle> {
   const titles = new Map<string, RecentTitle>();
-  for (const m of matches) {
-    if (m.round !== "Final" || !m.winner_id || (m.match_date ?? "") < cutoffStr) continue;
+  for (const m of finals) {
+    if (!m.winner_id) continue;
     const date = m.match_date ?? "";
     const cur = titles.get(m.winner_id);
     if (!cur || date > cur.date) {
@@ -148,12 +156,34 @@ const getTourMatchRows = unstable_cache(
     const db = getSupabase();
     return fetchAllRows<MatchRow>((from, to) =>
       db.from("matches")
-        .select("id, player1_id, player2_id, winner_id, match_date, round, tournament, tournament_season")
+        .select("player1_id, player2_id, winner_id, match_date")
         .eq("tour", tour)
         .range(from, to)
     );
   },
   ["players-stat-matches"],
+  { revalidate: 3600 }
+);
+
+// Finals from the last year — everything Recent Winners needs, and nothing
+// else. Splitting these out (rather than carrying round/tournament/season on
+// all ~7,200 ATP rows above) is what keeps the cached payload under the 2MB
+// entry limit; over it, Next silently fails the cache write every request.
+const getRecentFinals = unstable_cache(
+  async (tour: string) => {
+    const db = getSupabase();
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - 1);
+    return fetchAllRows<FinalRow>((from, to) =>
+      db.from("matches")
+        .select("winner_id, match_date, tournament, tournament_season")
+        .eq("tour", tour)
+        .eq("round", "Final")
+        .gte("match_date", cutoff.toISOString().slice(0, 10))
+        .range(from, to)
+    );
+  },
+  ["players-recent-finals"],
   { revalidate: 3600 }
 );
 
@@ -214,7 +244,8 @@ export default async function PlayersPage({
   const matchRows = allPlayers.length > 0 ? await getTourMatchRows(activeTour) : [];
 
   // ── Apply the computed lenses ─────────────────────────────────
-  const titleMap = activeView === "winners" ? recentTitles(matchRows) : null;
+  const titleMap =
+    activeView === "winners" ? recentTitles(await getRecentFinals(activeTour)) : null;
   let players = allPlayers;
   if (activeView === "hot") {
     players = allPlayers.filter((p) => isHotStreak(p.id, matchRows));
@@ -306,22 +337,25 @@ export default async function PlayersPage({
   // ── Recent review excerpt per player ──────────────────────────
   // Walk commented reviews newest-first and attach each to its match's two
   // players. Bounded by the (small) review count, not players × matches, so
-  // no giant IN list. Match → players comes from the tour rows above.
+  // no giant IN list. The two player ids come from an embedded match relation
+  // — previously this built a match→players map over every row of the tour,
+  // which is the only reason those rows had to carry `id` at all.
   const reviewMap = new Map<string, string>();
   {
-    const matchPlayers = new Map<string, [string, string]>();
-    for (const m of matchRows) matchPlayers.set(m.id, [m.player1_id, m.player2_id]);
     const { data: reviewRows } = await admin
       .from("reviews")
-      .select("match_id, comment, created_at")
+      .select("comment, created_at, match:match_id ( player1_id, player2_id )")
       .not("comment", "is", null)
       .order("created_at", { ascending: false });
     for (const r of reviewRows ?? []) {
-      const pids = matchPlayers.get(r.match_id as string);
-      if (!pids) continue;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const m = r.match as any;
+      if (!m?.player1_id || !m?.player2_id) continue;
       const text = (r.comment as string | null)?.trim();
       if (!text) continue;
-      for (const pid of pids) if (!reviewMap.has(pid)) reviewMap.set(pid, text);
+      for (const pid of [m.player1_id as string, m.player2_id as string]) {
+        if (!reviewMap.has(pid)) reviewMap.set(pid, text);
+      }
     }
   }
 
