@@ -84,7 +84,7 @@ export default async function ProfileTabPage({ params }: Props) {
   const label       = TAB_LABELS[tab as Tab];
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12">
+    <main className="w-full max-w-4xl mx-auto px-4 py-12">
 
       {/* Back to profile */}
       <Link

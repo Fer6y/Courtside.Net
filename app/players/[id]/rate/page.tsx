@@ -45,7 +45,7 @@ export default async function RatePlayerPage({ params }: Props) {
   const tour = (player.career_stats as Record<string, string> | null)?.tour;
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-10">
+    <main className="w-full max-w-2xl mx-auto px-4 py-10">
       {/* Back */}
       <Link
         href={`/players/${id}`}

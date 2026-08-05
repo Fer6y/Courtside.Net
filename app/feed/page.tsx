@@ -267,7 +267,7 @@ export default async function FeedPage() {
   ).size;
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-10">
+    <main className="w-full max-w-6xl mx-auto px-4 py-10">
 
       {/* ── Page header ───────────────────────────────────────── */}
       <div className="mb-6">

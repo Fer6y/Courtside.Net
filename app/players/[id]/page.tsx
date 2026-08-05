@@ -203,7 +203,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const lastName = p.name.split(" ").pop();
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12">
+    <main className="w-full max-w-4xl mx-auto px-4 py-12">
       {/* Back */}
       <Link
         href="/players"

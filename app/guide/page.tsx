@@ -375,7 +375,7 @@ const TROPHY_TIERS = [
 
 export default function GuidePage() {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
+    <div className="w-full max-w-6xl mx-auto px-4 py-10">
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="mb-12">

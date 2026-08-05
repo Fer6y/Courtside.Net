@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="max-w-2xl mx-auto px-4 py-24 text-center">
+    <main className="w-full max-w-2xl mx-auto px-4 py-24 text-center">
       <div className="rounded-lg border border-white/5 bg-white/[0.02] p-10">
         <div className="font-mono text-5xl font-bold text-text-dim mb-4">
           OUT

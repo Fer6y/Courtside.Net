@@ -112,12 +112,15 @@ export default function CompareView({ p1, p2, h2hMatches, showH2HCard = true }: 
   return (
     <div>
       {/* ── Player headers with color pickers ──────────────────── */}
-      <div className="flex items-start justify-between gap-6 mb-10">
+      <div className="flex items-start justify-between gap-3 sm:gap-6 mb-10">
         {/* P1 */}
         <div className="flex-1 min-w-0">
           <Link href={`/players/${p1.id}`} className="hover:opacity-80 transition-opacity">
+            {/* Fraunces, not mono — player names are serif per the programme
+                type roles. Wraps rather than truncating: "Jannik Sin…" is
+                worse than two lines on a 375px phone. */}
             <div
-              className="font-mono text-2xl font-bold truncate mb-1"
+              className="bill-name text-xl sm:text-2xl font-semibold leading-tight mb-1"
               style={{ color: p1Color }}
             >
               {p1.name}
@@ -140,7 +143,7 @@ export default function CompareView({ p1, p2, h2hMatches, showH2HCard = true }: 
         <div className="flex-1 min-w-0 text-right">
           <Link href={`/players/${p2.id}`} className="hover:opacity-80 transition-opacity">
             <div
-              className="font-mono text-2xl font-bold truncate mb-1"
+              className="bill-name text-xl sm:text-2xl font-semibold leading-tight mb-1"
               style={{ color: p2Color }}
             >
               {p2.name}

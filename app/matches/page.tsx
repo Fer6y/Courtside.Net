@@ -285,7 +285,7 @@ export default async function MatchesPage({ searchParams }: { searchParams: Sear
     : activeTour === "WTA" ? "Every match · WTA" : "Every match · ATP";
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-12">
+    <main className="w-full max-w-5xl mx-auto px-4 py-12">
 
       {/* Masthead */}
       <div className="flex items-baseline justify-between flex-wrap gap-2">

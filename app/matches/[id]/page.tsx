@@ -213,7 +213,7 @@ export default async function MatchPage({ params }: Props) {
   const matchCourt = surfaceToCourt(surface);
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12">
+    <main className="w-full max-w-4xl mx-auto px-4 py-12">
       {matchCourt && (
         <>
           <script dangerouslySetInnerHTML={{ __html: courtOverrideScript(matchCourt) }} />

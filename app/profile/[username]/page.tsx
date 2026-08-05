@@ -561,7 +561,7 @@ export default async function ProfilePage({ params }: Props) {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12">
+    <main className="w-full max-w-4xl mx-auto px-4 py-12">
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row items-start gap-6 mb-8">

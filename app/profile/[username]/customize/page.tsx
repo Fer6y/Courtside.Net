@@ -50,7 +50,7 @@ export default async function CustomizeProfilePage({ params }: Props) {
   );
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-12">
+    <main className="w-full max-w-2xl mx-auto px-4 py-12">
 
       {/* Back */}
       <Link

@@ -58,7 +58,7 @@ export default async function ComparePage({
   const topPlayers = (topRaw ?? []) as PlayerOption[];
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12">
+    <main className="w-full max-w-4xl mx-auto px-4 py-12">
       <div className="mb-8">
         <p className="eyebrow mb-2" style={{ color: "rgba(236,229,216,0.5)" }}>
           Head to head

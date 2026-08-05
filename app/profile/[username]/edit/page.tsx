@@ -48,7 +48,7 @@ export default async function EditProfilePage({ params }: Props) {
   const bio         = (profile as Record<string, unknown>).bio as string ?? "";
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-12">
+    <main className="w-full max-w-2xl mx-auto px-4 py-12">
 
       {/* Back */}
       <Link

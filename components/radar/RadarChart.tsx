@@ -172,7 +172,11 @@ export default function RadarChart({
   return (
     <div style={{ width: "100%", maxWidth: 600 }}>
       <svg
-        viewBox="0 0 600 600"
+        // 60 units of bleed on every side. The category labels sit outside the
+        // 600-unit drawing (MOVEMENT reaches x=-54, TECHNIQUE x=658) and used
+        // to rely on overflow:visible to paint past the chart's own box — which
+        // works on desktop but gets cut off by the screen edge on a phone.
+        viewBox="-60 -60 720 720"
         width="100%"
         style={{ display: "block", overflow: "visible" }}
         aria-label={

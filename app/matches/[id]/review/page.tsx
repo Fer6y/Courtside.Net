@@ -52,7 +52,7 @@ export default async function ReviewMatchPage({ params }: Props) {
   const matchCourt = surfaceToCourt(match.surface as string | null);
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-10">
+    <main className="w-full max-w-2xl mx-auto px-4 py-10">
       {matchCourt && (
         <>
           <script dangerouslySetInnerHTML={{ __html: courtOverrideScript(matchCourt) }} />

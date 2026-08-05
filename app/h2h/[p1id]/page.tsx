@@ -44,7 +44,7 @@ export default async function H2HPickerPage({ params }: Props) {
     .limit(9);
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12">
+    <main className="w-full max-w-4xl mx-auto px-4 py-12">
       <Link
         href={`/players/${p1id}`}
         className="font-sans text-sm text-text-dim hover:text-text-mid mb-8 inline-block transition-colors duration-150"
