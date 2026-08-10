@@ -21,7 +21,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { matchstat } from "./matchstat";
+import { matchstat, MatchstatAuthError } from "./matchstat";
 import { identityMatches, type TrackedEvent } from "./tournamentCalendar";
 
 export type Tour = "ATP" | "WTA";
@@ -153,7 +153,8 @@ export async function discoverSeasonIds(
           pageNo: String(page),
         });
         rows = Array.isArray(pm) ? pm : [];
-      } catch {
+      } catch (err) {
+        if (err instanceof MatchstatAuthError) throw err; // dead key — stop everything
         break;
       }
       if (rows.length === 0) break;
@@ -174,7 +175,8 @@ export async function discoverSeasonIds(
     try {
       const info = await matchstat<Record<string, unknown>>(`${t}/tournament/info/${tid}`);
       infos.set(tid, { name: String(info.name ?? ""), tier: String(info.tier ?? "") });
-    } catch {
+    } catch (err) {
+      if (err instanceof MatchstatAuthError) throw err; // dead key — stop everything
       // unidentifiable candidate — ignore
     }
   }
@@ -185,7 +187,11 @@ export async function discoverSeasonIds(
     for (const [tid, info] of infos) {
       if (!identityMatches(event, info.name, info.tier)) continue;
       let draw = 0;
-      try { draw = (await fetchDraw(tour, tid)).length; } catch { /* keep 0 */ }
+      try { draw = (await fetchDraw(tour, tid)).length; }
+      catch (err) {
+        if (err instanceof MatchstatAuthError) throw err; // dead key — stop everything
+        /* keep 0 */
+      }
       matching.push({ tid, name: info.name, tier: info.tier, draw });
     }
     if (matching.length === 0) continue;
@@ -308,7 +314,8 @@ export async function importTournament(
       );
       if (error) throw new Error(error.message);
       playersCreated++;
-    } catch {
+    } catch (err) {
+      if (err instanceof MatchstatAuthError) throw err; // dead key — stop everything
       // next run retries; the match rows for this player skip until then
     }
   }

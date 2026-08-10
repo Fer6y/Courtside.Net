@@ -2,9 +2,19 @@
  * GET /api/cron/refresh-matches
  *
  * The live match-refresh pipeline (docs/live-match-refresh-plan.md).
- * Pinged every ~2.5 minutes by the GitHub Actions workflow
- * (.github/workflows/refresh-matches.yml); idempotent and time-boxed, so
- * overlapping or missed runs are harmless.
+ * Idempotent and time-boxed, so overlapping or missed runs are harmless.
+ *
+ * Cadence (off-season / low-cost mode, Aug 2026): the only scheduler is
+ * the daily Vercel cron in vercel.json (05:00 UTC). The GitHub Actions
+ * workflow (.github/workflows/refresh-matches.yml) that pinged every
+ * ~2.5 min during live tournaments is schedule-disabled — re-enable it
+ * when the API subscription is restored (see matchstat-api-connection.md
+ * "Season restart").
+ *
+ * Cached mode: if MATCHSTAT_API_KEY is unset, or the API answers 401/403
+ * (subscription cancelled), the run stops calling the API immediately and
+ * reports `apiInactive: true`. The site keeps serving whatever is already
+ * in Supabase — nothing user-facing depends on a live key.
  *
  * Auth: requires `Authorization: Bearer <CRON_SECRET>`. Vercel Cron sends
  * this automatically when the CRON_SECRET env var is set; external
@@ -35,6 +45,7 @@ import {
   syncRankings,
   type Tour,
 } from "@/lib/matchImport";
+import { MatchstatAuthError } from "@/lib/matchstat";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -49,6 +60,9 @@ interface RunSummary {
   rankings: { corrected: number; cleared: number } | null;
   skipped: string[];
   errors: string[];
+  /** true when the API key is unset or the subscription is inactive —
+   *  the run served cached data only. Not an error state. */
+  apiInactive?: boolean;
   ms: number;
 }
 
@@ -81,6 +95,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok: true, note: "no tracked tournament in window", ...summary });
     }
 
+    // Cached mode: no key configured → zero API calls, serve what we have.
+    if (!process.env.MATCHSTAT_API_KEY) {
+      summary.apiInactive = true;
+      summary.ms = Date.now() - started;
+      await writeLog(db, summary, true);
+      return NextResponse.json({
+        ok: true,
+        note: "MATCHSTAT_API_KEY not set — cached mode, no API calls made",
+        ...summary,
+      });
+    }
+
     // Season-id cache: a fixtures staging row for (event, year, tour) means
     // the tournament was already discovered.
     type Target = { event: TrackedEvent; year: number; tour: Tour; seasonId: string | null };
@@ -101,10 +127,15 @@ export async function GET(req: NextRequest) {
     // ── 2. Discovery (a couple of attempts per hour, or forced) ──────────
     // The probe costs ~20–40 API calls, so with ~90s ping cadence it only
     // fires in the first minutes of each hour until the event is found.
+    // Flipped by the first 401/403: the subscription is inactive, so every
+    // further API call would fail identically — stop making them.
+    let apiInactive = false;
+
     const needsDiscovery = targets.filter((t) => !t.seasonId);
     const discoveryDue = force || now.getUTCMinutes() < 3;
     if (needsDiscovery.length > 0 && discoveryDue) {
       for (const tour of ["ATP", "WTA"] as Tour[]) {
+        if (apiInactive) break;
         const tourTargets = needsDiscovery.filter((t) => t.tour === tour);
         if (tourTargets.length === 0 || Date.now() > started + TIME_BUDGET_MS) continue;
         try {
@@ -122,7 +153,12 @@ export async function GET(req: NextRequest) {
             );
           }
         } catch (err) {
-          summary.errors.push(`discovery ${tour}: ${(err as Error).message}`);
+          if (err instanceof MatchstatAuthError) {
+            apiInactive = true;
+            summary.skipped.push(`discovery ${tour}: API subscription inactive — cached mode`);
+          } else {
+            summary.errors.push(`discovery ${tour}: ${(err as Error).message}`);
+          }
         }
       }
     } else if (needsDiscovery.length > 0) {
@@ -137,6 +173,10 @@ export async function GET(req: NextRequest) {
     let anyTransition = false;
     for (const target of targets) {
       if (!target.seasonId) continue;
+      if (apiInactive) {
+        summary.skipped.push(`${target.event.name} ${target.tour}: API inactive, serving cache`);
+        continue;
+      }
       if (Date.now() > started + TIME_BUDGET_MS) {
         summary.skipped.push(`${target.event.name} ${target.tour}: out of time, next run`);
         continue;
@@ -170,12 +210,17 @@ export async function GET(req: NextRequest) {
           summary.errors.push(`${label} ${target.tour} validation: ${result.problems.join("; ")}`);
         }
       } catch (err) {
-        summary.errors.push(`poll ${label} ${target.tour}: ${(err as Error).message}`);
+        if (err instanceof MatchstatAuthError) {
+          apiInactive = true;
+          summary.skipped.push(`poll ${label} ${target.tour}: API subscription inactive — cached mode`);
+        } else {
+          summary.errors.push(`poll ${label} ${target.tour}: ${(err as Error).message}`);
+        }
       }
     }
 
     // ── 4. A final just landed → refresh live rankings ───────────────────
-    if (anyTransition && Date.now() < started + TIME_BUDGET_MS) {
+    if (anyTransition && !apiInactive && Date.now() < started + TIME_BUDGET_MS) {
       try {
         summary.rankings = await syncRankings(db);
       } catch (err) {
@@ -183,6 +228,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    if (apiInactive) summary.apiInactive = true;
     summary.ms = Date.now() - started;
     const ok = summary.errors.length === 0;
     await writeLog(db, summary, ok);

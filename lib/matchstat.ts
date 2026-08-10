@@ -51,6 +51,24 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+// ── Errors ────────────────────────────────────────────────────────────────────
+
+/**
+ * 401/403 from RapidAPI — the key is missing, revoked, or the subscription
+ * is inactive (e.g. cancelled between seasons). Not retryable: callers
+ * should stop making API calls for the rest of the run and serve cached
+ * Supabase data instead.
+ */
+export class MatchstatAuthError extends Error {
+  constructor(status: number, path: string, body: string) {
+    super(
+      `MatchStat ${status} on GET /${path} — RapidAPI subscription inactive ` +
+      `or key invalid: ${body.slice(0, 120)}`
+    );
+    this.name = "MatchstatAuthError";
+  }
+}
+
 // ── Core fetch ────────────────────────────────────────────────────────────────
 
 /**
@@ -101,6 +119,12 @@ export async function matchstat<T = unknown>(
     console.warn(`  [matchstat] 429 on /${path} — waiting ${backoff}ms, retrying (${retries} left)`);
     await sleep(backoff);
     return matchstat<T>(path, params, retries - 1);
+  }
+
+  // 401/403 — dead key or cancelled subscription: never retry
+  if (res.status === 401 || res.status === 403) {
+    const body = await res.text().catch(() => "");
+    throw new MatchstatAuthError(res.status, path, body);
   }
 
   // Other non-2xx

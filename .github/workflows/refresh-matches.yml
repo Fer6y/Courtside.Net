@@ -1,11 +1,24 @@
 # Pings the live match-refresh pipeline (docs/live-match-refresh-plan.md).
 #
-# GitHub's schedule floor is 5 minutes (and best-effort), so each run pings
-# the endpoint twice, 150 seconds apart — an effective ~2.5-minute refresh
-# cadence, balanced to stay well inside the tennis API's quota (~1,150
-# calls/day during a slam). Free on public repos; every ping is idempotent,
-# and off-season pings are no-ops (the route exits instantly when no
-# tournament is in its window).
+# ── OFF-SEASON MODE (Aug 2026) ──────────────────────────────────────────
+# The RapidAPI MatchStat subscription is cancelled, so the every-5-minutes
+# schedule below is commented out. The only automatic pull is the daily
+# Vercel cron (vercel.json, 05:00 UTC), which exits in cached mode if the
+# key is dead. The manual "Run workflow" button still works for one-off
+# pings.
+#
+# SEASON RESTART: re-subscribe on RapidAPI, update MATCHSTAT_API_KEY in
+# .env.local + Vercel env (a re-subscribe may issue a new key), then
+# uncomment the `schedule:` block below. Full checklist in
+# matchstat-api-connection.md → "Season restart".
+# ────────────────────────────────────────────────────────────────────────
+#
+# When live: GitHub's schedule floor is 5 minutes (and best-effort), so each
+# run pings the endpoint twice, 150 seconds apart — an effective ~2.5-minute
+# refresh cadence, balanced to stay well inside the tennis API's quota
+# (~1,150 calls/day during a slam). Free on public repos; every ping is
+# idempotent, and off-season pings are no-ops (the route exits instantly
+# when no tournament is in its window).
 #
 # Requires the CRON_SECRET repository secret (GitHub → Settings →
 # Secrets and variables → Actions) — same value as the Vercel env var.
@@ -16,9 +29,9 @@
 name: Refresh matches
 
 on:
-  schedule:
-    - cron: "*/5 * * * *" # every 5 minutes, UTC
-  workflow_dispatch: # adds a manual "Run workflow" button in the Actions tab
+  # schedule:                 # ← uncomment for live-tournament season
+  #   - cron: "*/5 * * * *"   #   every 5 minutes, UTC
+  workflow_dispatch: # manual "Run workflow" button in the Actions tab
 
 concurrency:
   group: refresh-matches

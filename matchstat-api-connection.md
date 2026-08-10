@@ -122,6 +122,30 @@ Once the smoke test passes, move to `data-source-migration-plan.md`: Phase 0 (co
 
 ---
 
+## Season restart (after the Aug 2026 off-season shutdown)
+
+The RapidAPI subscription was cancelled in Aug 2026 for the off-season. The
+app runs fine without it — the cron route detects the dead key (401/403 →
+`MatchstatAuthError`) and serves cached Supabase data, reporting
+`apiInactive: true`. To bring live imports back:
+
+1. **Re-subscribe** to the Tennis API – ATP/WTA/ITF listing on RapidAPI
+   (host `tennis-api-atp-wta-itf.p.rapidapi.com`).
+2. **Check the key** — a re-subscribe may issue a new `X-RapidAPI-Key`.
+   Update `MATCHSTAT_API_KEY` in `.env.local` AND the Vercel project env.
+3. **Smoke test:** `npx tsx scripts/phase0-verify.ts` (or hit
+   `/api/cron/refresh-matches?force=discover` with the CRON_SECRET bearer
+   header) and confirm no `apiInactive` in the response.
+4. **Re-enable the fast cadence:** uncomment the `schedule:` block in
+   `.github/workflows/refresh-matches.yml` and push. Until then the only
+   automatic pull is the daily Vercel cron (vercel.json, 05:00 UTC).
+5. **Backfill the gap:** anything missed while dark (e.g. US Open 2026)
+   imports via `scripts/reimport-slams.ts` / `scripts/reimport-masters.ts`
+   patterns — completed tournaments import fine after the fact, then run
+   `scripts/sync-live-rankings.ts` to catch rankings up.
+
+---
+
 ## Open items to confirm
 
 - [ ] Paid-tier price within budget (the free tier should cover the one-time backfill)
