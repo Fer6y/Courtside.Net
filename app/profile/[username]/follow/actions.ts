@@ -33,11 +33,12 @@ export async function followUser(targetProfileId: string) {
   // Ignore duplicate — already following
   if (error && error.code !== "23505") throw new Error(error.message);
 
-  const newAchievements = await checkAndAwardAchievements(profile.id).catch(() => [] as string[]);
+  const check = await checkAndAwardAchievements(profile.id)
+    .catch(() => ({ earned: [] as string[], nudge: null }));
   // Check follower-count achievements for the person being followed (fire-and-forget)
   checkAndAwardAchievements(targetProfileId).catch(() => {});
 
-  return { success: true, newAchievements };
+  return { success: true, newAchievements: check.earned };
 }
 
 export async function unfollowUser(targetProfileId: string) {

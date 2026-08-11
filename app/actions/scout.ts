@@ -21,5 +21,6 @@ export async function awardScoutBadge(): Promise<string[]> {
 
   if (!profile) return [];
 
-  return checkAndAwardAchievements(profile.id, { filterApplied: true });
+  const { earned } = await checkAndAwardAchievements(profile.id, { filterApplied: true });
+  return earned;
 }

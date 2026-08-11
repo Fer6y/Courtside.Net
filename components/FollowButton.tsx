@@ -4,17 +4,23 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { followUser, unfollowUser } from "@/app/profile/[username]/follow/actions";
 import AchievementBanner from "@/components/AchievementBanner";
+import { useToast } from "@/components/toast/ToastContext";
 
 interface Props {
   targetProfileId: string;
   initialIsFollowing: boolean;
+  /** For the toast message — "@username" when provided */
+  targetUsername?: string;
 }
 
-export default function FollowButton({ targetProfileId, initialIsFollowing }: Props) {
+export default function FollowButton({ targetProfileId, initialIsFollowing, targetUsername }: Props) {
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [isPending, startTransition]  = useTransition();
   const [earnedIds, setEarnedIds]     = useState<string[]>([]);
   const router = useRouter();
+  const toast  = useToast();
+
+  const who = targetUsername ? `@${targetUsername}` : "them";
 
   function toggle() {
     startTransition(async () => {
@@ -23,9 +29,14 @@ export default function FollowButton({ targetProfileId, initialIsFollowing }: Pr
       try {
         if (prev) {
           await unfollowUser(targetProfileId);
+          toast.notify(`Unfollowed ${who}`);
         } else {
           const result = await followUser(targetProfileId);
-          if (result.newAchievements?.length) setEarnedIds(result.newAchievements);
+          if (result.newAchievements?.length) {
+            setEarnedIds(result.newAchievements);
+          } else {
+            toast.notify(`Now following ${who}`);
+          }
         }
         router.refresh();
       } catch {

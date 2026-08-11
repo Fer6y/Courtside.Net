@@ -73,9 +73,10 @@ export async function submitMatchReview(matchId: string, formData: FormData) {
 
   if (watchErr) throw new Error(watchErr.message);
 
-  const newAchievements = await checkAndAwardAchievements(profile.id).catch(() => [] as string[]);
+  const check = await checkAndAwardAchievements(profile.id)
+    .catch(() => ({ earned: [] as string[], nudge: null }));
 
-  return { success: true, newAchievements };
+  return { success: true, newAchievements: check.earned, progressNudge: check.nudge };
 }
 
 export async function deleteReview(reviewId: string) {

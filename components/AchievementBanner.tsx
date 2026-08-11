@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ACHIEVEMENT_MAP, TIER_COLORS, TIER_LABELS } from "@/lib/achievements";
 
 interface Props {
@@ -126,6 +127,20 @@ export default function AchievementBanner({ achievementIds, onClear }: Props) {
             <div className="font-sans text-xs text-text-mid leading-snug mt-0.5">
               {achievement.description}
             </div>
+            <Link
+              href="/profile"
+              className="font-mono text-[10px] uppercase tracking-[0.12em] inline-flex items-center mt-1.5"
+              style={{
+                color: "#c9a96a",
+                pointerEvents: "auto",
+                textDecoration: "underline",
+                textUnderlineOffset: 3,
+                textDecorationColor: "rgba(201,169,106,0.5)",
+                minHeight: 24,
+              }}
+            >
+              View your honours →
+            </Link>
           </div>
         </div>
       </div>

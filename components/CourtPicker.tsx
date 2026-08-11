@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from "react";
 import { setCourtTheme } from "@/app/actions/court";
 import { COURT_OPTIONS, type CourtName } from "@/lib/courts";
+import { useToast } from "@/components/toast/ToastContext";
 
 // "Your court" — the viewer picks the surface the whole app is read on.
 // Selecting applies instantly (the effect writes data-court on <html>) for
@@ -10,6 +11,7 @@ import { COURT_OPTIONS, type CourtName } from "@/lib/courts";
 export default function CourtPicker({ initial }: { initial: CourtName }) {
   const [court, setCourt] = useState<CourtName>(initial);
   const [, startTransition] = useTransition();
+  const toast = useToast();
 
   // Sync the chosen court to <html> for instant, no-reload feedback. Lives in
   // an effect so the DOM write happens after render, not during the handler.
@@ -21,8 +23,11 @@ export default function CourtPicker({ initial }: { initial: CourtName }) {
   function choose(next: CourtName) {
     if (next === court) return;
     setCourt(next);
+    const label = COURT_OPTIONS.find((o) => o.value === next)?.label ?? next;
     startTransition(() => {
-      setCourtTheme(next).catch(() => {});
+      setCourtTheme(next)
+        .then(() => toast.notify(`Your court is now ${label}`))
+        .catch(() => {});
     });
   }
 

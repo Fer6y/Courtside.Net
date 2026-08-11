@@ -603,7 +603,11 @@ export default async function ProfilePage({ params }: Props) {
                 </>
               )}
               {currentClerkId && !isOwnProfile && (
-                <FollowButton targetProfileId={profile.id} initialIsFollowing={isFollowing} />
+                <FollowButton
+                  targetProfileId={profile.id}
+                  initialIsFollowing={isFollowing}
+                  targetUsername={profile.username}
+                />
               )}
             </div>
           </div>

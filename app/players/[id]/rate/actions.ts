@@ -53,7 +53,8 @@ export async function submitSkillRating(playerId: string, formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  const newAchievements = await checkAndAwardAchievements(profile.id).catch(() => [] as string[]);
+  const check = await checkAndAwardAchievements(profile.id)
+    .catch(() => ({ earned: [] as string[], nudge: null }));
 
-  return { success: true, newAchievements };
+  return { success: true, newAchievements: check.earned, progressNudge: check.nudge };
 }

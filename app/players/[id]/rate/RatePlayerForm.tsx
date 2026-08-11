@@ -116,7 +116,11 @@ export default function RatePlayerForm({
       const result = await submitSkillRating(playerId, fd);
       toast.success(toastId, "Rating saved!");
       setPending(false);
-      if (result.newAchievements?.length) setEarnedIds(result.newAchievements);
+      if (result.newAchievements?.length) {
+        setEarnedIds(result.newAchievements);
+      } else if (result.progressNudge) {
+        toast.notify(result.progressNudge, { actionLabel: "Honours", actionHref: "/profile" });
+      }
       router.push(`/players/${playerId}`);
       router.refresh();
     } catch {

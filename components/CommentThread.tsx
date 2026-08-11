@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { addComment, deleteComment } from "@/app/matches/[id]/comments/actions";
 import ReactionBar, { type ReactionSummary, EMPTY_REACTIONS } from "@/components/ReactionBar";
+import { useToast } from "@/components/toast/ToastContext";
 
 export interface Comment {
   id: string;
@@ -49,6 +50,7 @@ export default function CommentThread({
   const [replyTo, setReplyTo]     = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState("");
   const [isPending, startTransition] = useTransition();
+  const toast = useToast();
 
   const topLevel   = comments.filter((c) => !c.parent_comment_id);
   const repliesFor = (parentId: string) => comments.filter((c) => c.parent_comment_id === parentId);
@@ -60,7 +62,10 @@ export default function CommentThread({
         setComments((prev) => [...prev, created as unknown as Comment]);
         if (parentId) { setReplyTo(null); setReplyBody(""); }
         else          { setNewBody(""); }
-      } catch { /* silent */ }
+        toast.notify(parentId ? "Reply posted" : "Comment posted");
+      } catch {
+        toast.notify("Couldn't post comment — try again");
+      }
     });
   }
 

@@ -119,7 +119,12 @@ export default function ReviewMatchForm({ matchId, player1, player2, existing }:
       const result = await submitMatchReview(matchId, fd);
       toast.success(toastId, "Review saved!");
       setPending(false);
-      if (result.newAchievements?.length) setEarnedIds(result.newAchievements);
+      if (result.newAchievements?.length) {
+        setEarnedIds(result.newAchievements);
+      } else if (result.progressNudge) {
+        // Close to a milestone — the near-miss is the hook
+        toast.notify(result.progressNudge, { actionLabel: "Honours", actionHref: "/profile" });
+      }
       router.push(`/matches/${matchId}`);
       router.refresh();
     } catch (err) {
